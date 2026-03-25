@@ -72,6 +72,16 @@
         .sug-item { padding: 12px 15px; border-radius: 10px; cursor: pointer; font-size: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); font-weight:600;}
         .sug-item:hover { background: rgba(245, 158, 11, 0.1); color: var(--c-orange); }
 
+        /* DAFTAR SANTRI BERHUTANG (NEW) */
+        .student-bill-card { background: var(--bg-main); border-radius: 18px; padding: 18px 20px; margin-bottom: 15px; box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light); display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; border-left: 4px solid var(--c-orange);}
+        .student-bill-card:active { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); }
+        .sb-name { margin:0; font-size:14px; font-family:'Montserrat'; font-weight:800; color:var(--text-dark); }
+        .sb-info { margin:3px 0 0 0; font-size:10px; color:var(--text-muted); font-weight:600; }
+        .sb-total { font-size:14px; font-weight:800; color:var(--c-red); }
+        
+        .btn-kembali { background: transparent; color: var(--text-muted); border: none; font-family: 'Poppins'; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; margin-bottom: 20px; transition: 0.2s; padding: 10px; border-radius: 10px;}
+        .btn-kembali:active { background: rgba(0,0,0,0.05); }
+
         /* CARD TAGIHAN (HASIL CARI) */
         .card-tagihan { background: var(--bg-main); border-radius: 18px; padding: 20px; margin-bottom: 15px; box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--c-orange);}
         .btn-beri { background: var(--bg-main); color: var(--c-orange); border: none; padding: 10px 15px; border-radius: 10px; font-size: 11px; font-weight: 800; font-family:'Montserrat'; cursor: pointer; box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); transition:0.2s;}
@@ -124,14 +134,24 @@
 
         <div class="form-section active" id="sec-beri">
             <div class="panel-card">
-                <div class="input-group">
-                    <label>Cari Tagihan Santri (Nama/NIS)</label>
+                <div class="input-group" style="margin-bottom:0;">
+                    <label>Cari Cepat (Nama/NIS)</label>
                     <input type="text" class="input-edit" id="cariPintar" placeholder="Ketik nama santri..." onkeyup="tampilkanSaran()" autocomplete="off">
                     <div class="sug-box" id="sugBox"></div>
                 </div>
             </div>
-            <div id="hasilPencarian">
-                <p style="text-align:center; color:var(--text-muted); font-size:12px; font-weight:600; margin-top:30px;"><i class="fa-solid fa-magnifying-glass" style="font-size:30px; margin-bottom:10px; opacity:0.5;"></i><br>Pilih santri untuk melihat daftar tagihan aktifnya.</p>
+            
+            <!-- AREA 1: DAFTAR ANTREAN SANTRI -->
+            <div id="areaDaftarSantri">
+                <div style="text-align:center; padding:40px 20px; color:var(--text-muted);">
+                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size:30px; margin-bottom:15px;"></i><br>Memuat antrean dispensasi...
+                </div>
+            </div>
+
+            <!-- AREA 2: RINCIAN TAGIHAN SANTRI (MUNCUL SAAT DIKLIK) -->
+            <div id="areaRincian" style="display:none;">
+                <button class="btn-kembali" onclick="kembaliKeDaftar()"><i class="fa-solid fa-arrow-left"></i> Kembali ke Antrean</button>
+                <div id="hasilPencarian"></div>
             </div>
         </div>
 
@@ -170,6 +190,8 @@
 
     <script>
         let listTagihan = []; let listRiwayat = [];
+        let idSantriAktif = null; // Menyimpan state santri yang sedang dibuka
+        
         const formatRupiah = (n) => 'Rp ' + parseInt(n || 0).toLocaleString('id-ID');
         function showToast(msg) { let t = document.getElementById("toast"); t.querySelector("span").innerText = msg; t.className = "show"; setTimeout(() => { t.className = ""; }, 3000); }
 
@@ -181,13 +203,19 @@
                     if(r.Status === 'Belum Lunas' || r.Status === 'Cicilan') listTagihan.push(r);
                     else if(String(r.Status).includes('Dispensasi')) { 
                         listRiwayat.push(r); 
-                        // Kalkulasi hanya sisa tagihan jika sebelumnya sudah ada cicilan
                         let sisa = r.Status === 'Cicilan' ? (r.Nominal - (r.Terbayar || 0)) : r.Nominal;
                         total += parseInt(sisa || 0); 
                     }
                 });
+                
                 document.getElementById('sumDana').innerText = formatRupiah(total);
                 renderRiwayat();
+                renderDaftarSantriBerhutang();
+                
+                // State-Preservation: Jika sedang membuka rincian, refresh rincian tersebut
+                if(idSantriAktif) {
+                    renderFilter(idSantriAktif);
+                }
             });
         };
 
@@ -197,13 +225,68 @@
             el.classList.add('active'); document.getElementById('sec-' + tipe).classList.add('active');
         }
 
-        // PENCARIAN SMART AUTOCOMPLETE (Fix Error: Nama_Lengkap)
+        // TAMPILKAN SEMUA SANTRI YANG PUNYA TAGIHAN (NEW)
+        function renderDaftarSantriBerhutang() {
+            let rekap = {};
+            
+            listTagihan.forEach(t => {
+                if(!rekap[t.ID_Murid]) {
+                    let namaValid = t.Nama_Lengkap || t.Nama_Santri || "Hamba Allah";
+                    rekap[t.ID_Murid] = { id: t.ID_Murid, nama: namaValid, kelas: t.Kelas, count: 0, total: 0 };
+                }
+                rekap[t.ID_Murid].count++;
+                let sisa = t.Status === 'Cicilan' ? (t.Nominal - (t.Terbayar || 0)) : t.Nominal;
+                rekap[t.ID_Murid].total += parseInt(sisa);
+            });
+
+            let wadah = document.getElementById('areaDaftarSantri');
+            let arrRekap = Object.values(rekap).sort((a,b) => a.nama.localeCompare(b.nama));
+            
+            if(arrRekap.length === 0) {
+                wadah.innerHTML = `<div style="text-align:center; padding:40px 20px; color:var(--c-green); font-weight:700;"><i class="fa-solid fa-check-circle" style="font-size:50px; margin-bottom:15px;"></i><br>Alhamdulillah, tidak ada tagihan yang bisa dibebaskan saat ini.</div>`;
+                return;
+            }
+
+            wadah.innerHTML = `<h3 style="font-size:11px; color:var(--text-muted); margin-bottom:15px; text-transform:uppercase; letter-spacing:1px;">PILIH SANTRI (${arrRekap.length} ORANG)</h3>`;
+            
+            arrRekap.forEach(r => {
+                wadah.innerHTML += `
+                <div class="student-bill-card" onclick="bukaTagihanSantri('${r.id}', '${r.nama.replace(/'/g, "\\'")}')">
+                    <div>
+                        <h4 class="sb-name">${r.nama}</h4>
+                        <p class="sb-info">Kelas: ${r.kelas} • ${r.count} Item Tagihan</p>
+                    </div>
+                    <div style="text-align:right;">
+                        <span class="sb-total">${formatRupiah(r.total)}</span>
+                        <i class="fa-solid fa-chevron-right" style="color:var(--text-muted); margin-left:10px; font-size:12px;"></i>
+                    </div>
+                </div>`;
+            });
+        }
+
+        // NAVIGASI
+        function bukaTagihanSantri(idMurid, namaSantri) {
+            idSantriAktif = idMurid;
+            document.getElementById('areaDaftarSantri').style.display = 'none';
+            document.getElementById('areaRincian').style.display = 'block';
+            document.getElementById('cariPintar').value = namaSantri;
+            renderFilter(idMurid);
+        }
+
+        function kembaliKeDaftar() {
+            idSantriAktif = null;
+            document.getElementById('areaRincian').style.display = 'none';
+            document.getElementById('areaDaftarSantri').style.display = 'block';
+            document.getElementById('cariPintar').value = '';
+            document.getElementById('hasilPencarian').innerHTML = '';
+        }
+
+        // PENCARIAN SMART AUTOCOMPLETE
         function tampilkanSaran() {
             let input = document.getElementById('cariPintar').value.toLowerCase();
             let box = document.getElementById('sugBox'); box.innerHTML = '';
             if(input.length < 2) { box.style.display = 'none'; return; }
             
-            // Filter santri unik yang punya tagihan aktif
             let hasilUnik = [];
             listTagihan.forEach(t => {
                 let namaValid = String(t.Nama_Lengkap || t.Nama_Santri || "").toLowerCase();
@@ -215,12 +298,16 @@
             hasilUnik.slice(0, 5).forEach(s => {
                 let div = document.createElement('div'); div.className = 'sug-item';
                 div.innerHTML = `<b>${s.Nama_Santri}</b> <span style="font-size:10px; color:var(--text-muted);">(${s.ID_Murid})</span>`;
-                div.onclick = () => { document.getElementById('cariPintar').value = s.Nama_Santri; box.style.display = 'none'; renderFilter(s.ID_Murid); };
+                div.onclick = () => { 
+                    box.style.display = 'none'; 
+                    bukaTagihanSantri(s.ID_Murid, s.Nama_Santri); 
+                };
                 box.appendChild(div);
             });
             box.style.display = hasilUnik.length > 0 ? 'block' : 'none';
         }
 
+        // TAMPILKAN RINCIAN
         function renderFilter(id) {
             let wadah = document.getElementById('hasilPencarian');
             let res = listTagihan.filter(t => String(t.ID_Murid) === String(id));
@@ -261,8 +348,9 @@
                     Admin_Eksekutor: adminName 
                 });
                 
-                tutupModal(); document.getElementById('cariPintar').value = '';
-                document.getElementById('hasilPencarian').innerHTML = '<p style="text-align:center; color:var(--c-green); font-size:12px; font-weight:700; margin-top:20px;"><i class="fa-solid fa-check-circle" style="font-size:30px; margin-bottom:10px;"></i><br>Berhasil Dibebaskan & Dicatat dalam Log Audit!</p>';
+                tutupModal();
+                showToast("Tagihan Berhasil Dibebaskan & Dicatat di Log!");
+                // Karena Firebase Realtime, UI akan auto-refresh dan tagihan langsung hilang!
             } catch(err) {
                 showToast("Gagal memproses ke server.");
             }
