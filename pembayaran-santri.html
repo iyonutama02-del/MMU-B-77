@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" href="Logo-Favicon.png">
     <link rel="apple-touch-icon" href="Logo-Favicon.png">
     
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -32,7 +32,7 @@
             --bg-main: #e0e5ec; --text-dark: #31344b; --text-muted: #8C96A3;
             --shadow-dark: rgba(163, 177, 198, 0.6); --shadow-light: rgba(255, 255, 255, 0.6);
             --green-grad: linear-gradient(135deg, #2df077 0%, #00d26a 100%);
-            --c-green: #00d26a; --c-orange: #f59e0b; --c-blue: #4facfe;
+            --c-green: #00d26a; --c-orange: #f59e0b; --c-blue: #4facfe; --c-gold: #fbbf24;
         }
         [data-theme="dark"] {
             --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0;
@@ -75,7 +75,7 @@
         .ct-price { font-family: 'Montserrat'; font-weight: 900; font-size: 18px; color: var(--c-orange); text-align: right;}
         
         .ct-action { display: flex; gap: 12px; align-items: center; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 15px;}
-        .ct-input { flex: 1; padding: 12px 15px; border: none; border-radius: 12px; background: var(--bg-main); font-family: 'Montserrat'; font-size: 14px; font-weight: 800; color: var(--c-green); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); outline: none; text-align: right;}
+        .ct-input { flex: 1; padding: 12px 15px; border: none; border-radius: 12px; background: var(--bg-main); font-family: 'Montserrat'; font-size: 14px; font-weight: 800; color: var(--c-green); box-shadow: inset 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); outline: none; text-align: right;}
         .btn-bayar { background: var(--green-grad); color: white; border: none; padding: 12px 25px; border-radius: 12px; font-family: 'Montserrat'; font-weight: 800; font-size: 13px; cursor: pointer; box-shadow: 4px 4px 10px rgba(0, 210, 106, 0.3); transition: 0.2s;}
         .btn-bayar:active { transform: translateY(2px); box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2); }
 
@@ -92,21 +92,50 @@
         .neumorphic-spinner { width: 50px; height: 50px; border-radius: 50%; background: var(--bg-main); box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); border: 4px solid transparent; border-top-color: var(--c-green); animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* KUITANSI WRAPPER */
-        #kuitansi-cetak-wrapper { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9000; display:flex; justify-content:center; align-items:center; opacity:0; pointer-events:none; transition:0.3s; padding:20px; }
-        .kuitansi-box { width: 400px; background: white; border-radius: 20px; padding: 30px; font-family: 'Poppins', sans-serif; color: #1e293b; box-shadow: 0 20px 40px rgba(0,0,0,0.3); position: relative; overflow: hidden; }
-        .k-theme-emas { border-top: 12px solid #f59e0b; } .k-theme-emas .k-title { color: #f59e0b; } .k-theme-emas .k-total { background: rgba(245, 158, 11, 0.1); color: #f59e0b;}
-        .k-theme-hijau { border-top: 12px solid #22c55e; } .k-theme-hijau .k-title { color: #22c55e; } .k-theme-hijau .k-total { background: rgba(34, 197, 94, 0.1); color: #22c55e;}
-        .k-theme-abu { border-top: 12px solid #64748b; } .k-theme-abu .k-title { color: #64748b; } .k-theme-abu .k-total { background: rgba(100, 116, 139, 0.1); color: #475569;}
-        .k-header { text-align: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 15px; margin-bottom: 20px; }
-        .k-title { font-family: 'Montserrat'; font-weight: 900; font-size: 22px; margin: 0; letter-spacing: 1px; }
-        .k-sub { font-size: 11px; color: #64748b; margin: 5px 0 0; font-weight: 600;}
-        .k-body { font-size: 13px; line-height: 1.8; }
-        .k-row { display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding: 10px 0; }
-        .k-total { padding: 20px; border-radius: 12px; text-align: center; margin: 20px 0; }
-        .k-total span { display: block; font-size: 11px; font-weight: 700; opacity: 0.8; text-transform: uppercase; }
-        .k-total h2 { margin: 5px 0 0; font-family: 'Montserrat'; font-size: 28px; font-weight: 900; }
-        .k-footer { text-align: center; font-size: 11px; color: #94a3b8; font-style: italic; margin-top: 20px; font-weight: 500;}
+        /* --- KUITANSI PREMIUM TINGKAT DEWA --- */
+        #kuitansi-cetak-wrapper { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9000; display:flex; justify-content:center; align-items:center; opacity:0; pointer-events:none; transition:0.3s; padding:20px; }
+        
+        .kuitansi-box { 
+            width: 100%; max-width: 420px; background: #ffffff; border-radius: 20px; padding: 35px 30px; 
+            font-family: 'Poppins', sans-serif; color: #1e293b; box-shadow: 0 25px 50px rgba(0,0,0,0.5); 
+            position: relative; overflow: hidden; background-image: radial-gradient(#f8fafc 10%, transparent 11%); background-size: 20px 20px;
+        }
+        
+        /* Watermark Background */
+        .k-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 150px; color: rgba(0,0,0,0.03); z-index: 0; pointer-events: none; }
+        
+        /* Tema Kuitansi */
+        .k-theme-emas { border-top: 15px solid #fbbf24; } .k-theme-emas .k-icon { color: #fbbf24; } .k-theme-emas .k-total { background: rgba(251, 191, 36, 0.1); color: #b45309; border: 1px dashed #fbbf24;}
+        .k-theme-hijau { border-top: 15px solid #22c55e; } .k-theme-hijau .k-icon { color: #22c55e; } .k-theme-hijau .k-total { background: rgba(34, 197, 94, 0.1); color: #15803d; border: 1px dashed #22c55e;}
+        .k-theme-abu { border-top: 15px solid #64748b; } .k-theme-abu .k-icon { color: #64748b; } .k-theme-abu .k-total { background: rgba(100, 116, 139, 0.08); color: #334155; border: 1px dashed #94a3b8;}
+        
+        .k-header { display: flex; align-items: center; gap: 15px; border-bottom: 2px dashed #cbd5e1; padding-bottom: 20px; margin-bottom: 20px; position: relative; z-index: 1;}
+        .k-icon { font-size: 35px; }
+        .k-title { font-family: 'Montserrat'; font-weight: 900; font-size: 18px; margin: 0; letter-spacing: 0.5px; color: #0f172a;}
+        .k-sub { font-size: 10px; color: #64748b; margin: 2px 0 0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
+        .k-id { font-family: monospace; font-size: 11px; margin: 8px 0 0; font-weight: 700; color: #94a3b8; background: #f1f5f9; display: inline-block; padding: 3px 8px; border-radius: 6px;}
+        
+        .k-body { font-size: 12px; position: relative; z-index: 1;}
+        .k-row { display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding: 12px 0; }
+        .k-row span { color: #64748b; font-weight: 500;}
+        .k-row strong { color: #1e293b; font-weight: 700; text-align: right; max-width: 60%;}
+        
+        .k-total { padding: 20px; border-radius: 15px; text-align: center; margin: 25px 0; position: relative; z-index: 1;}
+        .k-total span { display: block; font-size: 11px; font-weight: 800; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;}
+        .k-total h2 { margin: 5px 0 0; font-family: 'Montserrat'; font-size: 32px; font-weight: 900; letter-spacing: -1px;}
+        .k-sisa { font-size: 12px; color: #ef4444; margin: 8px 0 0; font-weight: 800; background: white; display: inline-block; padding: 4px 10px; border-radius: 8px;}
+        
+        /* Area Pesan & Doa */
+        .k-pesan { text-align: center; background: #f8fafc; padding: 15px; border-radius: 12px; border-left: 4px solid #cbd5e1; font-size: 11px; font-weight: 600; color: #475569; font-style: italic; line-height: 1.6; position: relative; z-index: 1;}
+        .k-pesan i { font-size: 10px; color: #94a3b8; margin: 0 5px;}
+        
+        .k-footer { text-align: center; font-size: 9px; color: #94a3b8; margin-top: 25px; font-weight: 500; position: relative; z-index: 1; border-top: 1px solid #f1f5f9; padding-top: 15px;}
+
+        /* Controls under receipt */
+        .k-controls { position:absolute; bottom:30px; display:flex; gap:10px; width:100%; max-width:440px; padding:0 20px; }
+        .inp-wa { flex:1; padding:15px; border-radius:15px; border:none; outline:none; font-family:'Poppins'; font-weight:600; box-shadow:0 5px 15px rgba(0,0,0,0.2); }
+        .btn-wa { background:#25D366; color:white; border:none; padding:0 20px; border-radius:15px; font-weight:800; font-family:'Montserrat'; cursor:pointer; box-shadow:0 5px 15px rgba(37, 211, 102, 0.4); transition:0.2s; }
+        .btn-close-k { background:#ef4444; color:white; border:none; padding:0 18px; border-radius:15px; cursor:pointer; box-shadow:0 5px 15px rgba(239, 68, 68, 0.4); }
     </style>
 </head>
 <body>
@@ -116,7 +145,7 @@
     <div class="loading-overlay" id="loadingLayar">
         <div class="neumorphic-spinner"></div>
         <h3 style="font-family:'Montserrat'; margin:0; color:var(--text-dark);">Memproses Pembayaran...</h3>
-        <p style="font-size:12px; color:var(--c-green); font-weight:800; margin-top:10px;">Mencetak Kuitansi Digital</p>
+        <p style="font-size:12px; color:var(--c-green); font-weight:800; margin-top:10px;">Menyiapkan Kuitansi Digital Premium</p>
     </div>
 
     <div class="app-container">
@@ -132,7 +161,7 @@
                 <input type="text" class="input-edit" id="cariSantri" placeholder="Ketik nama untuk mencari cepat..." onkeyup="cariData()" autocomplete="off">
                 <div class="sug-box" id="sugBox"></div>
             </div>
-            <div style="text-align:center; font-size:10px; color:var(--c-green); font-weight:700; margin-top:15px;" id="statusSync"><i class="fa-solid fa-cloud-arrow-down"></i> Data Antrean Live Tersinkronisasi.</div>
+            <div style="text-align:center; font-size:10px; color:var(--c-green); font-weight:700; margin-top:15px;" id="statusSync"><i class="fa-solid fa-link"></i> Sinkronisasi Mutlak Database Aktif.</div>
         </div>
 
         <!-- AREA 1: DAFTAR SEMUA SANTRI YANG PUNYA TAGIHAN -->
@@ -149,72 +178,118 @@
         </div>
     </div>
 
-    <!-- KUITANSI DIGITAL -->
+    <!-- KUITANSI DIGITAL PREMIUM -->
     <div id="kuitansi-cetak-wrapper">
         <div class="kuitansi-box" id="areaCetak">
+            <div class="k-watermark"><i class="fa-solid fa-building-columns"></i></div>
+            
             <div class="k-header">
-                <h1 class="k-title">BUKTI PEMBAYARAN</h1>
-                <p class="k-sub">Madrasah Miftahul Ulum B-77 Jrebeng Kulon</p>
-                <p style="font-family:monospace; font-size:11px; margin:8px 0 0; font-weight:700;" id="k_id">ID: -</p>
+                <div class="k-icon"><i class="fa-solid fa-receipt"></i></div>
+                <div>
+                    <h1 class="k-title">BUKTI PEMBAYARAN</h1>
+                    <p class="k-sub">Madrasah Miftahul Ulum B-77</p>
+                    <p class="k-id" id="k_id">ID: -</p>
+                </div>
             </div>
+            
             <div class="k-body">
-                <div class="k-row"><span>Waktu Bayar</span><strong id="k_tgl">-</strong></div>
-                <div class="k-row"><span>Nama Santri</span><strong id="k_nama">-</strong></div>
+                <div class="k-row"><span>Tgl. Transaksi</span><strong id="k_tgl">-</strong></div>
+                <div class="k-row"><span>Diterima Dari</span><strong id="k_nama">-</strong></div>
                 <div class="k-row"><span>ID / Kelas</span><strong id="k_kelas">-</strong></div>
                 <div class="k-row"><span>Pembayaran</span><strong id="k_pos">-</strong></div>
-                <div class="k-row"><span>Kasir</span><strong id="k_kasir">-</strong></div>
+                <div class="k-row"><span>Kasir Penerima</span><strong id="k_kasir">-</strong></div>
             </div>
+            
             <div class="k-total">
                 <span id="k_label_total">TOTAL DITERIMA</span>
                 <h2 id="k_nominal">Rp 0</h2>
-                <p style="font-size:12px; color:#ef4444; margin:8px 0 0; font-weight:800; display:none;" id="k_sisa_tagihan">Sisa Tagihan: Rp 0</p>
+                <p class="k-sisa" id="k_sisa_tagihan" style="display:none;">Sisa Tagihan: Rp 0</p>
             </div>
-            <div class="k-footer" id="k_pesan">Terima kasih atas kepercayaannya.</div>
+
+            <div class="k-pesan">
+                <i class="fa-solid fa-quote-left"></i>
+                <span id="k_pesan_teks">Terima kasih atas kepercayaannya.</span>
+                <i class="fa-solid fa-quote-right"></i>
+            </div>
+            
+            <div class="k-footer">
+                Dokumen ini diterbitkan secara digital oleh Sistem Keuangan MMU B-77.<br>
+                Sah dan valid sebagai bukti pembayaran resmi.
+            </div>
         </div>
         
-        <div style="position:absolute; bottom:30px; display:flex; gap:10px; width:100%; max-width:440px; padding:0 20px;">
-            <input type="number" id="txtWA" placeholder="No WA Tujuan (08x)..." style="flex:1; padding:15px; border-radius:15px; border:none; outline:none; font-family:'Poppins'; font-weight:600; box-shadow:0 5px 15px rgba(0,0,0,0.2);">
-            <button onclick="unduhDanKirimWA()" style="background:#25D366; color:white; border:none; padding:0 20px; border-radius:15px; font-weight:800; font-family:'Montserrat'; cursor:pointer; box-shadow:0 5px 15px rgba(37, 211, 102, 0.4); transition:0.2s;"><i class="fa-solid fa-paper-plane"></i> KIRIM</button>
-            <button onclick="tutupKuitansi()" style="background:#ef4444; color:white; border:none; padding:0 18px; border-radius:15px; cursor:pointer; box-shadow:0 5px 15px rgba(239, 68, 68, 0.4);"><i class="fa-solid fa-xmark"></i></button>
+        <div class="k-controls">
+            <input type="number" id="txtWA" class="inp-wa" placeholder="No WA Tujuan (08x)...">
+            <button onclick="unduhDanKirimWA()" class="btn-wa"><i class="fa-solid fa-paper-plane"></i> KIRIM</button>
+            <button onclick="tutupKuitansi()" class="btn-close-k"><i class="fa-solid fa-xmark"></i></button>
         </div>
     </div>
 
     <script>
-        let dbTagihan = []; let dbSantri = [];
+        let dbTagihan = []; let listRiwayat = [];
+        let dbSantriUtama = []; // REFERENSI MUTLAK
+        let idSantriAktif = null;
+        
         const formatRp = (n) => 'Rp ' + parseInt(n || 0).toLocaleString('id-ID');
         function showToast(msg) { let t = document.getElementById("toast"); t.querySelector("span").innerText = msg; t.className = "show"; setTimeout(() => { t.className = ""; }, 3000); }
+
+        // --- DATABASE DOA & PESAN DINAMIS ---
+        const doaTepatWaktu = [
+            "Terima kasih atas pembayaran administrasi ananda. Semoga ilmu yang didapat menjadi ilmu yang barokah dan bermanfaat.",
+            "Alhamdulillah, kewajiban administrasi telah tertunaikan. Jazakumullah ahsanal jaza atas kerja samanya.",
+            "Pembayaran telah kami terima dengan baik. Semoga Allah senantiasa melimpahkan kelancaran rezeki bagi keluarga.",
+            "Syukron atas ketepatan waktu pembayarannya. Semoga ananda menjadi santri yang sholeh/sholehah."
+        ];
+        
+        const doaLebihEmas = [
+            "Jazakumullah Khairan atas infaq/kelebihannya. Semoga Allah membalasnya dengan rezeki yang berlipat ganda dan berkah.",
+            "Alhamdulillah, kelebihan pembayaran ini kami catat sebagai sedekah. Semoga menjadi amal jariyah yang tak terputus.",
+            "Terima kasih atas keikhlasan dan hartanya yang disedekahkan. Semoga Allah senantiasa memberikan kesehatan paripurna bagi keluarga.",
+            "Masya Allah, terima kasih atas kelebihannya. Semoga setiap rupiahnya menjadi pemberat timbangan amal kebaikan kelak."
+        ];
+
+        const doaTelatAbu = [
+            "Alhamdulillah, pembayaran telah kami terima dan tercatat di sistem. Terima kasih atas kerja samanya.",
+            "Kewajiban administrasi ananda telah masuk ke pembukuan kami. Semoga Allah senantiasa mempermudah segala urusan Bapak/Ibu.",
+            "Terima kasih telah menunaikan tanggungan administrasi madrasah. Semoga ilmu ananda senantiasa bermanfaat."
+        ];
+
+        function getRandomDoa(arrayDoa) {
+            return arrayDoa[Math.floor(Math.random() * arrayDoa.length)];
+        }
 
         window.onload = function() {
             let user = localStorage.getItem('namaPengguna');
             if(!user) window.location.href = 'index.html';
 
-            // Sinkronisasi Data Firebase
+            // SINKRONISASI MUTLAK 2 ARAH
             database.ref('santri').on('value', snap => {
-                dbSantri = []; snap.forEach(c => dbSantri.push(c.val()));
-                cobaRenderDaftar();
+                dbSantriUtama = []; snap.forEach(c => dbSantriUtama.push(c.val()));
+                if(dbTagihan.length > 0) renderDaftarSantriBerhutang();
             });
 
             database.ref('tagihan').on('value', snap => {
                 dbTagihan = []; snap.forEach(c => dbTagihan.push(c.val()));
-                cobaRenderDaftar();
+                if(dbSantriUtama.length > 0) renderDaftarSantriBerhutang();
+                if(idSantriAktif) renderTagihan(idSantriAktif);
             });
         };
 
-        function cobaRenderDaftar() {
-            // Tunggu sampai kedua database selesai diload
-            if(dbSantri.length > 0 && dbTagihan.length > 0) {
-                renderDaftarSantriBerhutang();
-            }
+        // FUNGSI PENGUNCI NAMA MUTLAK
+        function getNamaMutlak(idMurid, namaFallback) {
+            let santri = dbSantriUtama.find(s => String(s.ID_Murid) === String(idMurid));
+            if (santri) return (santri.Nama_Lengkap || santri.Nama_Santri || "Tanpa Nama");
+            return (namaFallback || "Hamba Allah");
         }
 
-        // TAMPILKAN SEMUA SANTRI YANG PUNYA TAGIHAN AKTIF DI AWAL
+        // TAMPILKAN SEMUA SANTRI YANG PUNYA TAGIHAN (SINKRON NAMA)
         function renderDaftarSantriBerhutang() {
             let tagihanAktif = dbTagihan.filter(t => t.Status === 'Belum Lunas' || t.Status === 'Cicilan');
             let rekap = {};
             
             tagihanAktif.forEach(t => {
                 if(!rekap[t.ID_Murid]) {
-                    let namaValid = t.Nama_Lengkap || t.Nama_Santri || "Hamba Allah";
+                    let namaValid = getNamaMutlak(t.ID_Murid, t.Nama_Santri);
                     rekap[t.ID_Murid] = { id: t.ID_Murid, nama: namaValid, kelas: t.Kelas, count: 0, total: 0 };
                 }
                 rekap[t.ID_Murid].count++;
@@ -246,7 +321,7 @@
             });
         }
 
-        // PENCARIAN (FALLBACK JIKA INGIN CARI CEPAT)
+        // PENCARIAN
         function cariData() {
             let input = document.getElementById('cariSantri').value.toLowerCase();
             let box = document.getElementById('sugBox'); box.innerHTML = '';
@@ -255,9 +330,9 @@
             let tagihanAktif = dbTagihan.filter(t => t.Status === 'Belum Lunas' || t.Status === 'Cicilan');
             let hasilUnik = [];
             tagihanAktif.forEach(t => {
-                let namaValid = String(t.Nama_Santri || t.Nama_Lengkap || "").toLowerCase();
+                let namaValid = getNamaMutlak(t.ID_Murid, t.Nama_Santri).toLowerCase();
                 if((namaValid.includes(input) || String(t.ID_Murid).includes(input)) && !hasilUnik.find(x => x.ID_Murid === t.ID_Murid)) {
-                    hasilUnik.push({ ID_Murid: t.ID_Murid, Nama_Santri: (t.Nama_Santri || t.Nama_Lengkap || "Hamba Allah"), Kelas: t.Kelas });
+                    hasilUnik.push({ ID_Murid: t.ID_Murid, Nama_Santri: getNamaMutlak(t.ID_Murid, t.Nama_Santri), Kelas: t.Kelas });
                 }
             });
 
@@ -273,8 +348,9 @@
             box.style.display = hasilUnik.length > 0 ? 'block' : 'none';
         }
 
-        // NAVIGASI ANTAR TAMPILAN
+        // NAVIGASI
         function bukaTagihanSantri(idMurid, namaSantri) {
+            idSantriAktif = idMurid;
             document.getElementById('areaDaftarSantri').style.display = 'none';
             document.getElementById('hasilTagihan').style.display = 'block';
             document.getElementById('cariSantri').value = namaSantri;
@@ -282,19 +358,21 @@
         }
 
         function kembaliKeDaftar() {
+            idSantriAktif = null;
             document.getElementById('hasilTagihan').style.display = 'none';
             document.getElementById('areaDaftarSantri').style.display = 'block';
             document.getElementById('cariSantri').value = '';
             document.getElementById('wadahKartuTagihan').innerHTML = '';
         }
 
-        // RENDER KARTU TAGIHAN SPESIFIK
+        // RENDER KARTU TAGIHAN
         function renderTagihan(idMurid) {
             let wadah = document.getElementById('wadahKartuTagihan'); wadah.innerHTML = '';
             let tagihanSiswa = dbTagihan.filter(t => String(t.ID_Murid) === String(idMurid) && (t.Status === 'Belum Lunas' || t.Status === 'Cicilan'));
 
             if(tagihanSiswa.length === 0) {
-                wadah.innerHTML = `<div style="text-align:center; padding:40px 20px; color:var(--c-green); font-weight:700;"><i class="fa-solid fa-check-circle" style="font-size:50px; margin-bottom:15px;"></i><br>Alhamdulillah, tagihan telah lunas semua.</div>`;
+                wadah.innerHTML = `<div style="text-align:center; padding:40px 20px; color:var(--c-green); font-weight:700;"><i class="fa-solid fa-check-circle" style="font-size:50px; margin-bottom:15px;"></i><br>Alhamdulillah, tagihan anak ini telah lunas semua.</div>`;
+                setTimeout(() => { kembaliKeDaftar(); }, 2000);
                 return;
             }
 
@@ -313,17 +391,16 @@
                     <div class="ct-action">
                         <span style="font-size:11px; font-weight:700; color:var(--text-muted);">Bayar:</span>
                         <input type="number" id="input_${t.ID_Tagihan}" class="ct-input" placeholder="0" value="${sisa}">
-                        <button class="btn-bayar" id="btn_${t.ID_Tagihan}" onclick="eksekusiBayar('${t.ID_Tagihan}', ${sisa}, '${t.Tanggal_Buat}')"><i class="fa-solid fa-check"></i> PROSES</button>
+                        <button class="btn-bayar" id="btn_${t.ID_Tagihan}" onclick="eksekusiBayar('${t.ID_Tagihan}', ${sisa}, '${t.Tanggal_Buat}')"><i class="fa-solid fa-check-double"></i> PROSES</button>
                     </div>
                 </div>`;
             });
 
-            // Set nomor WA Otomatis jika ada di database santri
-            let profil = dbSantri.find(s => String(s.ID_Murid) === String(idMurid));
+            let profil = dbSantriUtama.find(s => String(s.ID_Murid) === String(idMurid));
             if(profil && profil.WA_Wali) document.getElementById('txtWA').value = profil.WA_Wali;
         }
 
-        // MESIN PEMBAYARAN CERDAS
+        // MESIN PEMBAYARAN KUITANSI DEWA
         async function eksekusiBayar(idTagihan, tagihanHarusDibayar, tglBuat) {
             let inputBayar = parseInt(document.getElementById(`input_${idTagihan}`).value) || 0;
             if(inputBayar <= 0) { showToast("Masukkan nominal bayar dengan benar!"); return; }
@@ -339,24 +416,27 @@
             let waktu = new Date().toLocaleString('id-ID');
             let kasir = localStorage.getItem('namaPengguna') || 'Kasir';
 
-            // Logika 3 Tema Kuitansi
+            // KEPUTUSAN TEMA & DOA KUITANSI
             let selisihHari = (new Date() - new Date(tglBuat.split(' ')[0].split('/').reverse().join('-'))) / (1000 * 3600 * 24);
             let levelKuitansi = 'k-theme-hijau'; 
-            let pesanKuitansi = "Terima kasih telah menunaikan kewajiban administrasi tepat waktu.";
+            let pesanDoa = getRandomDoa(doaTepatWaktu);
+            let warnaKuitansi = "Hijau (Tepat Waktu)";
             
             if(uangLebih > 0) {
                 levelKuitansi = 'k-theme-emas'; 
-                pesanKuitansi = `Jazakumullah Khairan atas kelebihannya (${formatRp(uangLebih)}). Semoga menjadi amal jariyah.`;
+                pesanDoa = getRandomDoa(doaLebihEmas);
+                warnaKuitansi = "Emas (Premium/Sedekah)";
             } else if (selisihHari > 30) {
                 levelKuitansi = 'k-theme-abu';
-                pesanKuitansi = "Pembayaran telah kami terima. Terima kasih atas kerja samanya.";
+                pesanDoa = getRandomDoa(doaTelatAbu);
+                warnaKuitansi = "Abu-abu (Terlambat)";
             }
 
             try {
                 let updates = {};
-                let namaAsli = (tgh.Nama_Lengkap || tgh.Nama_Santri || "Hamba Allah");
+                let namaAsli = getNamaMutlak(tgh.ID_Murid, tgh.Nama_Santri);
                 
-                // 1. Posting ke Buku Kas & Kas Masuk
+                // 1. Posting Buku Kas
                 let dataMasuk = {
                     ID_Transaksi: `PAY-${ts}`, Waktu: waktu, Kategori_Nama: tgh.Nama_Pos,
                     Nominal: inputBayar, Sumber: namaAsli, 
@@ -367,7 +447,7 @@
                 updates[`buku_kas/PAY-${ts}`] = dataMasuk;
                 updates[`kas_masuk/PAY-${ts}`] = dataMasuk;
 
-                // 2. Update Status Tagihan
+                // 2. Update Tagihan
                 if(statusBaru === 'Lunas') {
                     updates[`tagihan/${idTagihan}/Status`] = 'Lunas';
                     updates[`tagihan/${idTagihan}/Tgl_Lunas`] = waktu;
@@ -381,7 +461,7 @@
 
                 await database.ref().update(updates);
 
-                // --- SIAPKAN KUITANSI DIGITAL ---
+                // --- MERAKIT KUITANSI DIGITAL ---
                 document.getElementById('k_id').innerText = `ID: PAY-${ts}`;
                 document.getElementById('k_tgl').innerText = waktu.split(' ')[0];
                 document.getElementById('k_nama').innerText = namaAsli;
@@ -389,7 +469,7 @@
                 document.getElementById('k_pos').innerText = tgh.Nama_Pos;
                 document.getElementById('k_kasir').innerText = kasir;
                 document.getElementById('k_nominal').innerText = formatRp(inputBayar);
-                document.getElementById('k_pesan').innerText = pesanKuitansi;
+                document.getElementById('k_pesan_teks').innerText = pesanDoa;
                 
                 let areaCetak = document.getElementById('areaCetak');
                 areaCetak.className = `kuitansi-box ${levelKuitansi}`;
@@ -405,10 +485,6 @@
                 document.getElementById('loadingLayar').style.display = 'none';
                 document.getElementById('kuitansi-cetak-wrapper').style.opacity = '1';
                 document.getElementById('kuitansi-cetak-wrapper').style.pointerEvents = 'auto';
-                
-                if(statusBaru === 'Lunas') {
-                    document.getElementById(`card_${idTagihan}`).style.display = 'none';
-                }
 
             } catch(e) {
                 document.getElementById('loadingLayar').style.display = 'none';
@@ -420,8 +496,6 @@
         function tutupKuitansi() {
             document.getElementById('kuitansi-cetak-wrapper').style.opacity = '0';
             document.getElementById('kuitansi-cetak-wrapper').style.pointerEvents = 'none';
-            // Refresh ulang daftar jika ingin melihat update
-            cobaRenderDaftar(); 
         }
 
         // UNDUH KUITANSI SEBAGAI GAMBAR & KIRIM WA
@@ -430,10 +504,11 @@
             const waInp = document.getElementById('txtWA').value;
 
             document.getElementById('kuitansi-cetak-wrapper').style.pointerEvents = 'none';
-            showToast("Mempersiapkan gambar kuitansi...");
+            showToast("Mempersiapkan gambar kuitansi kualitas tinggi...");
 
-            html2canvas(area, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
-                const img = canvas.toDataURL("image/jpeg", 0.95);
+            // html2canvas kualitas tinggi untuk kuitansi premium
+            html2canvas(area, { scale: 3, useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
+                const img = canvas.toDataURL("image/jpeg", 0.98);
                 const link = document.createElement('a'); 
                 link.download = `Kuitansi_${document.getElementById('k_nama').innerText.replace(/ /g,"_")}_${new Date().getTime()}.jpg`;
                 link.href = img; 
@@ -443,8 +518,10 @@
                     let no = waInp.replace(/\D/g, ''); 
                     if(no.startsWith('0')) no = '62' + no.substring(1);
                     
-                    const msg = encodeURIComponent(`*KUITANSI DIGITAL MMU B-77*\n\nAlhamdulillah, pembayaran ananda *${document.getElementById('k_nama').innerText}* telah kami terima dan masuk ke sistem.\n\n_Bukti gambar kuitansi resmi terlampir pada pesan ini (Silakan kirimkan gambar yang baru saja diunduh)._\n\nTerima kasih.`);
-                    setTimeout(() => window.open(`https://wa.me/${no}?text=${msg}`, '_blank'), 500);
+                    let pesanDoa = document.getElementById('k_pesan_teks').innerText;
+                    const msg = encodeURIComponent(`*KUITANSI DIGITAL MMU B-77*\n\nAlhamdulillah, pembayaran ananda *${document.getElementById('k_nama').innerText}* telah kami terima dan masuk ke sistem resmi madrasah.\n\n_${pesanDoa}_\n\n*(Bukti gambar kuitansi resmi terlampir pada pesan ini. Silakan kirimkan gambar kuitansi yang baru saja terunduh otomatis).*\n\nTerima kasih.`);
+                    
+                    setTimeout(() => window.open(`https://wa.me/${no}?text=${msg}`, '_blank'), 800);
                 }
                 
                 tutupKuitansi();
