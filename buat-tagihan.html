@@ -19,17 +19,20 @@
     <script>
         const role = localStorage.getItem('hakAkses');
         if(role === 'Operator' || role === 'Demo') {
-            alert("🔒 AKSES DIBATASI: Hanya Administrator yang dapat men-generate tagihan baru.");
+            alert("🔒 AKSES DIBATASI: Hanya Administrator yang dapat menyebar tagihan baru.");
             window.location.replace('beranda.html');
         }
         if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
     </script>
 
     <style>
+        /* --- TEMA NEUMORPHISM PREMIUM --- */
         :root {
             --bg-main: #e0e5ec; --text-dark: #31344b; --text-muted: #8C96A3;
             --shadow-dark: rgba(163, 177, 198, 0.6); --shadow-light: rgba(255, 255, 255, 0.6);
-            --c-blue: #4facfe; --c-green: #00d26a; --c-orange: #f59e0b;
+            --c-blue: #4facfe; --c-green: #00d26a; --c-orange: #f59e0b; --c-red: #ff758c;
+            --grad-green: linear-gradient(135deg, #2df077 0%, #00d26a 100%);
+            --grad-blue: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         }
         [data-theme="dark"] {
             --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0;
@@ -47,34 +50,45 @@
         .btn-icon:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
         .header-title { font-family:'Montserrat'; font-size:18px; font-weight:900; margin:0; text-transform:uppercase; letter-spacing:1px; }
 
+        /* TABS */
         .tab-container { display: flex; background: var(--bg-main); border-radius: 15px; padding: 8px; margin-bottom: 25px; box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); }
         .tab-btn { flex: 1; text-align: center; padding: 12px 0; border-radius: 12px; font-size: 12px; font-weight: 700; color: var(--text-muted); cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px;}
-        .tab-btn.active { background: var(--bg-main); color: var(--c-blue); box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); }
+        .tab-btn.active.massal { background: var(--bg-main); color: var(--c-green); box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); }
+        .tab-btn.active.individu { background: var(--bg-main); color: var(--c-blue); box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); }
 
         .form-section { display: none; animation: fadeIn 0.4s ease; }
         .form-section.active { display: block; }
 
+        /* CARDS & INPUTS */
         .form-card { background: var(--bg-main); border-radius: 25px; padding: 25px; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); margin-bottom:20px;}
         .input-group { margin-bottom: 20px; position: relative;}
         .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; margin-left: 5px; }
-        .input-edit { width: 100%; padding: 15px 20px; border: none; border-radius: 15px; background: var(--bg-main); font-family: 'Poppins'; font-size: 13px; color: var(--text-dark); box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); outline: none; transition: 0.3s; font-weight:500;}
+        
+        .input-edit { width: 100%; padding: 15px 20px; border: none; border-radius: 15px; background: var(--bg-main); font-family: 'Poppins'; font-size: 13px; color: var(--text-dark); box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); outline: none; transition: 0.3s; font-weight:600; appearance: none;}
+        .input-edit:focus { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light), 0 0 0 2px rgba(0, 210, 106, 0.3); }
+        
         .input-readonly { background: transparent; color: var(--text-muted); pointer-events: none; box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);}
 
+        /* AUTOCOMPLETE BOX */
         .sug-box { position: absolute; top: 100%; left: 0; width: 100%; background: var(--bg-main); border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 100; max-height: 200px; overflow-y: auto; display: none; margin-top: 8px; padding: 5px;}
         .sug-item { padding: 12px 15px; border-radius: 10px; cursor: pointer; font-size: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); font-weight:600;}
         .sug-item:hover { background: rgba(79, 172, 254, 0.1); color: var(--c-blue); }
 
-        .btn-submit { width: 100%; padding: 16px; background: var(--bg-main); color: var(--c-blue); border: none; border-radius: 15px; font-family: 'Montserrat'; font-weight: 800; font-size: 14px; cursor: pointer; box-shadow: 5px 5px 15px var(--shadow-dark), -5px -5px 15px var(--shadow-light); display: flex; justify-content: center; align-items: center; gap: 10px; transition:0.3s;}
-        .btn-submit:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); color: var(--text-muted);}
+        /* BUTTONS */
+        .btn-submit { width: 100%; padding: 16px; border: none; border-radius: 15px; font-family: 'Montserrat'; font-weight: 800; font-size: 14px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; transition:0.3s; color: white;}
+        .btn-submit.massal { background: var(--grad-green); box-shadow: 5px 5px 15px rgba(0, 210, 106, 0.4); }
+        .btn-submit.individu { background: var(--grad-blue); box-shadow: 5px 5px 15px rgba(79, 172, 254, 0.4); }
+        .btn-submit:active { transform: translateY(2px); box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2);}
 
+        /* TOAST & LOADER */
         #toast { visibility: hidden; min-width: 250px; background-color: #31344b; color: #fff; text-align: center; border-radius: 15px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
         @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
         @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
         
-        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(224, 229, 236, 0.8); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(5px);}
-        .loading-overlay i { font-size: 40px; color: var(--c-blue); margin-bottom: 15px; animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(224, 229, 236, 0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(5px);}
+        .neumorphic-spinner { width: 50px; height: 50px; border-radius: 50%; background: var(--bg-main); box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); border: 4px solid transparent; border-top-color: var(--c-green); animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -82,26 +96,30 @@
     <div id="toast"><span>Pesan</span></div>
     
     <div class="loading-overlay" id="loadingLayar">
-        <i class="fa-solid fa-circle-notch"></i>
-        <h3 style="font-family:'Montserrat'; margin:0; color:var(--text-dark);">Mendistribusikan Tagihan...</h3>
-        <p style="font-size:12px; color:var(--text-muted); font-weight:600;">Mohon tunggu, jangan tutup halaman.</p>
+        <div class="neumorphic-spinner"></div>
+        <h3 style="font-family:'Montserrat'; margin:0; color:var(--text-dark);">Menyebarkan Tagihan...</h3>
+        <p id="loadingProgress" style="font-size:12px; color:var(--c-green); font-weight:800; margin-top:10px;">Mohon tunggu, memproses data...</p>
     </div>
 
     <div class="app-container">
         <div class="nav-top">
             <button class="btn-icon" onclick="window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
-            <h1 class="header-title">Distribusi Tagihan</h1>
+            <h1 class="header-title">Sebar Tagihan</h1>
             <div style="width:45px;"></div>
         </div>
 
         <div class="tab-container">
-            <div class="tab-btn active" onclick="bukaTab('massal', this)"><i class="fa-solid fa-users"></i> Massal (Per Kelas)</div>
-            <div class="tab-btn" onclick="bukaTab('individu', this)"><i class="fa-solid fa-user"></i> Individu</div>
+            <div class="tab-btn active massal" id="btnTabMassal" onclick="bukaTab('massal', this)"><i class="fa-solid fa-users"></i> Massal (Per Kelas)</div>
+            <div class="tab-btn individu" id="btnTabIndividu" onclick="bukaTab('individu', this)"><i class="fa-solid fa-user"></i> Individu Terpilih</div>
         </div>
 
         <div class="form-section active" id="sec-massal">
             <div class="form-card">
                 <form id="formMassal">
+                    <div class="input-group">
+                        <label>Admin Pembuat (Otomatis)</label>
+                        <input type="text" class="input-edit input-readonly" id="m_admin" readonly>
+                    </div>
                     <div class="input-group">
                         <label>Pilih Kelas Tujuan</label>
                         <select class="input-edit" id="m_kelas" required>
@@ -110,19 +128,19 @@
                     </div>
                     <div class="input-group">
                         <label>Pos Tagihan Keuangan</label>
-                        <select class="input-edit select-kode" id="m_kode" required onchange="setNominal('m_kode', 'm_nominal')">
+                        <select class="input-edit select-kode" id="m_kode" required onchange="setNominalDanKeterangan('m_kode', 'm_nominal', 'm_keterangan')">
                             <option value="">-- Sedang memuat pos tagihan --</option>
                         </select>
                     </div>
                     <div class="input-group">
-                        <label>Nominal Tagihan (Rp)</label>
-                        <input type="number" class="input-edit" id="m_nominal" placeholder="Contoh: 50000" required>
+                        <label>Nominal Tagihan Per Anak (Rp)</label>
+                        <input type="number" class="input-edit" id="m_nominal" placeholder="0" required>
                     </div>
                     <div class="input-group">
-                        <label>Catatan / Keterangan</label>
-                        <input type="text" class="input-edit" id="m_keterangan" placeholder="Contoh: SPP Bulan Rajab">
+                        <label>Catatan (Otomatis Hijriyah)</label>
+                        <input type="text" class="input-edit" id="m_keterangan" placeholder="Contoh: SPP Ramadhan 1447 H">
                     </div>
-                    <button type="submit" class="btn-submit"><i class="fa-solid fa-paper-plane"></i> GENERATE KE KELAS</button>
+                    <button type="submit" class="btn-submit massal"><i class="fa-solid fa-bolt"></i> GENERATE KE SELURUH KELAS</button>
                 </form>
             </div>
         </div>
@@ -130,6 +148,10 @@
         <div class="form-section" id="sec-individu">
             <div class="form-card">
                 <form id="formIndividu">
+                    <div class="input-group">
+                        <label>Admin Pembuat (Otomatis)</label>
+                        <input type="text" class="input-edit input-readonly" id="i_admin" readonly>
+                    </div>
                     <div class="input-group">
                         <label>Cari Santri (Nama / NIS)</label>
                         <input type="text" class="input-edit" id="i_search" placeholder="Ketik nama santri..." autocomplete="off" onkeyup="cariSantri()">
@@ -139,23 +161,23 @@
                     </div>
                     <div class="input-group">
                         <label>Nama Santri Terpilih</label>
-                        <input type="text" class="input-edit input-readonly" id="i_nama_display" placeholder="Pilih dari pencarian" readonly required>
+                        <input type="text" class="input-edit input-readonly" id="i_nama_display" placeholder="Pilih dari pencarian di atas" readonly required>
                     </div>
                     <div class="input-group">
                         <label>Pos Tagihan Keuangan</label>
-                        <select class="input-edit select-kode" id="i_kode" required onchange="setNominal('i_kode', 'i_nominal')">
+                        <select class="input-edit select-kode" id="i_kode" required onchange="setNominalDanKeterangan('i_kode', 'i_nominal', 'i_keterangan')">
                             <option value="">-- Sedang memuat pos tagihan --</option>
                         </select>
                     </div>
                     <div class="input-group">
                         <label>Nominal Tagihan (Rp)</label>
-                        <input type="number" class="input-edit" id="i_nominal" placeholder="Contoh: 25000" required>
+                        <input type="number" class="input-edit" id="i_nominal" placeholder="0" required>
                     </div>
                     <div class="input-group">
-                        <label>Catatan / Keterangan</label>
+                        <label>Catatan (Otomatis Hijriyah)</label>
                         <input type="text" class="input-edit" id="i_keterangan" placeholder="Contoh: Denda Keterlambatan">
                     </div>
-                    <button type="submit" class="btn-submit"><i class="fa-solid fa-user-check"></i> BERIKAN TAGIHAN</button>
+                    <button type="submit" class="btn-submit individu"><i class="fa-solid fa-user-check"></i> BERIKAN TAGIHAN INDIVIDU</button>
                 </form>
             </div>
         </div>
@@ -169,9 +191,27 @@
             el.classList.add('active'); document.getElementById('sec-' + tipe).classList.add('active');
         }
 
+        const hijriMonths = ["Muharram", "Safar", "Rabiul Awal", "Rabiul Akhir", "Jumadil Awal", "Jumadil Akhir", "Rajab", "Sya'ban", "Ramadhan", "Syawal", "Dzulqa'dah", "Dzulhijjah"];
+        
+        function getHijriParts(dateObj) {
+            try {
+                let formatter = new Intl.DateTimeFormat('en-US-u-ca-islamic-umalqura', { month: 'numeric', year: 'numeric' });
+                let formatted = formatter.format(dateObj); 
+                let numbers = formatted.match(/\d+/g);
+                return { month: parseInt(numbers[0]) - 1, year: parseInt(numbers[1]) };
+            } catch (e) {
+                return { month: dateObj.getMonth(), year: dateObj.getFullYear() }; 
+            }
+        }
+
         let dbSantri = []; let dbKode = [];
 
         window.onload = function() {
+            // Set Admin Name for Audit Trail
+            let namaAdmin = localStorage.getItem('namaPengguna') || 'Admin Keuangan';
+            document.getElementById('m_admin').value = namaAdmin;
+            document.getElementById('i_admin').value = namaAdmin;
+
             // 1. Sinkronisasi Data Santri
             database.ref('santri').on('value', snap => {
                 dbSantri = []; let kelasSet = new Set();
@@ -183,12 +223,12 @@
                     }
                 });
 
-                let optKelas = '<option value="">-- Pilih Kelas --</option>';
-                Array.from(kelasSet).sort().forEach(k => optKelas += `<option value="${k}">Kelas ${k}</option>`);
+                let optKelas = '<option value="">-- Pilih Kelas Tujuan --</option>';
+                Array.from(kelasSet).sort().forEach(k => optKelas += `<option value="${k}">${k}</option>`);
                 document.getElementById('m_kelas').innerHTML = optKelas;
             });
 
-            // 2. Sinkronisasi Kode Keuangan (Smart Prefix)
+            // 2. Sinkronisasi Kode Keuangan (Smart Prefix Pemasukan)
             database.ref('kode_keuangan').on('value', snap => {
                 dbKode = [];
                 let opt = '<option value="">-- Pilih Pos Tagihan --</option>';
@@ -200,28 +240,37 @@
                         let jenis = String(k.Jenis || '').toLowerCase();
                         let status = String(k.Status || '').toLowerCase();
                         
-                        // Hanya ambil yang Pemasukan atau berawalan 1 dan 2
                         let isMasuk = jenis.includes('masuk') || jenis.includes('pemasukan') || key.startsWith('1') || key.startsWith('2');
                         
                         if(isMasuk && status !== 'nonaktif') {
-                            k.Kode_Uang = key; // simpan ID key
+                            k.Kode_Uang = key; 
                             dbKode.push(k);
                             opt += `<option value="${key}">${key} - ${k.Nama_Pos}</option>`;
                         }
                     });
                 }
-                
-                // Tempel ke kedua dropdown
                 document.querySelectorAll('.select-kode').forEach(el => el.innerHTML = opt);
             });
         };
 
-        function setNominal(idSelect, idTarget) {
+        // AUTO-FILL NOMINAL DAN DESKRIPSI HIJRIYAH
+        function setNominalDanKeterangan(idSelect, idNominal, idKeterangan) {
             let val = document.getElementById(idSelect).value;
             let target = dbKode.find(k => k.Kode_Uang === val);
-            document.getElementById(idTarget).value = target ? (target.Nominal_Default || 0) : '';
+            
+            if(target) {
+                document.getElementById(idNominal).value = target.Nominal_Default || 0;
+                
+                let hDate = getHijriParts(new Date());
+                let autoDesc = `${target.Nama_Pos} ${hijriMonths[hDate.month]} ${hDate.year} H`;
+                document.getElementById(idKeterangan).value = autoDesc;
+            } else {
+                document.getElementById(idNominal).value = '';
+                document.getElementById(idKeterangan).value = '';
+            }
         }
 
+        // PENCARIAN SANTRI INDIVIDU
         function cariSantri() {
             let input = document.getElementById('i_search').value.toLowerCase();
             let box = document.getElementById('i_sug'); box.innerHTML = '';
@@ -244,15 +293,16 @@
             box.style.display = res.length > 0 ? 'block' : 'none';
         }
 
-        // --- CORE DISTRIBUTION LOGIC ---
+        // KEKUATAN DISTRIBUSI (CORE LOGIC)
         async function buatTagihan(tipe) {
             let loader = document.getElementById('loadingLayar');
+            let progressTxt = document.getElementById('loadingProgress');
             loader.style.display = 'flex';
 
             try {
                 let timestamp = new Date().getTime();
                 let tglIndo = new Date().toLocaleString('id-ID');
-                let admin = localStorage.getItem('namaPengguna') || 'Admin';
+                let admin = document.getElementById(tipe === 'massal' ? 'm_admin' : 'i_admin').value;
                 let updates = {};
 
                 if (tipe === 'massal') {
@@ -264,6 +314,8 @@
 
                     let targetSantri = dbSantri.filter(s => s.Kelas === kls);
                     if(targetSantri.length === 0) throw "Tidak ada santri aktif di kelas ini.";
+
+                    progressTxt.innerText = `Menyusun data untuk ${targetSantri.length} santri...`;
 
                     targetSantri.forEach((s, idx) => {
                         let invID = `INV-${s.ID_Murid}-${kodeUang}-${timestamp}-${idx}`;
@@ -281,6 +333,10 @@
                     let nominal = document.getElementById('i_nominal').value;
                     let ket = document.getElementById('i_keterangan').value;
                     let posName = dbKode.find(k => k.Kode_Uang === kodeUang).Nama_Pos;
+                    
+                    if(!nis) throw "Pilih santri terlebih dahulu!";
+
+                    progressTxt.innerText = `Menyusun tagihan individu...`;
 
                     let invID = `INV-${nis}-${kodeUang}-${timestamp}`;
                     updates[`tagihan/${invID}`] = { 
@@ -290,14 +346,26 @@
                     };
                 }
 
+                progressTxt.innerText = `Mengirim ke Server Firebase...`;
+                
+                // --- INI PERINTAH SAKTI YANG LANGSUNG MENYEBAR KE FIREBASE ---
                 await database.ref().update(updates);
+                // -------------------------------------------------------------
+                
                 showToast("🚀 Tagihan berhasil didistribusikan ke server!");
+                
                 if(tipe === 'massal') document.getElementById('formMassal').reset(); 
                 else { document.getElementById('formIndividu').reset(); document.getElementById('i_nama_display').value = ''; }
+                
+                // Pastikan nama admin tidak hilang setelah form direset
+                document.getElementById('m_admin').value = admin;
+                document.getElementById('i_admin').value = admin;
+                
             } catch(err) { 
                 showToast("Kesalahan: " + err); 
             } finally { 
                 loader.style.display = 'none'; 
+                progressTxt.innerText = 'Mohon tunggu, memproses data...';
             }
         }
 
