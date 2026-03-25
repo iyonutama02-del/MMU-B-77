@@ -190,12 +190,20 @@
 
     <script>
         let listTagihan = []; let listRiwayat = [];
-        let idSantriAktif = null; // Menyimpan state santri yang sedang dibuka
+        let dbSantriUtama = []; // REFERENSI MUTLAK KE DATABASE SANTRI
+        let idSantriAktif = null;
         
         const formatRupiah = (n) => 'Rp ' + parseInt(n || 0).toLocaleString('id-ID');
         function showToast(msg) { let t = document.getElementById("toast"); t.querySelector("span").innerText = msg; t.className = "show"; setTimeout(() => { t.className = ""; }, 3000); }
 
         window.onload = function() {
+            // SINKRONISASI 2 ARAH SEKALIGUS
+            database.ref('santri').on('value', snap => {
+                dbSantriUtama = [];
+                snap.forEach(c => dbSantriUtama.push(c.val()));
+                if(listTagihan.length > 0) renderDaftarSantriBerhutang(); 
+            });
+
             database.ref('tagihan').on('value', snap => {
                 listTagihan = []; listRiwayat = []; let total = 0;
                 snap.forEach(c => {
@@ -203,21 +211,26 @@
                     if(r.Status === 'Belum Lunas' || r.Status === 'Cicilan') listTagihan.push(r);
                     else if(String(r.Status).includes('Dispensasi')) { 
                         listRiwayat.push(r); 
-                        let sisa = r.Status === 'Cicilan' ? (r.Nominal - (r.Terbayar || 0)) : r.Nominal;
-                        total += parseInt(sisa || 0); 
+                        let sisa = r.Status === 'Cicilan' ? (parseInt(r.Nominal) - parseInt(r.Terbayar || 0)) : parseInt(r.Nominal);
+                        total += sisa; 
                     }
                 });
                 
                 document.getElementById('sumDana').innerText = formatRupiah(total);
                 renderRiwayat();
-                renderDaftarSantriBerhutang();
                 
-                // State-Preservation: Jika sedang membuka rincian, refresh rincian tersebut
-                if(idSantriAktif) {
-                    renderFilter(idSantriAktif);
-                }
+                if(dbSantriUtama.length > 0) renderDaftarSantriBerhutang();
+                
+                if(idSantriAktif) renderFilter(idSantriAktif);
             });
         };
+
+        // FUNGSI PENGUNCI NAMA MUTLAK DARI DATABASE SANTRI
+        function getNamaMutlak(idMurid, namaFallback) {
+            let santri = dbSantriUtama.find(s => String(s.ID_Murid) === String(idMurid));
+            if (santri) return (santri.Nama_Lengkap || santri.Nama_Santri || "Tanpa Nama");
+            return (namaFallback || "Hamba Allah");
+        }
 
         function bukaTab(tipe, el) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -225,18 +238,17 @@
             el.classList.add('active'); document.getElementById('sec-' + tipe).classList.add('active');
         }
 
-        // TAMPILKAN SEMUA SANTRI YANG PUNYA TAGIHAN (NEW)
         function renderDaftarSantriBerhutang() {
             let rekap = {};
             
             listTagihan.forEach(t => {
                 if(!rekap[t.ID_Murid]) {
-                    let namaValid = t.Nama_Lengkap || t.Nama_Santri || "Hamba Allah";
+                    let namaValid = getNamaMutlak(t.ID_Murid, t.Nama_Santri);
                     rekap[t.ID_Murid] = { id: t.ID_Murid, nama: namaValid, kelas: t.Kelas, count: 0, total: 0 };
                 }
                 rekap[t.ID_Murid].count++;
-                let sisa = t.Status === 'Cicilan' ? (t.Nominal - (t.Terbayar || 0)) : t.Nominal;
-                rekap[t.ID_Murid].total += parseInt(sisa);
+                let sisa = t.Status === 'Cicilan' ? (parseInt(t.Nominal) - parseInt(t.Terbayar || 0)) : parseInt(t.Nominal);
+                rekap[t.ID_Murid].total += sisa;
             });
 
             let wadah = document.getElementById('areaDaftarSantri');
@@ -264,7 +276,6 @@
             });
         }
 
-        // NAVIGASI
         function bukaTagihanSantri(idMurid, namaSantri) {
             idSantriAktif = idMurid;
             document.getElementById('areaDaftarSantri').style.display = 'none';
@@ -281,7 +292,6 @@
             document.getElementById('hasilPencarian').innerHTML = '';
         }
 
-        // PENCARIAN SMART AUTOCOMPLETE
         function tampilkanSaran() {
             let input = document.getElementById('cariPintar').value.toLowerCase();
             let box = document.getElementById('sugBox'); box.innerHTML = '';
@@ -289,9 +299,9 @@
             
             let hasilUnik = [];
             listTagihan.forEach(t => {
-                let namaValid = String(t.Nama_Lengkap || t.Nama_Santri || "").toLowerCase();
+                let namaValid = getNamaMutlak(t.ID_Murid, t.Nama_Santri).toLowerCase();
                 if((namaValid.includes(input) || String(t.ID_Murid).includes(input)) && !hasilUnik.find(x => x.ID_Murid === t.ID_Murid)) {
-                    hasilUnik.push({ ID_Murid: t.ID_Murid, Nama_Santri: (t.Nama_Lengkap || t.Nama_Santri) });
+                    hasilUnik.push({ ID_Murid: t.ID_Murid, Nama_Santri: getNamaMutlak(t.ID_Murid, t.Nama_Santri) });
                 }
             });
 
@@ -307,7 +317,6 @@
             box.style.display = hasilUnik.length > 0 ? 'block' : 'none';
         }
 
-        // TAMPILKAN RINCIAN
         function renderFilter(id) {
             let wadah = document.getElementById('hasilPencarian');
             let res = listTagihan.filter(t => String(t.ID_Murid) === String(id));
@@ -315,11 +324,12 @@
             
             if(res.length === 0) {
                  wadah.innerHTML = '<p style="text-align:center; color:var(--c-green); font-size:12px; font-weight:700; margin-top:20px;"><i class="fa-solid fa-check-circle" style="font-size:30px; margin-bottom:10px;"></i><br>Tidak ada tagihan aktif untuk santri ini.</p>';
+                 setTimeout(() => { kembaliKeDaftar(); }, 2000);
                  return;
             }
 
             res.forEach(t => {
-                let sisa = t.Status === 'Cicilan' ? (t.Nominal - (t.Terbayar || 0)) : t.Nominal;
+                let sisa = t.Status === 'Cicilan' ? (parseInt(t.Nominal) - parseInt(t.Terbayar || 0)) : parseInt(t.Nominal);
                 wadah.innerHTML += `<div class="card-tagihan">
                     <div><b style="font-family:'Montserrat'; font-size:13px;">${t.Nama_Pos}</b><br><span style="font-size:11px; color:var(--text-muted); font-weight:700;">${formatRupiah(sisa)}</span></div>
                     <button class="btn-beri" onclick="bukaModal('${t.ID_Tagihan}')">Bebaskan</button>
@@ -327,11 +337,9 @@
             });
         }
 
-        // KENDALI MODAL AUDIT
         function bukaModal(id) { document.getElementById('mIdTagihan').value = id; document.getElementById('modalDisp').style.display = 'flex'; }
         function tutupModal() { document.getElementById('modalDisp').style.display = 'none'; }
 
-        // EKSEKUSI PEMBEBASAN DENGAN AUDIT TRAIL
         document.getElementById('formDisp').onsubmit = async (e) => {
             e.preventDefault();
             let id = document.getElementById('mIdTagihan').value;
@@ -350,7 +358,6 @@
                 
                 tutupModal();
                 showToast("Tagihan Berhasil Dibebaskan & Dicatat di Log!");
-                // Karena Firebase Realtime, UI akan auto-refresh dan tagihan langsung hilang!
             } catch(err) {
                 showToast("Gagal memproses ke server.");
             }
@@ -358,7 +365,6 @@
             btn.innerHTML = '<i class="fa-solid fa-check-double"></i> KONFIRMASI BEBASKAN'; btn.disabled = false;
         };
 
-        // RENDER TABEL RIWAYAT LOG
         function renderRiwayat() {
             let b = document.getElementById('bodyRiwayat'); b.innerHTML = '';
             
@@ -368,8 +374,8 @@
             }
 
             listRiwayat.sort((x,y) => new Date(y.Tgl_Dispensasi.split(' ')[0].split('/').reverse().join('-')) - new Date(x.Tgl_Dispensasi.split(' ')[0].split('/').reverse().join('-'))).forEach(r => {
-                let sisaBebas = r.Status === 'Cicilan' ? (r.Nominal - (r.Terbayar || 0)) : r.Nominal;
-                let namaTampil = r.Nama_Lengkap || r.Nama_Santri || "Hamba Allah";
+                let sisaBebas = r.Status === 'Cicilan' ? (parseInt(r.Nominal) - parseInt(r.Terbayar || 0)) : parseInt(r.Nominal);
+                let namaTampil = getNamaMutlak(r.ID_Murid, r.Nama_Santri);
 
                 b.innerHTML += `<tr>
                     <td>${(r.Tgl_Dispensasi || '-').split(' ')[0]}<br><span style="font-size:9px; color:var(--text-muted);">Oleh: ${r.Admin_Eksekutor || '-'}</span></td>
