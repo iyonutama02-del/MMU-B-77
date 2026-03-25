@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#f0f4f8" id="meta-theme-color">
+    <title>Notifikasi WA Pintar - MMU B-77</title>
+    
+    <link rel="icon" type="image/png" href="Logo-Favicon.png">
+    <link rel="apple-touch-icon" href="Logo-Favicon.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+
+    <style>
+        :root {
+            --bg-main: #f0f4f8; --text-dark: #2d3748; --text-muted: #718096;
+            --shadow-light: #ffffff; --shadow-dark: #d1d9e6;
+            --wa-grad: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            --border-line: #e2e8f0;
+        }
+        [data-theme="dark"] { --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0; --shadow-light: #3a4556; --shadow-dark: #202835; }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { margin: 0; padding: 0; background-color: var(--bg-main); font-family: 'Poppins', sans-serif; color: var(--text-dark); padding-bottom: 50px; transition: 0.3s; }
+        .app-container { max-width: 800px; margin: 0 auto; padding: 20px; }
+
+        #toast { visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; gap: 10px; }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
+        @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+
+        .nav-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
+        .btn-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--bg-main); display: flex; justify-content: center; align-items: center; color: var(--text-dark); box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light); cursor: pointer; border: none; }
+
+        .tab-container { display: flex; background: var(--bg-main); border-radius: 15px; padding: 6px; margin-bottom: 25px; box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
+        .tab-btn { flex: 1; text-align: center; padding: 12px 0; border-radius: 12px; font-size: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .tab-btn.active { background: var(--bg-main); color: #25D366; box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light); }
+
+        .form-section { display: none; animation: fadeIn 0.4s ease; }
+        .form-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .info-box { background: rgba(37, 211, 102, 0.1); border-left: 4px solid #22c55e; color: #16a34a; padding: 15px; border-radius: 10px; font-size: 11px; margin-bottom: 20px; line-height: 1.6; font-weight: 600; }
+
+        /* KARTU TAGIHAN KONSOLIDASI */
+        .card-wa { background: var(--bg-main); border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light); border-left: 4px solid transparent; transition: 0.3s; }
+        .card-wa.terkirim { border-left-color: #22c55e; opacity: 0.8; }
+        .c-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed var(--border-line); padding-bottom: 10px; }
+        .c-header h4 { margin: 0; font-family: 'Montserrat'; font-size: 14px; }
+        .badge-kls { background: rgba(0,0,0,0.05); padding: 3px 8px; border-radius: 6px; font-size: 10px; }
+        .c-body { font-size: 11px; color: var(--text-muted); margin-bottom: 15px; }
+        .c-body ul { margin: 5px 0 0 15px; padding: 0; }
+        .c-footer { display: flex; justify-content: space-between; align-items: center; }
+        .c-total { font-family: 'Montserrat'; font-size: 16px; font-weight: 900; color: #ef4444; }
+        
+        .btn-wa-send { background: var(--wa-grad); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 4px 4px 10px rgba(37, 211, 102, 0.3); display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn-wa-send:active { transform: scale(0.95); }
+        .btn-wa-disabled { background: var(--shadow-dark); color: var(--text-muted); padding: 12px 20px; border-radius: 12px; font-size: 11px; font-weight: 700; border: none; cursor: not-allowed; }
+
+        /* EDITOR TEMPLATE & PREVIEW */
+        .panel-card { background: var(--bg-main); border-radius: 20px; padding: 20px; box-shadow: 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light); }
+        .var-badge { background: var(--bg-main); color: #25D366; padding: 6px 10px; border-radius: 8px; font-family: monospace; font-size: 11px; font-weight: 700; cursor: pointer; box-shadow: 3px 3px 8px var(--shadow-dark), -3px -3px 8px var(--shadow-light); display: inline-block; margin: 4px; border: 1px solid transparent; }
+        .var-badge:active { box-shadow: inset 2px 2px 5px var(--shadow-dark); }
+        
+        .input-edit { width: 100%; padding: 15px; border: none; border-radius: 15px; background: var(--bg-main); font-family: 'Poppins'; font-size: 12px; color: var(--text-dark); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); outline: none; resize: vertical; line-height: 1.6; margin-bottom: 15px; }
+        
+        .preview-box { background: #e5ddd5; border-radius: 12px; padding: 15px; margin-bottom: 15px; font-family: sans-serif; font-size: 12px; color: #111; line-height: 1.5; height: 200px; overflow-y: auto; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
+        .chat-bubble { background: #dcf8c6; padding: 10px 15px; border-radius: 15px 0 15px 15px; display: inline-block; max-width: 90%; white-space: pre-wrap; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+
+        .btn-submit { width: 100%; padding: 15px; background: var(--wa-grad); color: white; border: none; border-radius: 15px; font-family: 'Montserrat'; font-weight: 700; cursor: pointer; box-shadow: 4px 4px 15px rgba(37, 211, 102, 0.3); }
+
+        /* RIWAYAT (CLOUD) */
+        .card-riwayat { background: var(--bg-main); border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light); border-left: 3px solid #f59e0b; }
+        .r-head { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); border-bottom: 1px dashed var(--border-line); padding-bottom: 5px; margin-bottom: 8px; }
+        .r-body { font-size: 11px; }
+
+        .filter-select { padding: 12px 20px; border-radius: 12px; border: none; background: var(--bg-main); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); outline: none; font-family: 'Poppins'; font-size: 12px; margin-bottom: 20px; width: 100%; color: var(--text-dark); }
+    </style>
+</head>
+<body>
+
+    <div id="toast"><span>Pesan</span></div>
+
+    <div class="app-container">
+        <div class="nav-top">
+            <button class="btn-icon" onclick="window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
+            <h1 style="font-family:'Montserrat'; font-weight:800; font-size:18px; margin:0;">Smart WA Broadcast</h1>
+            <div style="width: 40px;"></div>
+        </div>
+
+        <div class="tab-container">
+            <div class="tab-btn active" onclick="bukaTab('broadcast', this)"><i class="fa-solid fa-paper-plane"></i> Kirim Tagihan</div>
+            <div class="tab-btn" onclick="bukaTab('template', this)"><i class="fa-solid fa-pen-nib"></i> Editor Pesan</div>
+            <div class="tab-btn" onclick="bukaTab('riwayat', this)"><i class="fa-solid fa-clock-rotate-left"></i> Log Cloud</div>
+        </div>
+
+        <div class="form-section active" id="tab-broadcast">
+            <div class="info-box">
+                <i class="fa-solid fa-bolt"></i> <strong>Sistem Auto-Rekap:</strong> Jika satu santri memiliki lebih dari 1 tagihan tertunggak, sistem otomatis menggabungkannya menjadi 1 pesan WA agar lebih sopan dan tidak mengganggu wali santri.
+            </div>
+            
+            <select class="filter-select" id="filterKelas" onchange="renderBroadcast()">
+                <option value="Semua">-- Tampilkan Semua Kelas --</option>
+            </select>
+
+            <div id="wadahBroadcast">
+                <div style="text-align:center; padding:40px; color:var(--text-muted);"><i class="fa-solid fa-circle-notch fa-spin" style="font-size:30px;"></i><br><br>Menyinkronkan tagihan realtime...</div>
+            </div>
+        </div>
+
+        <div class="form-section" id="tab-template">
+            <div class="panel-card">
+                <div style="margin-bottom:15px;">
+                    <span style="font-size:11px; font-weight:700;">Variabel Otomatis (Klik untuk menyisipkan):</span><br>
+                    <span class="var-badge" onclick="sisip('[Nama_Santri]')">[Nama_Santri]</span>
+                    <span class="var-badge" onclick="sisip('[Kelas]')">[Kelas]</span>
+                    <span class="var-badge" onclick="sisip('[Rincian_Tagihan]')">[Rincian_Tagihan]</span>
+                    <span class="var-badge" onclick="sisip('[Total_Tagihan]')">[Total_Tagihan]</span>
+                </div>
+                
+                <textarea class="input-edit" id="templateText" style="height: 180px;" onkeyup="updatePreview()"></textarea>
+                
+                <p style="font-size:11px; font-weight:700; margin-bottom:5px;"><i class="fa-brands fa-whatsapp"></i> Live Preview Pesan:</p>
+                <div class="preview-box">
+                    <div class="chat-bubble" id="previewChat">Ketik template di atas untuk melihat preview.</div>
+                </div>
+
+                <button class="btn-submit" onclick="simpanTemplate()"><i class="fa-solid fa-floppy-disk"></i> Simpan Template</button>
+            </div>
+        </div>
+
+        <div class="form-section" id="tab-riwayat">
+            <div class="info-box" style="border-color:#f59e0b; color:#d97706; background:rgba(245,158,11,0.1);">
+                <i class="fa-solid fa-cloud"></i> Riwayat ini tersimpan di Cloud Server. Semua perangkat admin dapat melihat jejak pengiriman pesan ini.
+            </div>
+            <div id="wadahRiwayat"></div>
+        </div>
+
+    </div>
+
+    <script>
+        const formatRp = (n) => 'Rp ' + parseInt(n || 0).toLocaleString('id-ID');
+        function showToast(msg) { let t = document.getElementById("toast"); t.querySelector("span").innerText = msg; t.className = "show"; setTimeout(() => { t.className = ""; }, 3000); }
+        function bukaTab(id, el) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+            el.classList.add('active'); document.getElementById('tab-' + id).classList.add('active');
+        }
+
+        const templateDefault = "Assalamu'alaikum Wr. Wb.\n\nSemoga Bapak/Ibu wali dari *[Nama_Santri]* ([Kelas]) senantiasa dalam lindungan Allah SWT.\n\nIzin menginformasikan rekapitulasi tagihan administrasi madrasah ananda yang belum diselesaikan:\n[Rincian_Tagihan]\nTotal Keseluruhan: *[Total_Tagihan]*\n\nKami memohon perkenan Bapak/Ibu untuk melunasinya. Jika sudah membayar, mohon abaikan pesan ini.\n\nWassalamu'alaikum Wr. Wb.";
+
+        let dataSantri = [];
+        let dataTagihan = [];
+        let dataRekap = []; // Data konsolidasi per siswa
+
+        window.onload = function() {
+            // Load Template
+            let savedTpl = localStorage.getItem('template_wa_advance');
+            document.getElementById('templateText').value = savedTpl ? savedTpl : templateDefault;
+            updatePreview();
+
+            // Sinkronisasi Firebase Realtime
+            database.ref('santri').on('value', snap => {
+                dataSantri = []; snap.forEach(c => dataSantri.push(c.val()));
+                prosesKonsolidasi();
+            });
+
+            database.ref('tagihan').on('value', snap => {
+                dataTagihan = []; snap.forEach(c => dataTagihan.push(c.val()));
+                prosesKonsolidasi();
+            });
+
+            // Sinkronisasi Riwayat Cloud
+            database.ref('log_notifikasi_wa').limitToLast(50).on('value', snap => {
+                let rHTML = '';
+                snap.forEach(c => {
+                    let d = c.val();
+                    rHTML = `<div class="card-riwayat">
+                        <div class="r-head"><span><i class="fa-regular fa-clock"></i> ${d.Waktu}</span> <span><i class="fa-solid fa-user-shield"></i> ${d.Admin}</span></div>
+                        <div class="r-body">Terkirim ke Wali <b>${d.Santri}</b> (${d.Kelas})<br>Total Tagihan: <span style="color:#ef4444; font-weight:700;">${formatRp(d.Total)}</span></div>
+                    </div>` + rHTML;
+                });
+                document.getElementById('wadahRiwayat').innerHTML = rHTML || '<p style="text-align:center; font-size:12px; color:gray; padding:20px;">Belum ada log pengiriman.</p>';
+            });
+        };
+
+        // MESIN KONSOLIDASI (AUTO-REKAP PER SANTRI)
+        function prosesKonsolidasi() {
+            if(dataSantri.length === 0 || dataTagihan.length === 0) return;
+
+            let rekapObj = {};
+            let kelasSet = new Set();
+
+            dataTagihan.forEach(t => {
+                if(t.Status === 'Belum Lunas') {
+                    if(!rekapObj[t.ID_Murid]) {
+                        rekapObj[t.ID_Murid] = {
+                            id: t.ID_Murid, nama: t.Nama_Santri, kelas: t.Kelas,
+                            item_tagihan: [], total: 0
+                        };
+                    }
+                    kelasSet.add(t.Kelas);
+                    rekapObj[t.ID_Murid].item_tagihan.push(`- ${t.Nama_Pos}: ${formatRp(t.Nominal)}`);
+                    rekapObj[t.ID_Murid].total += parseInt(t.Nominal);
+                }
+            });
+
+            dataRekap = Object.values(rekapObj).map(r => {
+                let profil = dataSantri.find(s => String(s.ID_Murid) === String(r.id));
+                r.wa = profil ? (profil.WA_Wali || '') : '';
+                return r;
+            });
+
+            // Update Filter Kelas
+            let selKls = document.getElementById('filterKelas');
+            let curVal = selKls.value;
+            selKls.innerHTML = '<option value="Semua">-- Tampilkan Semua Kelas --</option>';
+            Array.from(kelasSet).sort().forEach(k => { selKls.innerHTML += `<option value="${k}">Kelas ${k}</option>`; });
+            if(Array.from(kelasSet).includes(curVal)) selKls.value = curVal;
+
+            renderBroadcast();
+        }
+
+        function renderBroadcast() {
+            let wadah = document.getElementById('wadahBroadcast');
+            let filter = document.getElementById('filterKelas').value;
+            
+            let filtered = filter !== 'Semua' ? dataRekap.filter(d => d.Kelas === filter) : dataRekap;
+
+            if(filtered.length === 0) {
+                wadah.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);"><i class="fa-solid fa-check-double" style="font-size:40px; color:#22c55e; margin-bottom:15px;"></i><br>Seluruh tagihan sudah lunas / tidak ada data.</div>';
+                return;
+            }
+
+            wadah.innerHTML = '';
+            filtered.forEach(d => {
+                let noWA = d.wa.replace(/\D/g,'');
+                if(noWA.startsWith('0')) noWA = '62' + noWA.substring(1);
+
+                let btnHTML = noWA.length >= 10 
+                    ? `<button class="btn-wa-send" id="btn_${d.id}" onclick="kirimWA('${d.id}', '${noWA}')"><i class="fa-brands fa-whatsapp" style="font-size:16px;"></i> Kirim WA</button>`
+                    : `<button class="btn-wa-disabled" disabled><i class="fa-solid fa-triangle-exclamation"></i> No WA Kosong</button>`;
+
+                let rincianHTML = d.item_tagihan.join('<br>');
+
+                wadah.innerHTML += `
+                <div class="card-wa" id="card_${d.id}">
+                    <div class="c-header">
+                        <h4>${d.nama} <span class="badge-kls">${d.kelas}</span></h4>
+                    </div>
+                    <div class="c-body">
+                        <b>Rincian Tunggakan (${d.item_tagihan.length} Item):</b><br>
+                        <ul>${d.item_tagihan.map(i => `<li>${i}</li>`).join('')}</ul>
+                    </div>
+                    <div class="c-footer">
+                        <div class="c-total">${formatRp(d.total)}</div>
+                        ${btnHTML}
+                    </div>
+                </div>`;
+            });
+        }
+
+        function kirimWA(idMurid, noWA) {
+            let data = dataRekap.find(d => d.id === String(idMurid));
+            if(!data) return;
+
+            let rincianTeks = data.item_tagihan.join('\n');
+            let pesan = document.getElementById('templateText').value
+                .replace(/\[Nama_Santri\]/g, data.nama)
+                .replace(/\[Kelas\]/g, data.kelas)
+                .replace(/\[Rincian_Tagihan\]/g, rincianTeks)
+                .replace(/\[Total_Tagihan\]/g, formatRp(data.total));
+
+            let link = `https://wa.me/${noWA}?text=${encodeURIComponent(pesan)}`;
+            
+            let btn = document.getElementById(`btn_${idMurid}`);
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+            
+            setTimeout(() => {
+                btn.className = 'btn-wa-send';
+                btn.style.background = '#e2e8f0'; btn.style.color = '#22c55e';
+                btn.innerHTML = '<i class="fa-solid fa-check-double"></i> Terkirim';
+                document.getElementById(`card_${idMurid}`).classList.add('terkirim');
+                window.open(link, '_blank');
+
+                // POST TO FIREBASE LOG
+                let ts = new Date().getTime();
+                database.ref('log_notifikasi_wa/LOG-' + ts).set({
+                    Waktu: new Date().toLocaleString('id-ID'),
+                    Admin: localStorage.getItem('namaPengguna') || 'Admin',
+                    Santri: data.nama,
+                    Kelas: data.kelas,
+                    Total: data.total
+                });
+            }, 500);
+        }
+
+        // --- EDITOR LOGIC ---
+        function sisip(txt) {
+            let el = document.getElementById('templateText');
+            let start = el.selectionStart, end = el.selectionEnd;
+            el.value = el.value.substring(0, start) + txt + el.value.substring(end);
+            el.focus(); el.selectionEnd = start + txt.length;
+            updatePreview();
+        }
+
+        function updatePreview() {
+            let txt = document.getElementById('templateText').value;
+            // Simulasi data dummy
+            txt = txt.replace(/\[Nama_Santri\]/g, "Achmad Fulan")
+                     .replace(/\[Kelas\]/g, "Ula-3")
+                     .replace(/\[Rincian_Tagihan\]/g, "- SPP Bulan Maret: Rp 50.000\n- LKS Fiqih: Rp 25.000")
+                     .replace(/\[Total_Tagihan\]/g, "Rp 75.000");
+            
+            // Format Bolding WA (*)
+            txt = txt.replace(/\*(.*?)\*/g, "<strong>$1</strong>");
+            txt = txt.replace(/\n/g, "<br>");
+            document.getElementById('previewChat').innerHTML = txt;
+        }
+
+        function simpanTemplate() {
+            localStorage.setItem('template_wa_advance', document.getElementById('templateText').value);
+            showToast("Template Notifikasi Disimpan!");
+        }
+    </script>
+</body>
+</html>

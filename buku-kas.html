@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#f0f4f8" id="meta-theme-color">
+    <title>Buku Kas Utama - MMU B-77</title>
+    
+    <link rel="icon" type="image/png" href="Logo-Favicon.png">
+    <link rel="apple-touch-icon" href="Logo-Favicon.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+
+    <style>
+        :root {
+            --bg-main: #f0f4f8; --text-dark: #2d3748; --text-muted: #718096;
+            --shadow-light: #ffffff; --shadow-dark: #d1d9e6;
+            --orange-header: #f59e0b; /* Warna Header mirip aplikasi M-Banking */
+            --border-line: #e2e8f0;
+        }
+        [data-theme="dark"] { --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0; --shadow-light: #3a4556; --shadow-dark: #202835; --border-line: #475569; }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { margin: 0; padding: 0; background-color: var(--bg-main); font-family: 'Poppins', sans-serif; color: var(--text-dark); transition: 0.3s; padding-bottom: 50px; }
+        .app-container { max-width: 800px; margin: 0 auto; padding: 20px; }
+
+        .nav-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
+        .btn-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--bg-main); display: flex; justify-content: center; align-items: center; color: var(--text-dark); box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light); cursor: pointer; border: none; }
+
+        /* SUMMARY BAR */
+        .summary-bar { background: var(--bg-main); border-radius: 15px; padding: 20px; box-shadow: 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light); display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; }
+        .sum-item { flex: 1; min-width: 120px; text-align: center; border-right: 2px solid var(--border-line); }
+        .sum-item:last-child { border-right: none; }
+        .sum-item p { margin: 0 0 5px 0; font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        .sum-item h3 { margin: 0; font-family: 'Montserrat'; font-weight: 900; font-size: 18px; }
+        #totMasuk { color: #22c55e; } #totKeluar { color: #ef4444; } #totSaldo { color: #3b82f6; }
+
+        /* FILTER PANEL */
+        .filter-card { background: var(--bg-main); padding: 20px; border-radius: 20px; box-shadow: 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light); margin-bottom: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+        .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 5px; }
+        .input-edit { width: 100%; padding: 12px; border: none; border-radius: 10px; background: var(--bg-main); font-family: 'Poppins'; font-size: 12px; box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); outline: none; }
+        .btn-action { padding: 12px; border: none; border-radius: 10px; font-family: 'Montserrat'; font-weight: 800; font-size: 12px; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+        .btn-action:active { transform: scale(0.98); }
+
+        /* ADVANCED MUTATION CARD DESIGN (REFERENSI GAMBAR) */
+        .mutasi-list { display: flex; flex-direction: column; gap: 15px; }
+        .mutasi-card { background: var(--bg-main); border-radius: 12px; overflow: hidden; box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light); border: 1px solid var(--border-line); }
+        
+        .m-header { background: var(--orange-header); color: #fff; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; }
+        .m-head-left { font-family: 'Montserrat'; font-weight: 800; font-size: 14px; }
+        .m-head-right { font-size: 11px; font-weight: 600; text-align: right; line-height: 1.2; }
+        
+        .m-body { padding: 15px; font-size: 12px; line-height: 1.6; color: var(--text-dark); border-bottom: 1px dashed var(--border-line); }
+        .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; font-family: 'Montserrat'; }
+        .badge-in { background: rgba(34, 197, 94, 0.1); color: #16a34a; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .badge-out { background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); }
+        
+        .m-footer { padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.02); }
+        .m-amt { font-family: 'Montserrat'; font-weight: 900; font-size: 14px; }
+        .m-amt-in { color: #22c55e; } .m-amt-out { color: #ef4444; }
+        .m-saldo { text-align: right; line-height: 1.2; }
+        .m-saldo span { color: #3b82f6; font-family: 'Montserrat'; font-weight: 800; font-size: 14px; }
+
+        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); font-size: 12px; }
+
+        /* PRINT TEMPLATE (NO SIGNATURE) */
+        #print-area { display: none; width: 1123px; background: white; padding: 40px; color: black; position: absolute; left: 0; top: 0; z-index: -2000; font-family: Arial, sans-serif; }
+        .pdf-kop { text-align: center; border-bottom: 4px double black; padding-bottom: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 25px; }
+        .pdf-kop img { width: 90px; }
+        .pdf-table { width: 100%; border: 1px solid black; border-collapse: collapse; font-size: 11px; }
+        .pdf-table th, .pdf-table td { border: 1px solid black; padding: 8px; vertical-align: top; }
+        .pdf-table th { background: #f2f2f2; text-align: center; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="nav-top">
+            <button class="btn-icon" onclick="window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
+            <h1 style="font-family:'Montserrat'; font-weight:900; font-size:18px; margin:0;">Buku Kas (Mutasi)</h1>
+            <button class="btn-icon" onclick="window.location.reload()"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+
+        <div class="summary-bar">
+            <div class="sum-item"><p>Debet</p><h3 id="totMasuk">Rp 0</h3></div>
+            <div class="sum-item"><p>Kredit</p><h3 id="totKeluar">Rp 0</h3></div>
+            <div class="sum-item"><p>Saldo Kas</p><h3 id="totSaldo">Rp 0</h3></div>
+        </div>
+
+        <div class="filter-card">
+            <div class="input-group" style="grid-column: span 2;">
+                <label>Pencarian Riwayat</label>
+                <input type="text" class="input-edit" id="cariData" placeholder="Cari ID, Pos, Nominal, atau Keterangan..." onkeyup="prosesData()">
+            </div>
+            <div class="input-group">
+                <label>Dari Tanggal</label>
+                <input type="date" class="input-edit" id="fMulai" onchange="prosesData()">
+            </div>
+            <div class="input-group">
+                <label>Sampai Tanggal</label>
+                <input type="date" class="input-edit" id="fAkhir" onchange="prosesData()">
+            </div>
+            <div class="input-group" style="display: flex; align-items: flex-end; gap: 10px; grid-column: 1 / -1;">
+                <button class="btn-action" style="background: #ef4444; flex: 1;" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> Unduh PDF</button>
+                <button class="btn-action" style="background: #22c55e; flex: 1;" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> Unduh Excel</button>
+            </div>
+        </div>
+
+        <div class="mutasi-list" id="bodyKas">
+            <div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin" style="font-size:30px; margin-bottom:10px; color:#f59e0b;"></i><br>Sinkronisasi Jurnal Kas...</div>
+        </div>
+    </div>
+
+    <div id="print-area">
+        <div class="pdf-kop">
+            <img src="Logo-Favicon.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3353/3353138.png'">
+            <div style="text-align: left;">
+                <h1 style="margin:0; font-family:Arial; font-weight:bold; font-size: 24px;">MADRASAH MIFTAHUL ULUM B-77</h1>
+                <p style="margin:5px 0 0; font-size:14px;">Jurnal Buku Kas Umum (Rincian Mutasi Keuangan)</p>
+                <p style="margin:5px 0 0; font-size:12px; font-weight:bold;" id="pdfTgl">Periode: Semua Waktu</p>
+            </div>
+        </div>
+        <table class="pdf-table">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Waktu</th>
+                    <th style="width: 18%;">Ref & Kasir</th>
+                    <th style="width: 27%;">Uraian Transaksi</th>
+                    <th style="width: 12%;">Debet (Rp)</th>
+                    <th style="width: 12%;">Kredit (Rp)</th>
+                    <th style="width: 16%;">Saldo Kas (Rp)</th>
+                </tr>
+            </thead>
+            <tbody id="pdfTableBody"></tbody>
+        </table>
+        <p style="margin-top:20px; font-size:10px; font-style:italic; color:#555;">Dokumen ini dicetak otomatis dari Sistem Informasi Keuangan Terpadu MMU B-77 pada <span id="wktCetak"></span></p>
+    </div>
+
+    <script>
+        let rawData = [];
+        const formatRp = (n) => parseInt(n || 0).toLocaleString('id-ID');
+
+        function getHijriDate(dateObj) {
+            try { return new Intl.DateTimeFormat('id-ID-u-ca-islamic', {day: 'numeric', month: 'long', year: 'numeric'}).format(dateObj); } 
+            catch (e) { return "-"; }
+        }
+
+        function getNamaHari(dateObj) {
+            const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            return hari[dateObj.getDay()];
+        }
+
+        window.onload = function() {
+            database.ref('buku_kas').on('value', snap => {
+                rawData = [];
+                snap.forEach(c => { rawData.push(c.val()); });
+                
+                // Urutkan Tanggal Terbaru ke Terlama
+                rawData.sort((a,b) => {
+                    let d1 = a.Waktu.split(',')[0].split('/').reverse().join('-');
+                    let d2 = b.Waktu.split(',')[0].split('/').reverse().join('-');
+                    return new Date(d2) - new Date(d1) || b.ID_Transaksi.localeCompare(a.ID_Transaksi);
+                });
+                prosesData();
+            });
+        };
+
+        function prosesData() {
+            const cari = document.getElementById('cariData').value.toLowerCase();
+            const start = document.getElementById('fMulai').value;
+            const end = document.getElementById('fAkhir').value;
+            
+            let filtered = rawData.filter(d => {
+                let adminInfo = d.Kasir || d.Admin_Penerima || d.Admin_Input || d.Penerima || '';
+                let matchCari = (d.ID_Transaksi.toLowerCase().includes(cari) || d.Kategori_Nama.toLowerCase().includes(cari) || (d.Sumber || d.Penerima || '').toLowerCase().includes(cari) || adminInfo.toLowerCase().includes(cari) || (d.Keterangan || '').toLowerCase().includes(cari) || String(d.Nominal).includes(cari));
+                
+                let tglParts = d.Waktu.split(',')[0].split('/');
+                let tglRow = `${tglParts[2]}-${tglParts[1]}-${tglParts[0]}`; 
+                
+                let matchTgl = true;
+                if(start) matchTgl = matchTgl && (tglRow >= start);
+                if(end) matchTgl = matchTgl && (tglRow <= end);
+                
+                return matchCari && matchTgl;
+            });
+
+            let saldoAkumulatif = 0; let totIn = 0; let totOut = 0;
+            let displayRows = [...filtered].reverse(); 
+            
+            let htmlUI = ''; let pdfHTML = '';
+
+            displayRows.forEach(d => {
+                let nom = parseInt(d.Nominal || 0);
+                let isMasuk = d.Jenis === 'MASUK';
+                if(isMasuk) { saldoAkumulatif += nom; totIn += nom; }
+                else { saldoAkumulatif -= nom; totOut += nom; }
+
+                // PENGOLAHAN WAKTU
+                let splitWaktu = d.Waktu.split(', ');
+                let tglMasehiStr = splitWaktu[0];
+                let jamStr = splitWaktu[1] || '-';
+                
+                let parts = tglMasehiStr.split('/');
+                let dateObj = new Date(parts[2], parts[1]-1, parts[0]);
+                
+                let namaHari = getNamaHari(dateObj);
+                let tglHijriyah = getHijriDate(dateObj);
+
+                let adminAktor = d.Kasir || d.Admin_Penerima || d.Admin_Input || 'System Auto';
+                let entitasTerkait = d.Sumber || d.Penerima || d.Nama_Santri || 'Lain-lain';
+
+                // BENTUK UI MUTASI (MIRIP M-BANKING)
+                htmlUI = `
+                <div class="mutasi-card">
+                    <div class="m-header">
+                        <div class="m-head-left">${tglMasehiStr} <br><span style="font-weight:500; font-size:11px;"><i class="fa-regular fa-clock"></i> ${jamStr}</span></div>
+                        <div class="m-head-right">${namaHari}<br>${tglHijriyah}</div>
+                    </div>
+                    <div class="m-body">
+                        <div style="margin-bottom:6px;"><span class="badge ${isMasuk ? 'badge-in' : 'badge-out'}">${d.Kategori_Nama || 'Transaksi'}</span></div>
+                        <b>REF: ${d.ID_Transaksi}</b><br>
+                        ${isMasuk ? 'Terima dari' : 'Diberikan ke'}: <b>${entitasTerkait}</b><br>
+                        Keterangan: ${d.Keterangan || 'Tidak ada catatan'}<br>
+                        <div style="margin-top:6px; font-size:10px; color:var(--text-muted);"><i class="fa-solid fa-user-check"></i> Petugas: ${adminAktor}</div>
+                    </div>
+                    <div class="m-footer">
+                        <div class="m-amt ${isMasuk ? 'm-amt-in' : 'm-amt-out'}">${isMasuk ? '+' : '-'} ${formatRp(nom)}</div>
+                        <div class="m-saldo">
+                            <span style="font-size:10px; color:var(--text-muted); font-weight:700;">SALDO</span><br>
+                            <span>${formatRp(saldoAkumulatif)}</span>
+                        </div>
+                    </div>
+                </div>` + htmlUI;
+
+                // BENTUK PDF ROW
+                pdfHTML = `<tr>
+                    <td><b>${tglMasehiStr}</b><br><span style="font-size:10px;">${tglHijriyah}</span><br><span style="font-size:9px;">${jamStr} WIB</span></td>
+                    <td><b style="font-family:monospace;">${d.ID_Transaksi}</b><br><span style="font-size:10px;">Petugas: ${adminAktor}</span></td>
+                    <td><b>[${d.Kategori_Nama || 'Transaksi'}]</b><br>${entitasTerkait}<br><span style="font-size:10px;">${d.Keterangan || '-'}</span></td>
+                    <td style="text-align:right;">${isMasuk?formatRp(nom):''}</td>
+                    <td style="text-align:right;">${!isMasuk?formatRp(nom):''}</td>
+                    <td style="text-align:right; font-weight:bold;">${formatRp(saldoAkumulatif)}</td>
+                </tr>` + pdfHTML;
+            });
+
+            document.getElementById('bodyKas').innerHTML = htmlUI || '<div class="empty-state"><i class="fa-solid fa-folder-open" style="font-size:40px; margin-bottom:15px;"></i><br>Tidak ada riwayat transaksi pada periode ini.</div>';
+            document.getElementById('pdfTableBody').innerHTML = pdfHTML;
+            
+            document.getElementById('totMasuk').innerText = 'Rp ' + formatRp(totIn);
+            document.getElementById('totKeluar').innerText = 'Rp ' + formatRp(totOut);
+            document.getElementById('totSaldo').innerText = 'Rp ' + formatRp(saldoAkumulatif);
+        }
+
+        // FUNGSI EXPORT
+        function exportPDF() {
+            const area = document.getElementById('print-area');
+            const start = document.getElementById('fMulai').value || 'Awal';
+            const end = document.getElementById('fAkhir').value || 'Sekarang';
+            
+            document.getElementById('pdfTgl').innerText = `Periode: ${start} s/d ${end}`;
+            document.getElementById('wktCetak').innerText = new Date().toLocaleString('id-ID');
+            
+            area.style.display = 'block'; 
+            const opt = { margin: 0.3, filename: 'Laporan_Mutasi_Kas.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } };
+            html2pdf().set(opt).from(area).save().then(() => { area.style.display = 'none'; });
+        }
+
+        function exportExcel() {
+            let excelData = [["Tanggal (M)", "Tanggal (H)", "Waktu", "No Transaksi", "Admin/Petugas", "Kategori", "Pihak Terkait", "Keterangan", "Debet (Masuk)", "Kredit (Keluar)", "Saldo Akhir"]];
+            let rowElements = document.getElementById('pdfTableBody').querySelectorAll('tr');
+            
+            rowElements.forEach(tr => {
+                let cols = tr.querySelectorAll('td');
+                if(cols.length === 6) {
+                    let wktText = cols[0].innerText.split('\n');
+                    let refText = cols[1].innerText.split('\n');
+                    let uraianText = cols[2].innerText.split('\n');
+                    
+                    excelData.push([
+                        wktText[0] || '', wktText[1] || '', (wktText[2] || '').replace(' WIB',''),
+                        refText[0] || '', (refText[1] || '').replace('Petugas: ',''),
+                        (uraianText[0] || '').replace('[','').replace(']',''), uraianText[1] || '', uraianText[2] || '',
+                        cols[3].innerText.replace(/\./g, ''), cols[4].innerText.replace(/\./g, ''), cols[5].innerText.replace(/\./g, '')
+                    ]);
+                }
+            });
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+            XLSX.utils.book_append_sheet(wb, ws, "Mutasi_Kas");
+            XLSX.writeFile(wb, "Mutasi_Keuangan_MMU_B77.xlsx");
+        }
+    </script>
+</body>
+</html>

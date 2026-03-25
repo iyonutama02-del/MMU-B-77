@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#f0f4f8" id="meta-theme-color">
+    <title>Kas Keluar Institusi - MMU B-77</title>
+    
+    <link rel="icon" type="image/png" href="Logo-Favicon.png">
+    <link rel="apple-touch-icon" href="Logo-Favicon.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        const role = localStorage.getItem('hakAkses');
+        if(role === 'Operator' || role === 'Demo') {
+            alert("🔒 AKSES DIBATASI: Menu ini hanya untuk Administrator.");
+            window.location.replace('beranda.html');
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-main: #f0f4f8; --text-dark: #2d3748; --text-muted: #718096;
+            --shadow-light: #ffffff; --shadow-dark: #d1d9e6;
+            --red-grad: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+            --border-line: #e2e8f0;
+        }
+        [data-theme="dark"] { --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0; --shadow-light: #3a4556; --shadow-dark: #202835; }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { margin: 0; padding: 0; background-color: var(--bg-main); font-family: 'Poppins', sans-serif; color: var(--text-dark); user-select: none; padding-bottom: 50px; transition: 0.3s; }
+        .app-container { max-width: 600px; margin: 0 auto; min-height: 100vh; padding: 20px; animation: fadeIn 0.4s ease-out forwards;}
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #toast { visibility: hidden; min-width: 280px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
+
+        .nav-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
+        .btn-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--bg-main); display: flex; justify-content: center; align-items: center; color: var(--text-dark); box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light); cursor: pointer; border: none; font-size: 16px; }
+
+        /* WIDGET SALDO & PENGELUARAN */
+        .expense-widget { background: var(--red-grad); border-radius: 20px; padding: 20px; color: white; margin-bottom: 25px; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3); }
+        .balance-guard { background: rgba(0,0,0,0.15); border-radius: 15px; padding: 12px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; }
+
+        .form-card { background: var(--bg-main); border-radius: 20px; padding: 25px; margin-bottom: 25px; box-shadow: 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light); }
+        .input-group { margin-bottom: 18px; }
+        .input-group label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; margin-left: 5px; }
+        .input-edit { width: 100%; padding: 14px 15px; border: none; border-radius: 12px; background: var(--bg-main); font-family: 'Poppins', sans-serif; font-size: 13px; color: var(--text-dark); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); outline: none; transition: 0.3s; appearance: none; }
+        .input-edit:focus { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light), 0 0 0 2px rgba(239, 68, 68, 0.3); }
+        .input-readonly { background: rgba(0,0,0,0.05); color: var(--text-muted); pointer-events: none; }
+
+        .btn-submit { width: 100%; padding: 16px; background: var(--red-grad); color: white; border: none; border-radius: 15px; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 14px; cursor: pointer; box-shadow: 4px 4px 15px rgba(239, 68, 68, 0.3); display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .btn-submit:disabled { background: #cbd5e1; box-shadow: none; cursor: not-allowed; opacity: 0.7; }
+
+        .history-item { background: var(--bg-main); padding: 15px; border-radius: 16px; margin-bottom: 12px; box-shadow: 4px 4px 10px var(--shadow-dark); display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #ef4444; }
+        .h-price { font-family: 'Montserrat'; font-weight: 800; color: #ef4444; }
+
+        /* MODAL SUKSES */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(4px); }
+        .modal-content { background: var(--bg-main); width: 100%; max-width: 350px; border-radius: 20px; padding: 30px; text-align: center; box-shadow: 10px 10px 30px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body>
+
+    <div id="toast"><span>Pesan</span></div>
+
+    <div class="app-container">
+        <div class="nav-top">
+            <button class="btn-icon" onclick="window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
+            <h1 class="header-title">Mutasi Kas Keluar</h1>
+            <div style="width: 40px;"></div>
+        </div>
+
+        <div class="expense-widget">
+            <p style="margin:0; font-size:10px; font-weight:700; opacity:0.8; text-transform:uppercase;">Pengeluaran Bulan Ini</p>
+            <h2 id="totalKeluar" style="margin:5px 0 0; font-family:'Montserrat'; font-weight:900; font-size:24px;">Rp 0</h2>
+            
+            <div class="balance-guard">
+                <span><i class="fa-solid fa-shield-halved"></i> SALDO KAS SAAT INI</span>
+                <span id="txtSaldoGuard">Rp 0</span>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <form id="formKasKeluar">
+                <div class="input-group">
+                    <label>Penanggung Jawab (Otomatis)</label>
+                    <input type="text" class="input-edit input-readonly" id="outKasir" readonly>
+                </div>
+                <div class="input-group">
+                    <label>Pos Anggaran (Sinkron Master)</label>
+                    <select class="input-edit" id="outKode" required>
+                        <option value="">-- Memuat Kategori --</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Nominal Pengeluaran</label>
+                    <input type="number" class="input-edit" id="outNominal" placeholder="0" required oninput="validasiSaldo()">
+                    <p id="msgError" style="font-size:9px; color:#ef4444; margin:5px 0 0 5px; display:none; font-weight:700;">🚨 Saldo Kas Tidak Mencukupi!</p>
+                </div>
+                <div class="input-group">
+                    <label>Diberikan Kepada / Keperluan</label>
+                    <input type="text" class="input-edit" id="outPenerima" placeholder="Cth: Toko Buku / Nama Guru" required>
+                </div>
+                <div class="input-group">
+                    <label>Keterangan Tambahan</label>
+                    <textarea class="input-edit" id="outKet" style="height: 80px; padding:15px; resize:none;" placeholder="Cth: Pembelian sapu dan alat kebersihan"></textarea>
+                </div>
+                <button type="submit" class="btn-submit" id="btnSimpan">
+                    <i class="fa-solid fa-money-bill-transfer"></i> SIMPAN PENGELUARAN
+                </button>
+            </form>
+        </div>
+
+        <div class="history-section">
+            <p style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:15px; text-transform:uppercase; padding-left:5px;">Riwayat Pengeluaran Terakhir</p>
+            <div id="wadahHistory"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalSukses">
+        <div class="modal-content">
+            <div style="width:70px; height:70px; background:#fee2e2; color:#ef4444; border-radius:50%; display:flex; justify-content:center; align-items:center; margin:0 auto 15px;">
+                <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:30px;"></i>
+            </div>
+            <h2 style="font-family:'Montserrat'; margin:0;">Berhasil Dicatat!</h2>
+            <p style="font-size:12px; margin-bottom:25px; color:var(--text-muted);">Dana telah dipotong dari Buku Kas Utama.</p>
+            <button class="btn-icon" style="width:100%; border-radius:12px; height:48px;" onclick="location.reload()">Selesai</button>
+        </div>
+    </div>
+
+    <script>
+        let saldoTersedia = 0;
+        function formatRupiah(n) { return 'Rp ' + parseInt(n || 0).toLocaleString('id-ID'); }
+        function showToast(msg) { let t = document.getElementById("toast"); t.querySelector("span").innerText = msg; t.className = "show"; setTimeout(() => { t.className = ""; }, 3000); }
+
+        window.onload = function() {
+            // Set Nama Kasir
+            document.getElementById('outKasir').value = localStorage.getItem('namaPengguna') || 'Admin Keuangan';
+
+            // Sinkron Master Kode (Hanya Pengeluaran)
+            database.ref('kode_keuangan').on('value', snap => {
+                let opt = '<option value="">-- Pilih Pos Pengeluaran --</option>';
+                snap.forEach(c => {
+                    let k = c.val();
+                    if((k.Jenis === 'Pengeluaran' || k.Jenis === 'Keluar') && k.Status !== 'Nonaktif') {
+                        opt += `<option value="${c.key}">${c.key} - ${k.Nama_Pos}</option>`;
+                    }
+                });
+                document.getElementById('outKode').innerHTML = opt;
+            });
+
+            // Sinkron Saldo & Riwayat
+            database.ref('buku_kas').on('value', snap => {
+                let totalMasuk = 0; let totalKeluar = 0; let html = '';
+                snap.forEach(c => {
+                    let d = c.val();
+                    let nom = parseInt(d.Nominal || 0);
+                    if(d.Jenis === 'MASUK') totalMasuk += nom;
+                    else if(d.Jenis === 'KELUAR') {
+                        totalKeluar += nom;
+                        html = `<div class="history-item">
+                            <div><h4>${d.Penerima || 'Pengeluaran'}</h4><p>${d.Kategori_Nama} • ${d.Waktu.split(',')[0]}</p></div>
+                            <div class="h-price">-${formatRupiah(d.Nominal)}</div>
+                        </div>` + html;
+                    }
+                });
+                saldoTersedia = totalMasuk - totalKeluar;
+                document.getElementById('txtSaldoGuard').innerText = formatRupiah(saldoTersedia);
+                document.getElementById('totalKeluar').innerText = formatRupiah(totalKeluar);
+                document.getElementById('wadahHistory').innerHTML = html || '<p style="text-align:center;font-size:12px;opacity:0.5;">Belum ada pengeluaran.</p>';
+            });
+        };
+
+        // VALIDASI SALDO REAL-TIME (ADVANCE GUARD)
+        function validasiSaldo() {
+            let nomInput = parseInt(document.getElementById('outNominal').value) || 0;
+            let btn = document.getElementById('btnSimpan');
+            let msg = document.getElementById('msgError');
+            if(nomInput > saldoTersedia) {
+                btn.disabled = true; msg.style.display = 'block';
+            } else {
+                btn.disabled = false; msg.style.display = 'none';
+            }
+        }
+
+        // EKSEKUSI PENYIMPANAN DUAL-PATH
+        document.getElementById('formKasKeluar').onsubmit = async (e) => {
+            e.preventDefault();
+            if(!confirm("Anda akan memotong dana dari kas madrasah. Lanjutkan?")) return;
+
+            const btn = document.getElementById('btnSimpan');
+            btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MEMPOSTING...';
+
+            try {
+                let ts = new Date().getTime();
+                let waktu = new Date().toLocaleString('id-ID');
+                let idKSK = "KSK-" + ts;
+                let nominal = parseInt(document.getElementById('outNominal').value);
+                let penerima = document.getElementById('outPenerima').value;
+                let ket = document.getElementById('outKet').value;
+                let admin = document.getElementById('outKasir').value;
+                let sel = document.getElementById('outKode');
+                let katNama = sel.options[sel.selectedIndex].text.split(' - ')[1];
+
+                let dataObj = {
+                    ID_Transaksi: idKSK, Waktu: waktu, Kategori_Nama: katNama,
+                    Nominal: nominal, Penerima: penerima, Keterangan: ket,
+                    Admin_Input: admin, Jenis: 'KELUAR'
+                };
+
+                let updates = {};
+                updates[`kas_keluar/${idKSK}`] = dataObj;
+                updates[`buku_kas/${idKSK}`] = dataObj; // Masuk ke Jurnal Umum mendetail
+
+                await database.ref().update(updates);
+                document.getElementById('modalSukses').style.display = 'flex';
+                showToast("Pengeluaran Berhasil Dicatat!");
+            } catch(err) {
+                alert("Kesalahan Server: " + err.message);
+                btn.disabled = false; btn.innerText = "SIMPAN PENGELUARAN";
+            }
+        };
+    </script>
+</body>
+</html>

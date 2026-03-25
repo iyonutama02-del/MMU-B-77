@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#e0e5ec" id="meta-theme-color">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <title>Database Santri - Sistem Keuangan</title>
+    
+    <link rel="icon" type="image/png" href="Logo-Favicon.png">
+    <link rel="apple-touch-icon" href="Logo-Favicon.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFdlgBRw9stQDAguizoFho5vhpdd1TDiw",
+            authDomain: "keuangan-mmu-b-77.firebaseapp.com",
+            databaseURL: "https://keuangan-mmu-b-77-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "keuangan-mmu-b-77",
+            storageBucket: "keuangan-mmu-b-77.appspot.com",
+            messagingSenderId: "1054561507756",
+            appId: "1:1054561507756:web:e16722c692d3b44ed3c209"
+        };
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const database = firebase.database();
+    </script>
+
+    <script>
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+
+    <style>
+        /* --- TEMA NEUMORPHISM ASLI --- */
+        :root {
+            --bg-main: #e0e5ec;
+            --text-dark: #31344b;
+            --text-muted: #8C96A3;
+            --shadow-dark: rgba(163, 177, 198, 0.6);
+            --shadow-light: rgba(255, 255, 255, 0.6);
+            --green-grad: linear-gradient(135deg, #37f08c 0%, #06d16f 100%);
+            --green-text: #06d16f;
+            --border-line: #d1d9e6;
+        }
+        [data-theme="dark"] {
+            --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0;
+            --shadow-dark: #202835; --shadow-light: #3a4556;
+            --green-grad: linear-gradient(135deg, #009245 0%, #007A39 100%);
+            --green-text: #22c55e;
+            --border-line: #4a5568;
+        }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { margin: 0; padding: 0; background-color: var(--bg-main); font-family: 'Poppins', sans-serif; color: var(--text-dark); user-select: none; padding-bottom: 50px; transition: 0.3s; }
+        
+        .app-container { max-width: 1000px; margin: 0 auto; min-height: 100vh; padding: 25px 20px; animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* TOAST NOTIFIKASI */
+        #toast { visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; }
+        #toast.show { visibility: visible; animation: fadeinToast 0.5s, fadeoutToast 0.5s 2.5s forwards; }
+        @keyframes fadeinToast { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes fadeoutToast { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+
+        /* HEADER NAVIGASI */
+        .nav-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; position: relative; }
+        .btn-icon { width: 45px; height: 45px; border-radius: 15px; background: var(--bg-main); display: flex; justify-content: center; align-items: center; color: var(--text-dark); text-decoration: none; box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light); transition: 0.3s; cursor: pointer; border: none; font-size: 16px; }
+        .btn-icon:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
+        .header-title { font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 800; margin: 0; position: absolute; left: 50%; transform: translateX(-50%); color: var(--text-dark); }
+
+        /* AREA PENCARIAN & FILTER */
+        .search-filter-row { display: flex; gap: 15px; margin-bottom: 20px; align-items: center; }
+        .search-box { flex: 2; display: flex; align-items: center; border-radius: 15px; padding: 14px 20px; background: var(--bg-main); box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); transition: 0.3s; }
+        .search-box i { color: var(--text-muted); font-size: 16px; }
+        .search-box input { border: none; background: transparent; outline: none; width: 100%; font-family: 'Poppins', sans-serif; color: var(--text-dark); margin-left: 12px; font-size: 13px; user-select: auto; }
+        .search-box input::placeholder { color: var(--text-muted); font-weight: 500; }
+        
+        .filter-box { flex: 1; position: relative; }
+        .filter-box select { width: 100%; padding: 14px 15px; border-radius: 15px; border: none; background: var(--bg-main); color: var(--green-text); font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 600; box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); outline: none; appearance: none; cursor: pointer; }
+        .filter-box i { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--green-text); font-size: 12px; pointer-events: none; }
+
+        /* ACTION BUTTONS (ATAS TABEL) */
+        .action-top-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .btn-action { 
+            background: var(--bg-main); color: var(--text-dark); border: none; padding: 12px 5px; border-radius: 12px; 
+            font-family: 'Poppins', sans-serif; font-size: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; 
+            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light); transition: 0.3s; text-align: center;
+        }
+        .btn-action i { font-size: 12px; }
+        .btn-action:active { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); color: var(--green-text); }
+        
+        .btn-add-main { 
+            width: 100%; padding: 16px; background: var(--green-grad); color: white; border: none; border-radius: 16px; 
+            font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+            box-shadow: 5px 5px 15px rgba(6, 209, 111, 0.3); transition: 0.3s; margin-bottom: 20px;
+        }
+        .btn-add-main:active { box-shadow: inset 3px 3px 8px rgba(0,0,0,0.2); transform: translateY(2px); }
+
+        /* TABEL CONTAINER */
+        .table-container { 
+            background: var(--bg-main); border-radius: 20px; padding: 10px 15px 15px; 
+            box-shadow: 9px 9px 16px var(--shadow-dark), -9px -9px 16px var(--shadow-light); 
+            margin-bottom: 25px; 
+        }
+        .table-scroll-wrapper {
+            max-height: 60vh; overflow-y: auto; overflow-x: auto;
+            border-radius: 10px;
+        }
+        .table-scroll-wrapper::-webkit-scrollbar { width: 6px; height: 6px; }
+        .table-scroll-wrapper::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; }
+
+        table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 12px; text-align: left; position: relative; }
+        
+        /* STICKY HEADER */
+        th { 
+            position: sticky; top: 0; background-color: var(--bg-main); z-index: 10;
+            color: var(--text-muted); font-weight: 700; padding: 15px 12px; 
+            font-family: 'Montserrat', sans-serif; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; 
+        }
+        th::after { content: ''; position: absolute; left: 0; bottom: 0; width: 100%; border-bottom: 2px solid var(--border-line); }
+
+        td { padding: 15px 12px; border-bottom: 1px solid var(--border-line); color: var(--text-dark); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        
+        .btn-wa-link {
+            background: rgba(34, 197, 94, 0.1); color: var(--green-text); font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 600;
+            padding: 6px 12px; border-radius: 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: 0.3s;
+        }
+        .btn-wa-link:active { background: rgba(34, 197, 94, 0.2); transform: scale(0.95); }
+
+        .action-btns { display: flex; gap: 8px; }
+        .btn-aksi-tabel { width: 34px; height: 34px; border-radius: 10px; background: var(--bg-main); border: none; box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; font-size: 13px; color: var(--text-dark); }
+        .btn-aksi-tabel:active { box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light); }
+        .btn-edit { color: #f59e0b; }
+        .btn-rapor { color: var(--green-text); }
+        .btn-mutasi { color: #6b7280; }
+
+        .empty-state { text-align: center; padding: 30px 20px; color: var(--text-muted); font-weight: 500; font-size: 13px; }
+
+        /* MODALS FORM SANTRI */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(224, 229, 236, 0.8); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
+        [data-theme="dark"] .modal-overlay { background: rgba(45, 55, 72, 0.8); }
+        
+        .modal-content { background: var(--bg-main); width: 100%; max-width: 500px; border-radius: 25px; padding: 30px 25px; box-shadow: 10px 10px 30px rgba(0,0,0,0.3); position: relative; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s ease-out forwards; border: 1px solid var(--border-line); }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { margin: 0; font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 800; color: var(--green-text); display: flex; align-items: center; gap: 10px; }
+        .close-btn { font-size: 20px; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+        .close-btn:active { color: #ef4444; }
+        
+        .input-group { margin-bottom: 18px; }
+        .modal-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; margin-left: 5px; }
+        .input-edit { width: 100%; padding: 15px 20px; border: none; border-radius: 15px; background: var(--bg-main); font-family: 'Poppins', sans-serif; font-size: 13px; color: var(--text-dark); box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); outline: none; box-sizing: border-box; transition: 0.3s; }
+        .input-edit:focus { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light), 0 0 0 2px rgba(34, 197, 94, 0.3); }
+        .input-edit.readonly { background: rgba(209, 217, 230, 0.2); color: var(--text-muted); pointer-events: none; box-shadow: none; border: 1px solid var(--border-line); }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
+        .btn-submit { width: 100%; padding: 16px; background: var(--green-grad); color: white; border: none; border-radius: 15px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; margin-top: 15px; box-shadow: 4px 4px 10px rgba(6, 209, 111, 0.3); transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .btn-submit:active { transform: translateY(2px); box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2); }
+        .btn-submit:disabled { background: var(--border-line); box-shadow: none; cursor: not-allowed; color: var(--text-muted); }
+        .btn-submit.btn-edit-mode { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 4px 4px 10px rgba(245, 158, 11, 0.3); }
+
+        /* LOADER PUSAT */
+        #importLoading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(224, 229, 236, 0.8); z-index: 2000; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        [data-theme="dark"] #importLoading { background: rgba(45, 55, 72, 0.8); }
+        .neumorphic-spinner { width: 50px; height: 50px; border-radius: 50%; background: var(--bg-main); box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); border: 4px solid transparent; border-top-color: var(--green-text); animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #importStatusText { font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--text-dark); margin: 0; }
+
+        /* MODAL RIWAYAT PDF (PENGGANTI RAPOR) */
+        .modal-rapor { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
+        .rapor-content { background: #ffffff; width: 100%; max-width: 600px; max-height: 90vh; border-radius: 20px; overflow-y: auto; position: relative; animation: slideUp 0.3s; padding: 30px; color: #1e293b; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .btn-close-modal { position: absolute; top: 15px; right: 20px; font-size: 24px; color: #94a3b8; cursor: pointer; transition: 0.2s; }
+        .btn-close-modal:active { color: #ef4444; }
+        
+        #area-cetak-rapor { padding: 10px; background: #ffffff; }
+        .kop-surat { text-align: center; border-bottom: 3px solid #1e293b; padding-bottom: 15px; margin-bottom: 20px; }
+        .kop-surat h2 { margin: 0; font-family: 'Montserrat', sans-serif; font-size: 18px; color: #1e293b; letter-spacing: 1px; }
+        .kop-surat p { margin: 5px 0 0; font-size: 11px; font-weight: 600; color: #475569; }
+        
+        .biodata-rapor { font-size: 12px; margin-bottom: 20px; line-height: 1.6; color: #1e293b; font-family: 'Poppins', sans-serif; font-weight: 500; }
+        .tabel-rapor { width: 100%; border-collapse: collapse; font-size: 11px; color: #1e293b; font-family: 'Poppins', sans-serif; }
+        .tabel-rapor th, .tabel-rapor td { border: 1px solid #cbd5e1; padding: 10px 8px; text-align: left; }
+        .tabel-rapor th { background-color: #f1f5f9; font-weight: 700; color: #0f172a; } 
+        
+        .btn-download-rapor { width: 100%; padding: 16px; background: #3b82f6; color: white; border: none; border-radius: 15px; font-family: 'Montserrat', sans-serif; font-weight: 700; cursor: pointer; margin-top: 20px; display: flex; justify-content: center; gap: 10px; font-size: 13px; box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3); transition: 0.3s; }
+        .btn-download-rapor:active { transform: translateY(2px); box-shadow: 0 5px 10px rgba(59, 130, 246, 0.3); }
+    </style>
+</head>
+<body>
+
+    <div id="toast"><i class="fa-solid fa-circle-info"></i> <span id="toastMsg">Pesan</span></div>
+
+    <div id="importLoading">
+        <div class="neumorphic-spinner"></div>
+        <h3 id="importStatusText">Menarik Database Santri...</h3>
+    </div>
+
+    <div class="app-container">
+        
+        <div class="nav-top">
+            <button class="btn-icon" onclick="window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
+            <h1 class="header-title">Database Santri</h1>
+            <button class="btn-icon" onclick="muatDataFirebase()" title="Refresh Sinkronisasi"><i class="fa-solid fa-rotate" style="color: var(--green-text);"></i></button>
+        </div>
+
+        <div class="search-filter-row">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Cari nama atau NIS..." onkeyup="cariTabel()">
+            </div>
+            <div class="filter-box">
+                <select id="filterKelas" onchange="cariTabel()">
+                    <option value="semua">Semua Kelas</option>
+                </select>
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+        </div>
+
+        <div class="action-top-row">
+            <button class="btn-action" onclick="exportPDF()"><i class="fa-solid fa-file-pdf" style="color: #ef4444;"></i> Cetak PDF</button>
+            <button class="btn-action" onclick="downloadTemplateExcel()"><i class="fa-solid fa-file-excel" style="color: #10b981;"></i> Template Excel</button>
+            <input type="file" id="uploadExcel" accept=".xlsx, .xls" style="display: none;">
+            <button class="btn-action" onclick="document.getElementById('uploadExcel').click();"><i class="fa-solid fa-file-import" style="color: #f59e0b;"></i> Impor Excel</button>
+        </div>
+        
+        <button class="btn-add-main" onclick="bukaModalTambah()"><i class="fa-solid fa-user-plus"></i> Tambah Data Santri Baru</button>
+
+        <div class="table-container">
+            <div class="table-scroll-wrapper">
+                <table id="tabelSantri">
+                    <thead>
+                        <tr>
+                            <th>NIS</th>
+                            <th>NAMA LENGKAP</th>
+                            <th>L/P</th>
+                            <th>KELAS</th>
+                            <th>NO. WA WALI</th>
+                            <th>AKSI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabel-body">
+                        <tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin" style="color:var(--green-text); font-size: 24px; margin-bottom:10px;"></i><br>Menghubungkan ke Server...</div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="modalFormSantri">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalFormTitle"><i class="fa-solid fa-user-plus"></i> Form Santri</h2>
+                <i class="fa-solid fa-xmark close-btn" onclick="tutupModalForm()"></i>
+            </div>
+            
+            <form id="formSantri">
+                <input type="hidden" id="formMode" value="tambah"> 
+                
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label class="modal-label">ID Murid (NIS Utama)</label>
+                        <input type="text" class="input-edit" id="id_murid" required placeholder="Cth: 2601001">
+                    </div>
+                    <div class="input-group">
+                        <label class="modal-label">Nama Lengkap</label>
+                        <input type="text" class="input-edit" id="nama" required placeholder="Sesuai KK">
+                    </div>
+                </div>
+                
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label class="modal-label">Jenis Kelamin</label>
+                        <select class="input-edit" id="lp" style="padding-right: 15px;">
+                            <option value="L">Laki-laki (L)</option>
+                            <option value="P">Perempuan (P)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label class="modal-label">Kelas</label>
+                        <input type="text" class="input-edit" id="kelas" required placeholder="Cth: I - SATU">
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label class="modal-label">Nomor WA Wali</label>
+                    <input type="tel" class="input-edit" id="wa" required placeholder="Cth: 081234567890">
+                </div>
+                
+                <div class="input-group">
+                    <label class="modal-label">Keterangan Tambahan</label>
+                    <input type="text" class="input-edit" id="keterangan" placeholder="-">
+                </div>
+                
+                <button type="submit" class="btn-submit" id="btnSimpan"><i class="fa-solid fa-floppy-disk"></i> Simpan ke Firebase</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-rapor" id="modalRapor">
+        <div class="rapor-content">
+            <i class="fa-solid fa-xmark btn-close-modal" onclick="tutupRapor()"></i>
+            
+            <div id="area-cetak-rapor">
+                <div class="kop-surat">
+                    <h2>REKAM JEJAK FINANSIAL SANTRI</h2>
+                    <p>Madrasah Miftahul Ulum Ibtidaiyah B-77 Jrebeng Kulon</p>
+                </div>
+                
+                <div class="biodata-rapor">
+                    <table style="width: 100%; border:none;">
+                        <tr><td style="width: 110px; border:none; padding:2px;">Nama Santri</td><td style="border:none; padding:2px;">: <b id="rprNama" style="text-transform: uppercase;">Fulan</b></td></tr>
+                        <tr><td style="border:none; padding:2px;">NIS / ID</td><td style="border:none; padding:2px;">: <span id="rprNIS">0000</span></td></tr>
+                        <tr><td style="border:none; padding:2px;">Kelas</td><td style="border:none; padding:2px;">: <span id="rprKelas">1 Ibtidaiyah</span></td></tr>
+                        <tr><td style="border:none; padding:2px;">Tanggal Cetak</td><td style="border:none; padding:2px;">: <span id="rprTanggal" style="font-family: monospace; font-weight: 600; color: #3b82f6;">-</span></td></tr>
+                    </table>
+                </div>
+
+                <table class="tabel-rapor">
+                    <thead>
+                        <tr>
+                            <th>Tgl Update</th>
+                            <th>Pos Administrasi</th>
+                            <th>Nominal</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyRaporList"></tbody>
+                </table>
+            </div>
+
+            <button class="btn-download-rapor" onclick="unduhRaporPDF()"><i class="fa-solid fa-download"></i> Unduh Lembar Transparansi</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. INISIALISASI DASAR & AUTO-LOGOUT ---
+        let usernameAsli = localStorage.getItem('usernameAsli');
+        if(!usernameAsli) { window.location.href = 'index.html'; }
+
+        let idleTime = 0;
+        document.addEventListener('mousemove', () => idleTime = 0); document.addEventListener('keypress', () => idleTime = 0);
+        setInterval(() => { idleTime++; if(idleTime > 15) { localStorage.removeItem('usernameAsli'); window.location.href = 'index.html'; } }, 60000);
+
+        function showToast(msg) {
+            let toast = document.getElementById("toast"); document.getElementById("toastMsg").innerText = msg;
+            toast.className = "show"; setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+        
+        function formatRupiah(angka) { return 'Rp ' + parseInt(angka || 0).toLocaleString('id-ID'); }
+        
+        // --- SOLUSI FILTER WA PINTAR (ANTI ANGKA 8) ---
+        function formatWALink(noWA) {
+            if(!noWA) return '';
+            let strWA = String(noWA).replace(/\D/g,'');
+            if(strWA.startsWith('0')) return '62' + strWA.substring(1);
+            // Paksa nambah 62 kalau Excel mencuri angka 0
+            if(strWA.startsWith('8')) return '62' + strWA;
+            return strWA;
+        }
+
+        function formatWADisplay(noWA) {
+            if(!noWA || String(noWA).trim() === '-') return '-';
+            let strWA = String(noWA).replace(/\D/g,'');
+            if(strWA.startsWith('62')) return '0' + strWA.substring(2);
+            // Paksa nambah 0 di layar kalau Excel mencuri angka 0
+            if(strWA.startsWith('8')) return '0' + strWA;
+            return strWA;
+        }
+
+        // --- 2. FIREBASE REALTIME LISTENER UNTUK DATA SANTRI ---
+        window.onload = function() {
+            muatDataFirebase();
+        };
+
+        function muatDataFirebase() {
+            let loadingEl = document.getElementById('importLoading');
+            let statusText = document.getElementById('importStatusText');
+            
+            loadingEl.style.display = 'flex';
+            statusText.innerText = "Menghubungkan Radar Firebase...";
+
+            let timeoutBatas = setTimeout(() => {
+                if(loadingEl.style.display === 'flex') {
+                    loadingEl.style.display = 'none';
+                    showToast("Koneksi lambat. Tekan Ctrl+F5.");
+                }
+            }, 8000);
+
+            try {
+                database.ref('santri').on('value', snapshot => {
+                    clearTimeout(timeoutBatas); 
+
+                    let tabelBody = document.getElementById('tabel-body');
+                    tabelBody.innerHTML = '';
+                    
+                    let filterKelas = document.getElementById('filterKelas');
+                    let setKelas = new Set();
+                    
+                    if (!snapshot.exists()) {
+                        tabelBody.innerHTML = `<tr><td colspan="6"><div class="empty-state">Data Santri Masih Kosong di Server. Silakan Import Excel.</div></td></tr>`;
+                        loadingEl.style.display = 'none';
+                        return;
+                    } 
+                    
+                    snapshot.forEach(childSnapshot => {
+                        let row = childSnapshot.val();
+                        if(typeof row !== 'object' || row === null) return;
+
+                        if(row.Kelas) setKelas.add(row.Kelas);
+                        
+                        let linkWA = formatWALink(row.WA_Wali);
+                        let tampilWA = formatWADisplay(row.WA_Wali);
+                        
+                        let btnWAHTML = linkWA 
+                            ? `<a href="https://wa.me/${linkWA}" target="_blank" class="btn-wa-link"><i class="fa-brands fa-whatsapp" style="font-size:14px;"></i> ${tampilWA}</a>`
+                            : `<span style="color:var(--text-muted); font-size:11px;">-</span>`;
+
+                        let escapedNama = String(row.Nama_Lengkap || "").replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        let escapedKet = String(row.Keterangan || "").replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                        let tr = document.createElement('tr');
+                        tr.className = "baris-data";
+                        tr.setAttribute("data-kelas", row.Kelas || "");
+                        tr.innerHTML = `
+                            <td><strong>${row.ID_Murid || '-'}</strong></td>
+                            <td style="font-weight:600;">${row.Nama_Lengkap || '-'}</td>
+                            <td>${row.LP || '-'}</td>
+                            <td style="font-weight:600; color:var(--text-muted);">${row.Kelas || '-'}</td>
+                            <td>${btnWAHTML}</td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="btn-aksi-tabel btn-edit" title="Edit Profil" onclick="bukaModalEdit('${row.ID_Murid}', '${escapedNama}', '${row.LP}', '${row.Kelas}', '${row.WA_Wali}', '${escapedKet}')"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="btn-aksi-tabel btn-rapor" title="Buku Riwayat Administrasi" onclick="bukaRapor('${row.ID_Murid}', '${escapedNama}', '${row.Kelas}')"><i class="fa-solid fa-file-invoice"></i></button>
+                                    <button class="btn-aksi-tabel btn-mutasi" title="Pindah/Boyong Santri" onclick="window.location.href='mutasi-kelas.html?nis=${row.ID_Murid}'"><i class="fa-solid fa-right-left"></i></button>
+                                </div>
+                            </td>
+                        `;
+                        tabelBody.appendChild(tr);
+                    });
+
+                    let currentFilter = filterKelas.value;
+                    filterKelas.innerHTML = '<option value="semua">Semua Kelas</option>';
+                    Array.from(setKelas).sort().forEach(kls => {
+                        let opt = document.createElement('option');
+                        opt.value = kls; opt.text = kls;
+                        filterKelas.add(opt);
+                    });
+                    if(Array.from(setKelas).includes(currentFilter)) filterKelas.value = currentFilter;
+
+                    cariTabel(); 
+                    loadingEl.style.display = 'none';
+
+                }, (error) => {
+                    clearTimeout(timeoutBatas);
+                    loadingEl.style.display = 'none';
+                    showToast("Akses Firebase Ditolak: Cek Settingan Rules Anda.");
+                    console.error(error);
+                });
+            } catch(err) {
+                clearTimeout(timeoutBatas);
+                loadingEl.style.display = 'none';
+                showToast("Error Eksekusi Firebase.");
+                console.error(err);
+            }
+        }
+
+        function cariTabel() {
+            let inputNamaNIS = document.getElementById("searchInput").value.toLowerCase();
+            let filterKls = document.getElementById("filterKelas").value;
+            let tr = document.querySelectorAll(".baris-data");
+            
+            tr.forEach(baris => {
+                let teksBaris = baris.cells[0].innerText.toLowerCase() + " " + baris.cells[1].innerText.toLowerCase();
+                let kelasSiswa = baris.getAttribute("data-kelas");
+                
+                let cocokNama = teksBaris.includes(inputNamaNIS);
+                let cocokKelas = (filterKls === "semua" || kelasSiswa === filterKls);
+
+                baris.style.display = (cocokNama && cocokKelas) ? "" : "none";
+            });
+        }
+
+        // --- 3. FUNGSI FORM ---
+        function bukaModalTambah() { 
+            document.getElementById('formMode').value = 'tambah';
+            document.getElementById('modalFormTitle').innerHTML = '<i class="fa-solid fa-user-plus"></i> Tambah Santri Baru';
+            document.getElementById('id_murid').readOnly = false;
+            document.getElementById('id_murid').classList.remove('readonly');
+            document.getElementById('btnSimpan').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan ke Firebase';
+            document.getElementById('btnSimpan').className = 'btn-submit';
+            
+            document.getElementById('formSantri').reset();
+            document.getElementById('modalFormSantri').style.display = 'flex'; 
+        }
+
+        function bukaModalEdit(id, nama, lp, kelas, wa, ket) {
+            document.getElementById('formMode').value = 'edit';
+            document.getElementById('modalFormTitle').innerHTML = '<i class="fa-solid fa-pen-to-square" style="color:#f59e0b;"></i> Edit Data Santri';
+            
+            document.getElementById('id_murid').value = id;
+            document.getElementById('id_murid').readOnly = true;
+            document.getElementById('id_murid').classList.add('readonly'); 
+            
+            document.getElementById('nama').value = nama;
+            document.getElementById('lp').value = lp;
+            document.getElementById('kelas').value = kelas;
+            document.getElementById('wa').value = (wa === '-' || wa === 'undefined') ? '' : wa;
+            document.getElementById('keterangan').value = (ket === '-' || ket === 'undefined') ? '' : ket;
+
+            document.getElementById('btnSimpan').innerHTML = '<i class="fa-solid fa-check-double"></i> Perbarui Firebase';
+            document.getElementById('btnSimpan').className = 'btn-submit btn-edit-mode';
+            
+            document.getElementById('modalFormSantri').style.display = 'flex';
+        }
+
+        function tutupModalForm() { 
+            document.getElementById('modalFormSantri').style.display = 'none'; 
+            document.getElementById('formSantri').reset(); 
+        }
+
+        document.getElementById('formSantri').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            let mode = document.getElementById('formMode').value;
+            let idMurid = document.getElementById('id_murid').value.trim();
+            
+            let btnSimpan = document.getElementById('btnSimpan');
+            let textAsli = btnSimpan.innerHTML;
+            btnSimpan.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Menyuntik Server...'; 
+            btnSimpan.disabled = true;
+
+            let dataSimpan = {
+                ID_Murid: idMurid,
+                Nama_Lengkap: document.getElementById('nama').value.trim(),
+                LP: document.getElementById('lp').value,
+                Kelas: document.getElementById('kelas').value.trim(),
+                WA_Wali: document.getElementById('wa').value.trim(),
+                Keterangan: document.getElementById('keterangan').value.trim() || '-'
+            };
+
+            try {
+                if (mode === 'tambah') {
+                    let cekEksis = await database.ref('santri/' + idMurid).once('value');
+                    if (cekEksis.exists()) {
+                        showToast('Peringatan: NIS tersebut sudah dipakai santri lain!');
+                        btnSimpan.innerHTML = textAsli; btnSimpan.disabled = false;
+                        return;
+                    }
+                    await database.ref('santri/' + idMurid).set(dataSimpan);
+                    showToast('Data Santri Baru Diciptakan!');
+                } else {
+                    await database.ref('santri/' + idMurid).update(dataSimpan);
+                    showToast('Data Santri Diperbarui!');
+                }
+                tutupModalForm();
+            } catch (error) {
+                showToast('Terjadi kesalahan jaringan.');
+            }
+            
+            btnSimpan.innerHTML = textAsli; btnSimpan.disabled = false; 
+        });
+
+        // --- 4. SISTEM IMPORT EXCEL ---
+        function downloadTemplateExcel() {
+            const templateData = [ ["ID_Murid", "Nama_Lengkap", "LP", "Kelas", "WA_Wali", "Keterangan"], ["2601001", "Ahmad Fulan", "L", "I - SATU", "081234567890", "Hapus baris contoh ini sebelum import"] ];
+            const ws = XLSX.utils.aoa_to_sheet(templateData); ws['!cols'] = [ {wch:15}, {wch:35}, {wch:5}, {wch:15}, {wch:15}, {wch:35} ];
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Template_Santri");
+            XLSX.writeFile(wb, "Template_Import_Santri_B77.xlsx");
+        }
+
+        document.getElementById('uploadExcel').addEventListener('change', function(e) {
+            let file = e.target.files[0]; if (!file) return;
+            document.getElementById('importLoading').style.display = 'flex';
+            document.getElementById('importStatusText').innerText = "Membaca file Excel...";
+
+            let reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    let data = new Uint8Array(e.target.result); 
+                    let workbook = XLSX.read(data, {type: 'array'});
+                    let jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {defval: ""});
+                    
+                    if(jsonData.length === 0) { 
+                        showToast('File Excel kosong!'); document.getElementById('importLoading').style.display = 'none'; return; 
+                    }
+
+                    document.getElementById('importStatusText').innerText = `Menyuntikkan ${jsonData.length} baris ke Firebase...`;
+
+                    let updates = {}; 
+                    let jumlahValid = 0;
+
+                    jsonData.forEach(row => { 
+                        let nid = String(row['ID_Murid'] || '').trim();
+                        if(nid !== "") {
+                            updates[nid] = { 
+                                ID_Murid: nid, 
+                                Nama_Lengkap: String(row['Nama_Lengkap'] || '').trim(), 
+                                LP: String(row['LP'] || '').trim(), 
+                                Kelas: String(row['Kelas'] || '').trim(), 
+                                WA_Wali: String(row['WA_Wali'] || '').trim(), 
+                                Keterangan: String(row['Keterangan'] || '').trim() || '-'
+                            }; 
+                            jumlahValid++;
+                        }
+                    });
+
+                    await database.ref('santri').update(updates);
+                    
+                    document.getElementById('importLoading').style.display = 'none';
+                    showToast(`Sukses Import ${jumlahValid} Data Kilat!`);
+                } catch(error) {
+                    document.getElementById('importLoading').style.display = 'none'; 
+                    showToast('Kesalahan sistem saat membaca Excel.'); 
+                }
+                
+                document.getElementById('uploadExcel').value = ""; 
+            }; 
+            reader.readAsArrayBuffer(file);
+        });
+
+        // --- 5. EXPORT PDF ---
+        function exportPDF() {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.text("Buku Induk Santri MMU B-77", 14, 20);
+            
+            let now = new Date();
+            let formatWaktu = `${now.getDate()} ${now.toLocaleString('id-ID', {month:'long'})} ${now.getFullYear()} - ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} WIB`;
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.text("Waktu Cetak: " + formatWaktu, 14, 28);
+            
+            let bodyData = [];
+            document.querySelectorAll("#tabelSantri tbody tr").forEach(row => {
+                let cols = row.querySelectorAll("td");
+                if (cols.length > 1 && row.style.display !== "none") bodyData.push([cols[0].innerText, cols[1].innerText, cols[2].innerText, cols[3].innerText, cols[4].innerText]);
+            });
+
+            if(bodyData.length === 0) { showToast("Tidak ada data untuk PDF!"); return; }
+
+            doc.autoTable({ head: [['ID Murid', 'Nama Lengkap', 'L/P', 'Kelas', 'WA Wali']], body: bodyData, startY: 35, theme: 'grid', headStyles: { fillColor: [6, 209, 111], textColor: 255 }, styles: { fontSize: 9 } });
+            doc.save('Database_Santri_B77.pdf');
+        }
+
+        // --- 6. FITUR BUKU RIWAYAT ---
+        let currentRaporNama = "";
+        async function bukaRapor(id_murid, nama, kelas) {
+            document.getElementById('importLoading').style.display = 'flex';
+            document.getElementById('importStatusText').innerText = "Menarik Rekam Jejak...";
+            
+            currentRaporNama = nama;
+            document.getElementById('rprNama').innerText = nama; 
+            document.getElementById('rprNIS').innerText = id_murid;
+            document.getElementById('rprKelas').innerText = kelas; 
+            
+            let now = new Date();
+            let dString = `${now.getDate()} ${now.toLocaleString('id-ID', {month:'long'})} ${now.getFullYear()} - ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')} WIB`;
+            document.getElementById('rprTanggal').innerText = dString;
+
+            try {
+                let snapshot = await database.ref('tagihan').orderByChild('ID_Murid').equalTo(id_murid).once('value');
+                
+                let tbody = document.getElementById('bodyRaporList'); 
+                tbody.innerHTML = '';
+
+                if(!snapshot.exists()) { 
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px;">Belum ada catatan transaksi keuangan.</td></tr>'; 
+                } else {
+                    let listTagihan = [];
+                    snapshot.forEach(child => { listTagihan.push(child.val()); });
+                    
+                    listTagihan.sort((a,b) => { 
+                        let statA = a.Status.toLowerCase() === 'belum lunas' ? 0 : 1; 
+                        let statB = b.Status.toLowerCase() === 'belum lunas' ? 0 : 1; 
+                        return statA - statB; 
+                    });
+                    
+                    listTagihan.forEach(row => {
+                        let statusColor = row.Status.toLowerCase() === 'belum lunas' ? 'color:#ef4444; font-weight:bold;' : 'color:#22c55e; font-weight:600;';
+                        let ket = row.Keterangan ? ` <br><span style="font-size:9px; color:#64748b;">(${row.Keterangan})</span>` : '';
+                        tbody.innerHTML += `<tr><td>${row.Tanggal_Buat.split(' ')[0]}</td><td><strong>${row.Nama_Pos}</strong>${ket}</td><td>${formatRupiah(row.Nominal)}</td><td style="${statusColor}">${row.Status}</td></tr>`;
+                    });
+                }
+                document.getElementById('importLoading').style.display = 'none'; 
+                document.getElementById('modalRapor').style.display = 'flex';
+            } catch(e) {
+                document.getElementById('importLoading').style.display = 'none'; 
+                showToast("Gagal memuat rekam jejak server.");
+            }
+        }
+
+        function tutupRapor() { document.getElementById('modalRapor').style.display = 'none'; }
+
+        function unduhRaporPDF() {
+            showToast("Mempersiapkan PDF Transparansi...");
+            let printArea = document.getElementById('area-cetak-rapor');
+
+            var opt = { 
+                margin: 0.5, 
+                filename: `Rekam_Jejak_${currentRaporNama.replace(/ /g, '_')}.pdf`, 
+                image: { type: 'jpeg', quality: 0.98 }, 
+                html2canvas: { scale: 2, useCORS: true }, 
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } 
+            };
+            html2pdf().set(opt).from(printArea).save().then(() => { showToast("File PDF berhasil diunduh!"); });
+        }
+    </script>
+</body>
+</html>

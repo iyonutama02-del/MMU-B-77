@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#e0e5ec" id="meta-theme-color">
+    <title>Generate Tagihan - MMU B-77</title>
+    
+    <link rel="icon" type="image/png" href="Logo-Favicon.png">
+    <link rel="apple-touch-icon" href="Logo-Favicon.png">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        const role = localStorage.getItem('hakAkses');
+        if(role === 'Operator' || role === 'Demo') {
+            alert("🔒 AKSES DIBATASI: Hanya Administrator yang dapat men-generate tagihan baru.");
+            window.location.replace('beranda.html');
+        }
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+
+    <style>
+        :root {
+            --bg-main: #e0e5ec; --text-dark: #31344b; --text-muted: #8C96A3;
+            --shadow-dark: rgba(163, 177, 198, 0.6); --shadow-light: rgba(255, 255, 255, 0.6);
+            --c-blue: #4facfe; --c-green: #00d26a; --c-orange: #f59e0b;
+        }
+        [data-theme="dark"] {
+            --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0;
+            --shadow-dark: #202835; --shadow-light: #3a4556;
+        }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { background: var(--bg-main); font-family: 'Poppins', sans-serif; color: var(--text-dark); margin:0; padding:0; padding-bottom:50px; transition:0.3s;}
+        
+        .app-container { max-width: 600px; margin: 0 auto; padding: 25px 20px; animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        
+        .nav-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;}
+        .btn-icon { width: 45px; height: 45px; border-radius: 15px; background: var(--bg-main); display: flex; justify-content: center; align-items: center; color: var(--text-dark); box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); border: none; cursor: pointer; transition: 0.2s;}
+        .btn-icon:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
+        .header-title { font-family:'Montserrat'; font-size:18px; font-weight:900; margin:0; text-transform:uppercase; letter-spacing:1px; }
+
+        .tab-container { display: flex; background: var(--bg-main); border-radius: 15px; padding: 8px; margin-bottom: 25px; box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); }
+        .tab-btn { flex: 1; text-align: center; padding: 12px 0; border-radius: 12px; font-size: 12px; font-weight: 700; color: var(--text-muted); cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px;}
+        .tab-btn.active { background: var(--bg-main); color: var(--c-blue); box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); }
+
+        .form-section { display: none; animation: fadeIn 0.4s ease; }
+        .form-section.active { display: block; }
+
+        .form-card { background: var(--bg-main); border-radius: 25px; padding: 25px; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); margin-bottom:20px;}
+        .input-group { margin-bottom: 20px; position: relative;}
+        .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; margin-left: 5px; }
+        .input-edit { width: 100%; padding: 15px 20px; border: none; border-radius: 15px; background: var(--bg-main); font-family: 'Poppins'; font-size: 13px; color: var(--text-dark); box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); outline: none; transition: 0.3s; font-weight:500;}
+        .input-readonly { background: transparent; color: var(--text-muted); pointer-events: none; box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);}
+
+        .sug-box { position: absolute; top: 100%; left: 0; width: 100%; background: var(--bg-main); border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 100; max-height: 200px; overflow-y: auto; display: none; margin-top: 8px; padding: 5px;}
+        .sug-item { padding: 12px 15px; border-radius: 10px; cursor: pointer; font-size: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); font-weight:600;}
+        .sug-item:hover { background: rgba(79, 172, 254, 0.1); color: var(--c-blue); }
+
+        .btn-submit { width: 100%; padding: 16px; background: var(--bg-main); color: var(--c-blue); border: none; border-radius: 15px; font-family: 'Montserrat'; font-weight: 800; font-size: 14px; cursor: pointer; box-shadow: 5px 5px 15px var(--shadow-dark), -5px -5px 15px var(--shadow-light); display: flex; justify-content: center; align-items: center; gap: 10px; transition:0.3s;}
+        .btn-submit:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); color: var(--text-muted);}
+
+        #toast { visibility: hidden; min-width: 250px; background-color: #31344b; color: #fff; text-align: center; border-radius: 15px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
+        @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+        
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(224, 229, 236, 0.8); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(5px);}
+        .loading-overlay i { font-size: 40px; color: var(--c-blue); margin-bottom: 15px; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="toast"><span>Pesan</span></div>
+    
+    <div class="loading-overlay" id="loadingLayar">
+        <i class="fa-solid fa-circle-notch"></i>
+        <h3 style="font-family:'Montserrat'; margin:0; color:var(--text-dark);">Mendistribusikan Tagihan...</h3>
+        <p style="font-size:12px; color:var(--text-muted); font-weight:600;">Mohon tunggu, jangan tutup halaman.</p>
+    </div>
+
+    <div class="app-container">
+        <div class="nav-top">
+            <button class="btn-icon" onclick="window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
+            <h1 class="header-title">Distribusi Tagihan</h1>
+            <div style="width:45px;"></div>
+        </div>
+
+        <div class="tab-container">
+            <div class="tab-btn active" onclick="bukaTab('massal', this)"><i class="fa-solid fa-users"></i> Massal (Per Kelas)</div>
+            <div class="tab-btn" onclick="bukaTab('individu', this)"><i class="fa-solid fa-user"></i> Individu</div>
+        </div>
+
+        <div class="form-section active" id="sec-massal">
+            <div class="form-card">
+                <form id="formMassal">
+                    <div class="input-group">
+                        <label>Pilih Kelas Tujuan</label>
+                        <select class="input-edit" id="m_kelas" required>
+                            <option value="">-- Sedang memuat kelas --</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Pos Tagihan Keuangan</label>
+                        <select class="input-edit select-kode" id="m_kode" required onchange="setNominal('m_kode', 'm_nominal')">
+                            <option value="">-- Sedang memuat pos tagihan --</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Nominal Tagihan (Rp)</label>
+                        <input type="number" class="input-edit" id="m_nominal" placeholder="Contoh: 50000" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Catatan / Keterangan</label>
+                        <input type="text" class="input-edit" id="m_keterangan" placeholder="Contoh: SPP Bulan Rajab">
+                    </div>
+                    <button type="submit" class="btn-submit"><i class="fa-solid fa-paper-plane"></i> GENERATE KE KELAS</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="form-section" id="sec-individu">
+            <div class="form-card">
+                <form id="formIndividu">
+                    <div class="input-group">
+                        <label>Cari Santri (Nama / NIS)</label>
+                        <input type="text" class="input-edit" id="i_search" placeholder="Ketik nama santri..." autocomplete="off" onkeyup="cariSantri()">
+                        <div class="sug-box" id="i_sug"></div>
+                        <input type="hidden" id="i_nis">
+                        <input type="hidden" id="i_kelas">
+                    </div>
+                    <div class="input-group">
+                        <label>Nama Santri Terpilih</label>
+                        <input type="text" class="input-edit input-readonly" id="i_nama_display" placeholder="Pilih dari pencarian" readonly required>
+                    </div>
+                    <div class="input-group">
+                        <label>Pos Tagihan Keuangan</label>
+                        <select class="input-edit select-kode" id="i_kode" required onchange="setNominal('i_kode', 'i_nominal')">
+                            <option value="">-- Sedang memuat pos tagihan --</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Nominal Tagihan (Rp)</label>
+                        <input type="number" class="input-edit" id="i_nominal" placeholder="Contoh: 25000" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Catatan / Keterangan</label>
+                        <input type="text" class="input-edit" id="i_keterangan" placeholder="Contoh: Denda Keterlambatan">
+                    </div>
+                    <button type="submit" class="btn-submit"><i class="fa-solid fa-user-check"></i> BERIKAN TAGIHAN</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showToast(msg) { let t = document.getElementById("toast"); t.querySelector("span").innerText = msg; t.className = "show"; setTimeout(() => { t.className = ""; }, 3000); }
+        function bukaTab(tipe, el) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+            el.classList.add('active'); document.getElementById('sec-' + tipe).classList.add('active');
+        }
+
+        let dbSantri = []; let dbKode = [];
+
+        window.onload = function() {
+            // 1. Sinkronisasi Data Santri
+            database.ref('santri').on('value', snap => {
+                dbSantri = []; let kelasSet = new Set();
+                snap.forEach(c => {
+                    let s = c.val();
+                    if(s.Status === 'Aktif') {
+                        dbSantri.push(s);
+                        if(s.Kelas) kelasSet.add(s.Kelas);
+                    }
+                });
+
+                let optKelas = '<option value="">-- Pilih Kelas --</option>';
+                Array.from(kelasSet).sort().forEach(k => optKelas += `<option value="${k}">Kelas ${k}</option>`);
+                document.getElementById('m_kelas').innerHTML = optKelas;
+            });
+
+            // 2. Sinkronisasi Kode Keuangan (Smart Prefix)
+            database.ref('kode_keuangan').on('value', snap => {
+                dbKode = [];
+                let opt = '<option value="">-- Pilih Pos Tagihan --</option>';
+                
+                if(snap.exists()) {
+                    snap.forEach(c => {
+                        let k = c.val();
+                        let key = String(c.key);
+                        let jenis = String(k.Jenis || '').toLowerCase();
+                        let status = String(k.Status || '').toLowerCase();
+                        
+                        // Hanya ambil yang Pemasukan atau berawalan 1 dan 2
+                        let isMasuk = jenis.includes('masuk') || jenis.includes('pemasukan') || key.startsWith('1') || key.startsWith('2');
+                        
+                        if(isMasuk && status !== 'nonaktif') {
+                            k.Kode_Uang = key; // simpan ID key
+                            dbKode.push(k);
+                            opt += `<option value="${key}">${key} - ${k.Nama_Pos}</option>`;
+                        }
+                    });
+                }
+                
+                // Tempel ke kedua dropdown
+                document.querySelectorAll('.select-kode').forEach(el => el.innerHTML = opt);
+            });
+        };
+
+        function setNominal(idSelect, idTarget) {
+            let val = document.getElementById(idSelect).value;
+            let target = dbKode.find(k => k.Kode_Uang === val);
+            document.getElementById(idTarget).value = target ? (target.Nominal_Default || 0) : '';
+        }
+
+        function cariSantri() {
+            let input = document.getElementById('i_search').value.toLowerCase();
+            let box = document.getElementById('i_sug'); box.innerHTML = '';
+            if(input.length < 2) { box.style.display = 'none'; return; }
+
+            let res = dbSantri.filter(s => s.Nama_Santri.toLowerCase().includes(input) || String(s.ID_Murid).includes(input)).slice(0, 5);
+            
+            res.forEach(s => {
+                let div = document.createElement('div'); div.className = 'sug-item';
+                div.innerHTML = `<b>${s.Nama_Santri}</b> <span style="font-size:10px; color:var(--text-muted);">(${s.Kelas})</span>`;
+                div.onclick = () => {
+                    document.getElementById('i_search').value = '';
+                    document.getElementById('i_nama_display').value = s.Nama_Santri;
+                    document.getElementById('i_nis').value = s.ID_Murid;
+                    document.getElementById('i_kelas').value = s.Kelas;
+                    box.style.display = 'none';
+                };
+                box.appendChild(div);
+            });
+            box.style.display = res.length > 0 ? 'block' : 'none';
+        }
+
+        // --- CORE DISTRIBUTION LOGIC ---
+        async function buatTagihan(tipe) {
+            let loader = document.getElementById('loadingLayar');
+            loader.style.display = 'flex';
+
+            try {
+                let timestamp = new Date().getTime();
+                let tglIndo = new Date().toLocaleString('id-ID');
+                let admin = localStorage.getItem('namaPengguna') || 'Admin';
+                let updates = {};
+
+                if (tipe === 'massal') {
+                    let kls = document.getElementById('m_kelas').value;
+                    let kodeUang = document.getElementById('m_kode').value;
+                    let nominal = document.getElementById('m_nominal').value;
+                    let ket = document.getElementById('m_keterangan').value;
+                    let posName = dbKode.find(k => k.Kode_Uang === kodeUang).Nama_Pos;
+
+                    let targetSantri = dbSantri.filter(s => s.Kelas === kls);
+                    if(targetSantri.length === 0) throw "Tidak ada santri aktif di kelas ini.";
+
+                    targetSantri.forEach((s, idx) => {
+                        let invID = `INV-${s.ID_Murid}-${kodeUang}-${timestamp}-${idx}`;
+                        updates[`tagihan/${invID}`] = { 
+                            ID_Tagihan: invID, ID_Murid: s.ID_Murid, Nama_Santri: s.Nama_Santri, Kelas: s.Kelas, 
+                            Kode_Uang: kodeUang, Nama_Pos: posName, Nominal: parseInt(nominal), 
+                            Keterangan: ket, Tanggal_Buat: tglIndo, Status: 'Belum Lunas', Admin_Pembuat: admin 
+                        };
+                    });
+                } else {
+                    let nis = document.getElementById('i_nis').value;
+                    let kls = document.getElementById('i_kelas').value;
+                    let nama = document.getElementById('i_nama_display').value;
+                    let kodeUang = document.getElementById('i_kode').value;
+                    let nominal = document.getElementById('i_nominal').value;
+                    let ket = document.getElementById('i_keterangan').value;
+                    let posName = dbKode.find(k => k.Kode_Uang === kodeUang).Nama_Pos;
+
+                    let invID = `INV-${nis}-${kodeUang}-${timestamp}`;
+                    updates[`tagihan/${invID}`] = { 
+                        ID_Tagihan: invID, ID_Murid: nis, Nama_Santri: nama, Kelas: kls, 
+                        Kode_Uang: kodeUang, Nama_Pos: posName, Nominal: parseInt(nominal), 
+                        Keterangan: ket, Tanggal_Buat: tglIndo, Status: 'Belum Lunas', Admin_Pembuat: admin 
+                    };
+                }
+
+                await database.ref().update(updates);
+                showToast("🚀 Tagihan berhasil didistribusikan ke server!");
+                if(tipe === 'massal') document.getElementById('formMassal').reset(); 
+                else { document.getElementById('formIndividu').reset(); document.getElementById('i_nama_display').value = ''; }
+            } catch(err) { 
+                showToast("Kesalahan: " + err); 
+            } finally { 
+                loader.style.display = 'none'; 
+            }
+        }
+
+        document.getElementById('formMassal').onsubmit = e => { e.preventDefault(); buatTagihan('massal'); };
+        document.getElementById('formIndividu').onsubmit = e => { e.preventDefault(); buatTagihan('individu'); };
+        document.addEventListener('click', e => { if(e.target.id !== 'i_search') document.getElementById('i_sug').style.display = 'none'; });
+    </script>
+</body>
+</html>

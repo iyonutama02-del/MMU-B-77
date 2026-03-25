@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#f0f4f8" id="meta-theme-color">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <title>Kode Keuangan - Sistem Keuangan</title>
+    
+    <link rel="icon" type="image/png" href="Logo-Favicon.png">
+    <link rel="apple-touch-icon" href="Logo-Favicon.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFdlgBRw9stQDAguizoFho5vhpdd1TDiw",
+            authDomain: "keuangan-mmu-b-77.firebaseapp.com",
+            databaseURL: "https://keuangan-mmu-b-77-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "keuangan-mmu-b-77",
+            storageBucket: "keuangan-mmu-b-77.appspot.com",
+            messagingSenderId: "1054561507756",
+            appId: "1:1054561507756:web:e16722c692d3b44ed3c209"
+        };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const database = firebase.database();
+        
+        // Gembok Anti-Operator
+        if(localStorage.getItem('hakAkses') === 'Operator') {
+            alert("🔒 AKSES ILEGAL: Operator tidak diizinkan mengatur Kode Keuangan.");
+            window.location.replace('beranda.html');
+        }
+    </script>
+
+    <script>
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+
+    <style>
+        /* --- TEMA SOFT UI --- */
+        :root {
+            --bg-main: #f0f4f8; 
+            --text-dark: #2d3748;
+            --text-muted: #718096;
+            --shadow-light: #ffffff;
+            --shadow-dark: #d1d9e6;
+            --green-grad: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            --orange-grad: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --red-grad: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+        }
+        [data-theme="dark"] {
+            --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0;
+            --shadow-light: #3a4556; --shadow-dark: #202835;
+        }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+
+        body {
+            margin: 0; padding: 0; background-color: var(--bg-main);
+            font-family: 'Poppins', sans-serif; color: var(--text-dark);
+            user-select: none; padding-bottom: 50px; transition: 0.3s;
+        }
+        
+        .app-container { max-width: 1000px; margin: 0 auto; min-height: 100vh; padding: 20px; animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- TOAST NOTIFIKASI --- */
+        #toast { visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
+        @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+
+        /* --- NAVIGASI HEADER --- */
+        .nav-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
+        .btn-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--bg-main); display: flex; justify-content: center; align-items: center; color: var(--text-dark); box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light); transition: 0.2s; cursor: pointer; border: none; font-size: 16px; }
+        .btn-icon:active { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); }
+        .header-title { font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 700; margin: 0; color: var(--text-dark); }
+
+        /* --- PENCARIAN & AKSI --- */
+        .search-box { display: flex; align-items: center; border-radius: 15px; padding: 14px 20px; margin-bottom: 20px; background: var(--bg-main); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
+        .search-box i { color: var(--text-muted); font-size: 16px; }
+        .search-box input { border: none; background: transparent; outline: none; width: 100%; font-family: 'Poppins', sans-serif; color: var(--text-dark); margin-left: 12px; font-size: 13px; user-select: auto; }
+        .search-box input::placeholder { color: var(--text-muted); font-weight: 500; }
+
+        .btn-add { background: var(--green-grad); color: white; border: none; padding: 14px 20px; border-radius: 12px; font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 4px 4px 10px rgba(34, 197, 94, 0.3); transition: 0.2s; width: 100%; justify-content: center; }
+        .btn-add:active { box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2); transform: translateY(2px); }
+
+        /* --- TABEL DATA & WARNA BADGE --- */
+        .table-wrapper { background: var(--bg-main); border-radius: 20px; padding: 10px 15px 15px; box-shadow: 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light); overflow-x: auto; max-height: 65vh;}
+        .table-wrapper::-webkit-scrollbar { width: 6px; height: 6px; }
+        .table-wrapper::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; }
+        
+        table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 12px; text-align: left; }
+        th { color: var(--text-muted); font-weight: 700; padding: 15px 12px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; position: sticky; top: 0; background-color: var(--bg-main); z-index: 10; }
+        th::after { content: ''; position: absolute; left: 0; bottom: 0; width: 100%; border-bottom: 2px solid rgba(209, 217, 230, 0.5); }
+        td { padding: 12px; border-bottom: 1px solid rgba(209, 217, 230, 0.3); color: var(--text-dark); vertical-align: middle; transition: 0.3s; }
+        tr:last-child td { border-bottom: none; }
+        
+        /* 5 WARNA OTOMATIS BERDASARKAN KODE */
+        .badge { padding: 5px 10px; border-radius: 8px; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; letter-spacing: 0.5px; }
+        .badge-100 { background: rgba(34, 197, 94, 0.15); color: #22c55e; } /* Hijau */
+        .badge-200 { background: rgba(59, 130, 246, 0.15); color: #3b82f6; } /* Biru */
+        .badge-300 { background: rgba(239, 68, 68, 0.15); color: #ef4444; } /* Merah */
+        .badge-400 { background: rgba(245, 158, 11, 0.15); color: #f59e0b; } /* Oranye */
+        .badge-500 { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; } /* Ungu */
+        .badge-other { background: rgba(107, 114, 128, 0.15); color: #6b7280; } /* Abu-abu Dinamis */
+
+        /* HEADER PEMISAH (GOLONGAN) */
+        .group-header td { padding: 10px 15px !important; font-family: 'Montserrat'; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; background: rgba(209, 217, 230, 0.2); }
+        .gh-100 { color: #22c55e !important; border-left: 4px solid #22c55e; }
+        .gh-200 { color: #3b82f6 !important; border-left: 4px solid #3b82f6; }
+        .gh-300 { color: #ef4444 !important; border-left: 4px solid #ef4444; }
+        .gh-400 { color: #f59e0b !important; border-left: 4px solid #f59e0b; }
+        .gh-500 { color: #8b5cf6 !important; border-left: 4px solid #8b5cf6; }
+        .gh-oth { color: #6b7280 !important; border-left: 4px solid #6b7280; }
+
+        .btn-edit-row { color: #f59e0b; background: var(--bg-main); padding: 8px 12px; border-radius: 10px; box-shadow: 3px 3px 8px var(--shadow-dark), -3px -3px 8px var(--shadow-light); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; border: none; font-size: 13px;}
+        .btn-edit-row:active { box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light); }
+        .btn-locked { color: var(--text-muted); opacity: 0.5; cursor: not-allowed; }
+
+        .row-nonaktif td { opacity: 0.5; }
+        .row-nonaktif .nama-pos-teks { text-decoration: line-through; }
+        .badge-status { font-size: 9px; padding: 3px 6px; border-radius: 5px; margin-left: 5px; border: 1px solid currentColor; }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); font-weight: 500; }
+        .empty-state i { font-size: 40px; margin-bottom: 15px; display: block; opacity: 0.5; }
+
+        /* --- MODAL FORM --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(3px); }
+        .modal-content { background: var(--bg-main); width: 100%; max-width: 500px; border-radius: 20px; padding: 25px 20px; box-shadow: 10px 10px 30px rgba(0,0,0,0.3); position: relative; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { margin: 0; font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 800; color: #22c55e; display: flex; align-items: center; gap: 10px; }
+        .close-btn { font-size: 20px; color: var(--text-muted); cursor: pointer; }
+        
+        .input-group { margin-bottom: 15px; position: relative; }
+        .modal-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; margin-left: 5px; }
+        .input-edit { width: 100%; padding: 14px 15px; border: none; border-radius: 12px; background: var(--bg-main); font-family: 'Poppins', sans-serif; font-size: 13px; color: var(--text-dark); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); outline: none; box-sizing: border-box; user-select: auto; transition: 0.3s; appearance: none;}
+        .input-edit:focus { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light), 0 0 0 2px rgba(34, 197, 94, 0.3); }
+        
+        /* Gembok Akuntansi Read-only */
+        .input-edit.readonly-locked { background: rgba(209, 217, 230, 0.2); color: var(--text-muted); pointer-events: none; box-shadow: none; border: 1px solid rgba(209, 217, 230, 0.5); }
+        .icon-select { position: absolute; right: 15px; top: 38px; color: var(--text-muted); pointer-events: none; font-size: 12px;}
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
+        .btn-submit { width: 100%; padding: 14px; background: var(--green-grad); color: white; border: none; border-radius: 15px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; margin-top: 15px; box-shadow: 4px 4px 10px rgba(34, 197, 94, 0.3); transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .btn-submit:active { transform: translateY(2px); box-shadow: 2px 2px 5px rgba(34, 197, 94, 0.4); }
+        .btn-submit.mode-edit { background: var(--orange-grad); box-shadow: 4px 4px 10px rgba(245, 158, 11, 0.3); }
+    </style>
+</head>
+<body>
+
+    <div id="toast"><i class="fa-solid fa-circle-info"></i> <span id="toastMsg">Pesan</span></div>
+
+    <div class="app-container">
+        <div class="nav-top">
+            <button class="btn-icon" onclick="window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
+            <h1 class="header-title">Master Kode Keuangan</h1>
+            <button class="btn-icon" onclick="location.reload()" title="Segarkan Layar"><i class="fa-solid fa-rotate" style="color: #22c55e;"></i></button>
+        </div>
+
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="Cari nama pos atau kode (contoh: 101, SPP)..." onkeyup="cariKode()">
+        </div>
+
+        <div class="action-grid">
+            <button class="btn-add" id="btnTambahPos" onclick="bukaModal('tambah')">
+                <i class="fa-solid fa-folder-plus"></i> Tambah Pos Kustom Baru
+            </button>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Kode</th>
+                        <th>Nama Pos Keuangan</th>
+                        <th>Jenis Arus Kas</th>
+                        <th>Nominal Default</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tabel-body">
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 24px; color: #22c55e;"></i>
+                                <p style="margin-top: 10px;">Menarik Radar Firebase...</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalKode">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle"><i class="fa-solid fa-folder-plus"></i> Tambah Pos Baru</h2>
+                <i class="fa-solid fa-xmark close-btn" onclick="tutupModal()"></i>
+            </div>
+            <form id="formKode">
+                <input type="hidden" id="formMode" value="tambah">
+                <input type="hidden" id="isStandardCode" value="false">
+                
+                <div class="grid-2" style="grid-template-columns: 1.2fr 2fr;">
+                    <div class="input-group">
+                        <label class="modal-label">Kode Akun</label>
+                        <input type="number" class="input-edit" id="kode_uang" required placeholder="Cth: 601">
+                    </div>
+                    <div class="input-group">
+                        <label class="modal-label">Status Pos</label>
+                        <select class="input-edit" id="status_pos" style="cursor: pointer;">
+                            <option value="Aktif">Aktif (Digunakan)</option>
+                            <option value="Nonaktif">Nonaktif (Arsip)</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down icon-select"></i>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="modal-label">Nama Pos Keuangan</label>
+                    <input type="text" class="input-edit" id="nama_pos" required placeholder="Cth: Iuran Agustusan">
+                </div>
+
+                <div class="input-group">
+                    <label class="modal-label">Jenis Arus Kas <span id="labelGembok" style="color:#ef4444; font-size:9px; display:none;">(Terkunci)</span></label>
+                    <select class="input-edit" id="jenis" required style="cursor: pointer;">
+                        <option value="Pemasukan">Pemasukan (Uang Masuk)</option>
+                        <option value="Pengeluaran">Pengeluaran (Uang Keluar)</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down icon-select" id="iconGembok"></i>
+                </div>
+
+                <div class="input-group">
+                    <label class="modal-label">Nominal Default (Rp)</label>
+                    <input type="number" class="input-edit" id="nominal" placeholder="Kosongkan jika nominal bebas/variabel">
+                </div>
+
+                <button type="submit" class="btn-submit" id="btnSimpan">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan Pos Keuangan
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let hakAksesLokal = localStorage.getItem('hakAkses') || 'Operator';
+
+        // 21 KODE STANDAR (PONDASI HYBRID) - Mustahil Dihapus
+        const kodeStandar = [
+            { Kode_Uang: "101", Nama_Pos: "SPP / Syahriyah Bulanan", Jenis: "Pemasukan", Nominal_Default: 0 },
+            { Kode_Uang: "102", Nama_Pos: "Uang Pangkal / Pendaftaran", Jenis: "Pemasukan", Nominal_Default: 0 },
+            { Kode_Uang: "103", Nama_Pos: "Uang Gedung / Pembangunan", Jenis: "Pemasukan", Nominal_Default: 0 },
+            { Kode_Uang: "104", Nama_Pos: "Seragam & Atribut", Jenis: "Pemasukan", Nominal_Default: 0 },
+            { Kode_Uang: "105", Nama_Pos: "Buku / Kitab / LKS", Jenis: "Pemasukan", Nominal_Default: 0 },
+            { Kode_Uang: "201", Nama_Pos: "Infaq Sukarela / Jumat", Jenis: "Pemasukan", Nominal_Default: 0 },
+            { Kode_Uang: "202", Nama_Pos: "Donatur Tetap / Simpatisan", Jenis: "Pemasukan", Nominal_Default: 0 },
+            { Kode_Uang: "203", Nama_Pos: "Dana Bantuan (BOS/Yayasan)", Jenis: "Pemasukan", Nominal_Default: 0 },
+            { Kode_Uang: "204", Nama_Pos: "Usaha Madrasah (Koperasi)", Jenis: "Pemasukan", Nominal_Default: 0 },
+            { Kode_Uang: "301", Nama_Pos: "Bisaroh / Gaji Asatidz", Jenis: "Pengeluaran", Nominal_Default: 0 },
+            { Kode_Uang: "302", Nama_Pos: "Bisaroh Staf / TU / Kebersihan", Jenis: "Pengeluaran", Nominal_Default: 0 },
+            { Kode_Uang: "303", Nama_Pos: "Belanja ATK (Alat Tulis)", Jenis: "Pengeluaran", Nominal_Default: 0 },
+            { Kode_Uang: "304", Nama_Pos: "Tagihan Listrik, Air, Internet", Jenis: "Pengeluaran", Nominal_Default: 0 },
+            { Kode_Uang: "305", Nama_Pos: "Konsumsi Harian / Rapat", Jenis: "Pengeluaran", Nominal_Default: 0 },
+            { Kode_Uang: "401", Nama_Pos: "Biaya Ujian / Evaluasi", Jenis: "Pengeluaran", Nominal_Default: 0 },
+            { Kode_Uang: "402", Nama_Pos: "Kegiatan PHBI / Maulid", Jenis: "Pengeluaran", Nominal_Default: 0 },
+            { Kode_Uang: "403", Nama_Pos: "Haflah Akhirussanah / Wisuda", Jenis: "Pengeluaran", Nominal_Default: 0 },
+            { Kode_Uang: "404", Nama_Pos: "Ekstrakurikuler / Pelatihan", Jenis: "Pengeluaran", Nominal_Default: 0 },
+            { Kode_Uang: "501", Nama_Pos: "Rehab / Perawatan Gedung", Jenis: "Pengeluaran", Nominal_Default: 0 },
+            { Kode_Uang: "502", Nama_Pos: "Pembelian Inventaris Fisik", Jenis: "Pengeluaran", Nominal_Default: 0 },
+            { Kode_Uang: "503", Nama_Pos: "Perawatan Elektronik", Jenis: "Pengeluaran", Nominal_Default: 0 }
+        ];
+
+        function formatRupiah(angka) {
+            if(!angka || angka == 0) return 'Bebas / Variabel';
+            return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
+        }
+
+        function showToast(msg) {
+            let toast = document.getElementById("toast"); document.getElementById("toastMsg").innerText = msg;
+            toast.className = "show"; setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        // --- 1. FIREBASE REALTIME LISTENER ---
+        window.onload = function() {
+            if(hakAksesLokal === 'Demo') { document.getElementById('btnTambahPos').style.display = 'none'; }
+            muatDataKodeRealtime();
+        };
+
+        function muatDataKodeRealtime() {
+            let tabelBody = document.getElementById('tabel-body');
+            
+            // Radar Firebase on('value') - Realtime Sync
+            database.ref('kode_keuangan').on('value', snapshot => {
+                tabelBody.innerHTML = ''; 
+                
+                // Siapkan Pondasi
+                let mergedData = JSON.parse(JSON.stringify(kodeStandar));
+                mergedData.forEach(item => item.Status = 'Aktif'); // Default
+                
+                if(snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        let dbRow = child.val();
+                        let kodeDb = String(child.key);
+                        let existingIndex = mergedData.findIndex(item => String(item.Kode_Uang) === kodeDb);
+                        
+                        if (existingIndex !== -1) {
+                            // Timpa data standar dengan data dari Firebase (Kecuali Jenis Arus Kas)
+                            mergedData[existingIndex].Nama_Pos = dbRow.Nama_Pos || dbRow.nama_pos || mergedData[existingIndex].Nama_Pos;
+                            mergedData[existingIndex].Nominal_Default = dbRow.Nominal_Default || dbRow.Nominal || 0;
+                            mergedData[existingIndex].Status = dbRow.Status || 'Aktif';
+                        } else {
+                            // Suntik pos kustom baru dari Firebase
+                            mergedData.push({
+                                Kode_Uang: kodeDb,
+                                Nama_Pos: dbRow.Nama_Pos || dbRow.nama_pos,
+                                Jenis: dbRow.Jenis || dbRow.jenis,
+                                Nominal_Default: dbRow.Nominal_Default || dbRow.Nominal || 0,
+                                Status: dbRow.Status || 'Aktif'
+                            });
+                        }
+                    });
+                }
+
+                // Urutkan berdasarkan angka kode
+                mergedData.sort((a, b) => parseInt(a.Kode_Uang) - parseInt(b.Kode_Uang));
+
+                let currentGroup = '';
+
+                if(mergedData.length === 0) return;
+
+                mergedData.forEach(row => {
+                    let kodeInt = parseInt(row.Kode_Uang);
+                    let ratusan = Math.floor(kodeInt / 100) * 100; // Auto-Grouping (100, 200, 600, 900)
+                    
+                    let badgeClass = 'badge-other'; let ghClass = 'gh-oth';
+                    let groupName = `${ratusan}: Kategori Kustom ${ratusan}`;
+                    let icon = row.Jenis === 'Pemasukan' ? '<i class="fa-solid fa-arrow-down"></i>' : '<i class="fa-solid fa-arrow-up"></i>';
+                    let nomClean = row.Nominal_Default || 0;
+                    
+                    // Logika Warna Dinamis
+                    if (ratusan === 100) { badgeClass = 'badge-100'; ghClass = 'gh-100'; groupName = '100: Pemasukan Rutin (Wajib)'; }
+                    else if (ratusan === 200) { badgeClass = 'badge-200'; ghClass = 'gh-200'; groupName = '200: Pemasukan Non-Rutin / Donasi'; }
+                    else if (ratusan === 300) { badgeClass = 'badge-300'; ghClass = 'gh-300'; groupName = '300: Pengeluaran SDM & Operasional'; }
+                    else if (ratusan === 400) { badgeClass = 'badge-400'; ghClass = 'gh-400'; groupName = '400: Pengeluaran Kegiatan / Event'; }
+                    else if (ratusan === 500) { badgeClass = 'badge-500'; ghClass = 'gh-500'; groupName = '500: Pengeluaran Inventaris & Aset'; }
+
+                    // CETAK HEADER GRUP AUTO
+                    if (groupName !== currentGroup) {
+                        tabelBody.innerHTML += `<tr class="group-header"><td colspan="5" class="${ghClass}">${groupName}</td></tr>`;
+                        currentGroup = groupName;
+                    }
+
+                    // Aksi dan Gembok
+                    let isStandard = (kodeInt >= 101 && kodeInt <= 503);
+                    let actBtn = '';
+                    if (hakAksesLokal === 'Demo') {
+                        actBtn = `<button class="btn-edit-row btn-locked" title="Akses Ditolak" onclick="showToast('Hanya Admin yang bisa mengedit.')"><i class="fa-solid fa-lock"></i></button>`;
+                    } else {
+                        let escapedNama = String(row.Nama_Pos || "").replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        actBtn = `<button class="btn-edit-row" title="Edit Pos" onclick="bukaModal('edit', '${row.Kode_Uang}', '${escapedNama}', '${row.Jenis}', '${nomClean}', '${row.Status}', ${isStandard})"><i class="fa-solid fa-pen"></i></button>`;
+                    }
+
+                    // Status Soft Delete Visual
+                    let rowClass = "baris-data";
+                    let badgeStatus = "";
+                    if(row.Status === 'Nonaktif') {
+                        rowClass += " row-nonaktif";
+                        badgeStatus = `<span class="badge-status" style="color:#ef4444;">Nonaktif</span>`;
+                    }
+
+                    // CETAK BARIS DATA
+                    let tr = document.createElement('tr');
+                    tr.className = rowClass;
+                    tr.innerHTML = `
+                        <td><strong>${row.Kode_Uang || '-'}</strong></td>
+                        <td style="font-weight: 600;"><span class="nama-pos-teks">${row.Nama_Pos || '-'}</span> ${badgeStatus}</td>
+                        <td><span class="badge ${badgeClass}">${icon} ${row.Jenis || '-'}</span></td>
+                        <td style="font-family: monospace; font-size: 13px; font-weight: 600;">${formatRupiah(nomClean)}</td>
+                        <td>${actBtn}</td>
+                    `;
+                    tabelBody.appendChild(tr);
+                });
+                cariKode(); // Terapkan pencarian ulang jika sedang ngetik
+            }, (error) => {
+                tabelBody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i><p>Akses ditolak / Error Firebase.</p></div></td></tr>`;
+            });
+        }
+
+        // --- PENCARIAN ---
+        function cariKode() {
+            let input = document.getElementById("searchInput").value.toLowerCase();
+            let rows = document.querySelectorAll(".baris-data, .group-header");
+            
+            rows.forEach(row => {
+                if(row.classList.contains('group-header')) {
+                    row.style.display = input === "" ? "" : "none";
+                } else {
+                    let text = row.innerText.toLowerCase();
+                    row.style.display = text.includes(input) ? "" : "none";
+                }
+            });
+        }
+
+        // --- KENDALI MODAL ---
+        function bukaModal(mode, kode='', nama='', jenis='Pemasukan', nom=0, status='Aktif', isStandard=false) { 
+            let form = document.getElementById('formKode'); form.reset();
+            let inputKode = document.getElementById('kode_uang');
+            let inputJenis = document.getElementById('jenis');
+            let title = document.getElementById('modalTitle');
+            let btn = document.getElementById('btnSimpan');
+            
+            document.getElementById('formMode').value = mode;
+            document.getElementById('isStandardCode').value = isStandard;
+
+            if(mode === 'edit') {
+                title.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Edit Pos Keuangan';
+                title.style.color = '#f59e0b';
+                btn.className = 'btn-submit mode-edit';
+                btn.innerHTML = '<i class="fa-solid fa-check-double"></i> Simpan Perubahan';
+                
+                inputKode.value = parseInt(kode);
+                inputKode.classList.add('readonly-locked'); inputKode.readOnly = true; 
+                
+                document.getElementById('nama_pos').value = nama;
+                document.getElementById('nominal').value = nom == 0 ? '' : nom;
+                document.getElementById('status_pos').value = status;
+                
+                inputJenis.value = jenis;
+                // Gembok Arus Kas untuk Kode Bawaan!
+                if(isStandard) {
+                    inputJenis.classList.add('readonly-locked');
+                    document.getElementById('labelGembok').style.display = 'inline';
+                    document.getElementById('iconGembok').className = "fa-solid fa-lock icon-select";
+                } else {
+                    inputJenis.classList.remove('readonly-locked');
+                    document.getElementById('labelGembok').style.display = 'none';
+                    document.getElementById('iconGembok').className = "fa-solid fa-chevron-down icon-select";
+                }
+            } else {
+                title.innerHTML = '<i class="fa-solid fa-folder-plus"></i> Tambah Pos Kustom';
+                title.style.color = '#22c55e';
+                btn.className = 'btn-submit';
+                btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Pos Baru';
+                
+                inputKode.classList.remove('readonly-locked'); inputKode.readOnly = false;
+                inputJenis.classList.remove('readonly-locked');
+                document.getElementById('status_pos').value = 'Aktif';
+                document.getElementById('labelGembok').style.display = 'none';
+                document.getElementById('iconGembok').className = "fa-solid fa-chevron-down icon-select";
+            }
+            document.getElementById('modalKode').style.display = 'flex'; 
+        }
+
+        function tutupModal() { document.getElementById('modalKode').style.display = 'none'; }
+
+        // --- VALIDASI ANTI-DUPLIKAT 0.1 DETIK & SIMPAN ---
+        document.getElementById('formKode').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if(hakAksesLokal === 'Demo') { showToast("Aksi ditolak untuk akun Demo."); return; }
+
+            let mode = document.getElementById('formMode').value;
+            let inputKodeVal = document.getElementById('kode_uang').value.trim();
+            
+            let btnSimpan = document.getElementById('btnSimpan');
+            let txtAsli = btnSimpan.innerHTML;
+            btnSimpan.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Menyimpan...'; btnSimpan.disabled = true;
+
+            try {
+                // Pengecekan Anti-Duplikat untuk Mode Tambah Baru
+                if (mode === 'tambah') {
+                    // 1. Cek di Database
+                    let cekDb = await database.ref('kode_keuangan/' + inputKodeVal).once('value');
+                    // 2. Cek di Standar Array
+                    let isStandarExits = kodeStandar.some(item => String(item.Kode_Uang) === inputKodeVal);
+                    
+                    if (cekDb.exists() || isStandarExits) {
+                        showToast(`GAGAL: Kode ${inputKodeVal} sudah ada di sistem! Gunakan kode angka lain.`);
+                        btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false;
+                        return;
+                    }
+                }
+
+                // Siapkan Objek Simpan (Jika Standard, abaikan perubahan Jenis Arus Kas)
+                let isStandard = document.getElementById('isStandardCode').value === 'true';
+                let dataSimpan = {
+                    Nama_Pos: document.getElementById('nama_pos').value.trim(),
+                    Nominal_Default: document.getElementById('nominal').value || 0,
+                    Status: document.getElementById('status_pos').value
+                };
+
+                if (!isStandard) {
+                    dataSimpan.Jenis = document.getElementById('jenis').value;
+                }
+
+                // Tembak ke Firebase!
+                await database.ref('kode_keuangan/' + inputKodeVal).update(dataSimpan);
+                
+                showToast('Master Kode berhasil diperbarui!'); 
+                tutupModal(); 
+
+            } catch (err) {
+                console.error(err);
+                showToast('Kesalahan Jaringan. Gagal menyimpan.');
+            }
+            
+            btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false;
+        });
+    </script>
+</body>
+</html>

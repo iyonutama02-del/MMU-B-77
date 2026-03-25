@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#e0e5ec" id="meta-theme-color">
+    <title>Kasir Pembayaran - MMU B-77</title>
+    
+    <link rel="icon" type="image/png" href="Logo-Favicon.png">
+    <link rel="apple-touch-icon" href="Logo-Favicon.png">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        const role = localStorage.getItem('hakAkses');
+        if(role === 'Demo') {
+            alert("🔒 AKSES DIBATASI: Akun Demo tidak bisa mengakses Kasir.");
+            window.location.replace('beranda.html');
+        }
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+
+    <style>
+        /* --- NEUMORPHISM THEME --- */
+        :root {
+            --bg-main: #e0e5ec; --text-dark: #31344b; --text-muted: #8C96A3;
+            --shadow-dark: rgba(163, 177, 198, 0.6); --shadow-light: rgba(255, 255, 255, 0.6);
+            --green-grad: linear-gradient(135deg, #2df077 0%, #00d26a 100%);
+            --c-green: #00d26a; --c-orange: #f59e0b;
+        }
+        [data-theme="dark"] {
+            --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0;
+            --shadow-dark: #202835; --shadow-light: #3a4556;
+        }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { background: var(--bg-main); font-family: 'Poppins', sans-serif; color: var(--text-dark); margin:0; padding:0; padding-bottom:50px; transition:0.3s;}
+        .app-container { max-width: 600px; margin: 0 auto; padding: 20px; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+        .nav-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;}
+        .btn-icon { width: 45px; height: 45px; border-radius: 15px; background: var(--bg-main); display: flex; justify-content: center; align-items: center; color: var(--text-dark); box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); border: none; cursor: pointer; transition: 0.2s;}
+        .btn-icon:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
+        .header-title { font-family:'Montserrat'; font-size:18px; font-weight:900; margin:0; text-transform:uppercase; letter-spacing:1px; }
+
+        /* SEARCH BAR */
+        .search-card { background: var(--bg-main); border-radius: 20px; padding: 20px; margin-bottom: 25px; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); }
+        .input-group { position: relative; }
+        .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; margin-left: 5px; }
+        .input-edit { width: 100%; padding: 15px; border: none; border-radius: 12px; background: var(--bg-main); font-family: 'Poppins'; font-size: 13px; color: var(--text-dark); box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); outline: none; transition: 0.3s; appearance: none;}
+        
+        .sug-box { position: absolute; top: 100%; left: 0; width: 100%; background: var(--bg-main); border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 100; max-height: 250px; overflow-y: auto; display: none; margin-top: 8px; padding: 5px; border: 1px solid rgba(255,255,255,0.2);}
+        .sug-item { padding: 12px 15px; border-radius: 10px; cursor: pointer; font-size: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .sug-item:hover { background: rgba(0, 210, 106, 0.1); color: var(--c-green); font-weight: 700;}
+
+        /* TAGIHAN CARD */
+        .card-tagihan { background: var(--bg-main); border-radius: 18px; padding: 20px; margin-bottom: 15px; box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); border-left: 4px solid var(--c-orange); display: flex; flex-direction: column; gap: 15px;}
+        .ct-head { display: flex; justify-content: space-between; align-items: flex-start; }
+        .ct-title { font-family: 'Montserrat'; font-weight: 800; font-size: 14px; margin: 0 0 5px 0;}
+        .ct-info { font-size: 11px; color: var(--text-muted); margin: 0; line-height: 1.4;}
+        .ct-price { font-family: 'Montserrat'; font-weight: 900; font-size: 16px; color: var(--c-orange); text-align: right;}
+        
+        .ct-action { display: flex; gap: 10px; }
+        .ct-input { flex: 1; padding: 12px; border: none; border-radius: 10px; background: var(--bg-main); font-family: 'Poppins'; font-size: 13px; font-weight: 700; color: var(--text-dark); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); outline: none; }
+        .btn-bayar { background: var(--green-grad); color: white; border: none; padding: 0 20px; border-radius: 10px; font-family: 'Montserrat'; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 4px 4px 10px rgba(0, 210, 106, 0.3); transition: 0.2s;}
+        .btn-bayar:active { transform: scale(0.95); }
+
+        #toast { visibility: hidden; min-width: 250px; background-color: #31344b; color: #fff; text-align: center; border-radius: 15px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
+        @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+
+        /* KUITANSI WRAPPER (HIDDEN) */
+        #kuitansi-cetak-wrapper { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9000; display:flex; justify-content:center; align-items:center; opacity:0; pointer-events:none; transition:0.3s; padding:20px; }
+        .kuitansi-box { width: 400px; background: white; border-radius: 15px; padding: 25px; font-family: 'Poppins', sans-serif; color: #1e293b; box-shadow: 0 20px 40px rgba(0,0,0,0.3); position: relative; overflow: hidden; }
+        .k-theme-emas { border-top: 10px solid #f59e0b; } .k-theme-emas .k-title { color: #f59e0b; }
+        .k-theme-hijau { border-top: 10px solid #22c55e; } .k-theme-hijau .k-title { color: #22c55e; }
+        .k-theme-abu { border-top: 10px solid #64748b; } .k-theme-abu .k-title { color: #64748b; }
+        
+        .k-header { text-align: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 15px; margin-bottom: 15px; }
+        .k-title { font-family: 'Montserrat'; font-weight: 900; font-size: 20px; margin: 0; letter-spacing: 1px; }
+        .k-sub { font-size: 10px; color: #64748b; margin: 5px 0 0; }
+        .k-body { font-size: 12px; line-height: 1.8; }
+        .k-row { display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding: 8px 0; }
+        .k-total { background: #f8fafc; padding: 15px; border-radius: 10px; text-align: center; margin: 15px 0; }
+        .k-total span { display: block; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+        .k-total h2 { margin: 5px 0 0; font-family: 'Montserrat'; font-size: 24px; font-weight: 900; }
+        .k-footer { text-align: center; font-size: 10px; color: #94a3b8; font-style: italic; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="toast"><span>Pesan</span></div>
+
+    <div class="app-container">
+        <div class="nav-top">
+            <button class="btn-icon" onclick="window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
+            <h1 class="header-title">Kasir Pembayaran</h1>
+            <div style="width: 45px;"></div>
+        </div>
+
+        <div class="search-card">
+            <div class="input-group">
+                <label>Cari Nama Santri / NIS</label>
+                <input type="text" class="input-edit" id="cariSantri" placeholder="Ketik nama anak..." onkeyup="cariData()" autocomplete="off">
+                <div class="sug-box" id="sugBox"></div>
+            </div>
+            <div style="text-align:center; font-size:10px; color:var(--c-green); font-weight:700; margin-top:10px;" id="statusSync"><i class="fa-solid fa-cloud-arrow-down"></i> Data tersinkronisasi.</div>
+        </div>
+
+        <div id="hasilTagihan">
+            <div style="text-align:center; padding:30px; color:var(--text-muted); font-size:12px; font-weight:600;">
+                <i class="fa-solid fa-cash-register" style="font-size:40px; margin-bottom:15px; opacity:0.5;"></i><br>
+                Pilih santri untuk melihat daftar tagihan.
+            </div>
+        </div>
+    </div>
+
+    <div id="kuitansi-cetak-wrapper">
+        <div class="kuitansi-box" id="areaCetak">
+            <div class="k-header">
+                <h1 class="k-title">BUKTI PEMBAYARAN</h1>
+                <p class="k-sub">Madrasah Miftahul Ulum B-77 Jrebeng Kulon</p>
+                <p style="font-family:monospace; font-size:10px; margin:5px 0 0;" id="k_id">ID: -</p>
+            </div>
+            <div class="k-body">
+                <div class="k-row"><span>Waktu</span><strong id="k_tgl">-</strong></div>
+                <div class="k-row"><span>Nama Santri</span><strong id="k_nama">-</strong></div>
+                <div class="k-row"><span>ID / Kelas</span><strong id="k_kelas">-</strong></div>
+                <div class="k-row"><span>Pembayaran</span><strong id="k_pos">-</strong></div>
+                <div class="k-row"><span>Kasir</span><strong id="k_kasir">-</strong></div>
+            </div>
+            <div class="k-total">
+                <span id="k_label_total">TOTAL DIBAYAR</span>
+                <h2 id="k_nominal">Rp 0</h2>
+                <p style="font-size:11px; color:#ef4444; margin:5px 0 0; font-weight:700; display:none;" id="k_sisa_tagihan">Sisa Tagihan: Rp 0</p>
+            </div>
+            <div class="k-footer" id="k_pesan">Terima kasih atas kepercayaannya.</div>
+        </div>
+        
+        <div style="position:absolute; bottom:30px; display:flex; gap:10px; width:100%; max-width:400px; padding:0 20px;">
+            <input type="number" id="txtWA" placeholder="Kirim ke No WA (08x)..." style="flex:1; padding:12px; border-radius:12px; border:none; outline:none; font-family:'Poppins';">
+            <button onclick="unduhDanKirimWA()" style="background:#25D366; color:white; border:none; padding:0 20px; border-radius:12px; font-weight:700; cursor:pointer;"><i class="fa-solid fa-paper-plane"></i> Kirim</button>
+            <button onclick="tutupKuitansi()" style="background:#ef4444; color:white; border:none; padding:0 15px; border-radius:12px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+    </div>
+
+    <script>
+        let dbTagihan = []; let dbSantri = [];
+        const formatRp = (n) => 'Rp ' + parseInt(n || 0).toLocaleString('id-ID');
+        function showToast(msg) { let t = document.getElementById("toast"); t.querySelector("span").innerText = msg; t.className = "show"; setTimeout(() => { t.className = ""; }, 3000); }
+
+        window.onload = function() {
+            let user = localStorage.getItem('namaPengguna');
+            if(!user) window.location.href = 'index.html';
+
+            // Sinkronisasi Firebase Realtime
+            database.ref('santri').on('value', snap => {
+                dbSantri = []; snap.forEach(c => dbSantri.push(c.val()));
+            });
+
+            database.ref('tagihan').on('value', snap => {
+                dbTagihan = []; snap.forEach(c => dbTagihan.push(c.val()));
+            });
+        };
+
+        function cariData() {
+            let input = document.getElementById('cariSantri').value.toLowerCase();
+            let box = document.getElementById('sugBox'); box.innerHTML = '';
+            
+            if(input.length < 2) { box.style.display = 'none'; return; }
+
+            // Filter Tagihan yang Belum Lunas
+            let tagihanAktif = dbTagihan.filter(t => t.Status === 'Belum Lunas' || t.Status === 'Cicilan');
+            
+            // Cari santri unik yang punya tagihan
+            let hasilUnik = [];
+            tagihanAktif.forEach(t => {
+                if((t.Nama_Santri.toLowerCase().includes(input) || String(t.ID_Murid).includes(input)) && !hasilUnik.find(x => x.ID_Murid === t.ID_Murid)) {
+                    hasilUnik.push({ ID_Murid: t.ID_Murid, Nama_Santri: t.Nama_Santri, Kelas: t.Kelas });
+                }
+            });
+
+            hasilUnik.slice(0, 5).forEach(s => {
+                let div = document.createElement('div'); div.className = 'sug-item';
+                div.innerHTML = `<b>${s.Nama_Santri}</b> <span style="font-size:10px; color:gray;">(${s.Kelas})</span>`;
+                div.onclick = () => { 
+                    document.getElementById('cariSantri').value = s.Nama_Santri; 
+                    box.style.display = 'none'; 
+                    renderTagihan(s.ID_Murid); 
+                };
+                box.appendChild(div);
+            });
+            
+            box.style.display = hasilUnik.length > 0 ? 'block' : 'none';
+        }
+
+        function renderTagihan(idMurid) {
+            let wadah = document.getElementById('hasilTagihan'); wadah.innerHTML = '';
+            let tagihanSiswa = dbTagihan.filter(t => String(t.ID_Murid) === String(idMurid) && (t.Status === 'Belum Lunas' || t.Status === 'Cicilan'));
+
+            if(tagihanSiswa.length === 0) {
+                wadah.innerHTML = `<div style="text-align:center; padding:30px; color:#00d26a; font-weight:700;"><i class="fa-solid fa-check-circle" style="font-size:40px; margin-bottom:10px;"></i><br>Alhamdulillah, santri ini tidak memiliki tunggakan.</div>`;
+                return;
+            }
+
+            tagihanSiswa.forEach(t => {
+                let sisa = t.Status === 'Cicilan' ? (t.Nominal - (t.Terbayar || 0)) : t.Nominal;
+                
+                wadah.innerHTML += `
+                <div class="card-tagihan" id="card_${t.ID_Tagihan}">
+                    <div class="ct-head">
+                        <div>
+                            <h4 class="ct-title">${t.Nama_Pos}</h4>
+                            <p class="ct-info">Tagihan: ${formatRp(t.Nominal)} <br> ${t.Status === 'Cicilan' ? `<span style="color:#f59e0b; font-weight:700;">Sisa: ${formatRp(sisa)}</span>` : ''}</p>
+                        </div>
+                        <div class="ct-price">${formatRp(sisa)}</div>
+                    </div>
+                    <div class="ct-action">
+                        <input type="number" id="input_${t.ID_Tagihan}" class="ct-input" placeholder="Jml Bayar..." value="${sisa}">
+                        <button class="btn-bayar" id="btn_${t.ID_Tagihan}" onclick="eksekusiBayar('${t.ID_Tagihan}', ${sisa}, '${t.Tanggal_Buat}')">BAYAR</button>
+                    </div>
+                </div>`;
+            });
+
+            // Set nomor WA jika ada
+            let profil = dbSantri.find(s => String(s.ID_Murid) === String(idMurid));
+            if(profil && profil.WA_Wali) document.getElementById('txtWA').value = profil.WA_Wali;
+        }
+
+        async function eksekusiBayar(idTagihan, tagihanHarusDibayar, tglBuat) {
+            let inputBayar = parseInt(document.getElementById(`input_${idTagihan}`).value) || 0;
+            if(inputBayar <= 0) { showToast("Masukkan nominal dengan benar!"); return; }
+
+            let btn = document.getElementById(`btn_${idTagihan}`);
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; btn.disabled = true;
+
+            let tgh = dbTagihan.find(t => t.ID_Tagihan === idTagihan);
+            let sisaBaru = tagihanHarusDibayar - inputBayar;
+            let statusBaru = sisaBaru <= 0 ? 'Lunas' : 'Cicilan';
+            let uangLebih = sisaBaru < 0 ? Math.abs(sisaBaru) : 0;
+            
+            let ts = new Date().getTime(); let waktu = new Date().toLocaleString('id-ID');
+            let kasir = localStorage.getItem('namaPengguna') || 'Kasir';
+
+            // Pengecekan Level Warna Kuitansi
+            let selisihHari = (new Date() - new Date(tglBuat.split(' ')[0].split('/').reverse().join('-'))) / (1000 * 3600 * 24);
+            let levelKuitansi = 'k-theme-hijau'; let pesanKuitansi = "Terima kasih telah menunaikan kewajiban administrasi.";
+            
+            if(uangLebih > 0) {
+                levelKuitansi = 'k-theme-emas'; 
+                pesanKuitansi = `Jazakumullah Khairan atas kelebihannya (${formatRp(uangLebih)}). Semoga berkah.`;
+            } else if (selisihHari > 30) {
+                levelKuitansi = 'k-theme-abu';
+                pesanKuitansi = "Pembayaran telah kami terima. Terima kasih atas kerjasamanya.";
+            }
+
+            try {
+                let updates = {};
+                let dataMasuk = {
+                    ID_Transaksi: `PAY-${ts}`, Waktu: waktu, Kategori_Nama: tgh.Nama_Pos,
+                    Nominal: inputBayar, Sumber: tgh.Nama_Santri, Keterangan: `Pembayaran ${tgh.Nama_Pos}`,
+                    Admin_Penerima: kasir, Jenis: 'MASUK'
+                };
+
+                updates[`buku_kas/PAY-${ts}`] = dataMasuk;
+                updates[`kas_masuk/PAY-${ts}`] = dataMasuk;
+
+                if(statusBaru === 'Lunas') {
+                    updates[`tagihan/${idTagihan}/Status`] = 'Lunas';
+                    updates[`tagihan/${idTagihan}/Tgl_Lunas`] = waktu;
+                    updates[`tagihan/${idTagihan}/Kasir`] = kasir;
+                } else {
+                    let sdhBayar = parseInt(tgh.Terbayar || 0) + inputBayar;
+                    updates[`tagihan/${idTagihan}/Status`] = 'Cicilan';
+                    updates[`tagihan/${idTagihan}/Terbayar`] = sdhBayar;
+                }
+
+                await database.ref().update(updates);
+
+                // Tampilkan Kuitansi
+                document.getElementById('k_id').innerText = `ID: PAY-${ts}`;
+                document.getElementById('k_tgl').innerText = waktu.split(' ')[0];
+                document.getElementById('k_nama').innerText = tgh.Nama_Santri;
+                document.getElementById('k_kelas').innerText = `${tgh.ID_Murid} / ${tgh.Kelas}`;
+                document.getElementById('k_pos').innerText = tgh.Nama_Pos;
+                document.getElementById('k_kasir').innerText = kasir;
+                document.getElementById('k_nominal').innerText = formatRp(inputBayar);
+                document.getElementById('k_pesan').innerText = pesanKuitansi;
+                
+                let areaCetak = document.getElementById('areaCetak');
+                areaCetak.className = `kuitansi-box ${levelKuitansi}`;
+
+                let sisaTeks = document.getElementById('k_sisa_tagihan');
+                if(sisaBaru > 0) { sisaTeks.innerText = `Sisa Tagihan: ${formatRp(sisaBaru)}`; sisaTeks.style.display = 'block'; } 
+                else { sisaTeks.style.display = 'none'; }
+
+                document.getElementById('kuitansi-cetak-wrapper').style.opacity = '1';
+                document.getElementById('kuitansi-cetak-wrapper').style.pointerEvents = 'auto';
+                showToast("Pembayaran Berhasil!");
+
+                document.getElementById(`card_${idTagihan}`).style.display = 'none'; // Sembunyikan tagihan yg dibayar
+
+            } catch(e) {
+                showToast("Error Jaringan: " + e.message);
+                btn.innerHTML = 'BAYAR'; btn.disabled = false;
+            }
+        }
+
+        function tutupKuitansi() {
+            document.getElementById('kuitansi-cetak-wrapper').style.opacity = '0';
+            document.getElementById('kuitansi-cetak-wrapper').style.pointerEvents = 'none';
+        }
+
+        function unduhDanKirimWA() {
+            const area = document.getElementById('areaCetak');
+            const waInp = document.getElementById('txtWA').value;
+
+            html2canvas(area, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
+                const img = canvas.toDataURL("image/jpeg", 0.95);
+                const link = document.createElement('a'); link.download = `Kuitansi_${new Date().getTime()}.jpg`;
+                link.href = img; link.click();
+                
+                if(waInp) {
+                    let no = waInp; if(no.startsWith('0')) no = '62' + no.substring(1);
+                    const msg = encodeURIComponent(`*KUITANSI DIGITAL MMU B-77*\n\nAlhamdulillah, pembayaran ananda telah kami terima. Bukti kuitansi gambar terlampir.\n\nTerima kasih.`);
+                    setTimeout(() => window.open(`https://wa.me/${no}?text=${msg}`, '_blank'), 500);
+                }
+                tutupKuitansi();
+            });
+        }
+        document.addEventListener('click', e => { if(e.target.id !== 'cariSantri') document.getElementById('sugBox').style.display = 'none'; });
+    </script>
+</body>
+</html>

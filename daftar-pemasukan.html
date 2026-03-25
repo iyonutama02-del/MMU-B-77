@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#f0f4f8" id="meta-theme-color">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <title>Riwayat Pemasukan - Sistem Keuangan</title>
+    
+    <link rel="icon" type="image/png" href="Logo Favicon.png">
+    <link rel="apple-touch-icon" href="Logo Favicon.png">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+
+    <style>
+        /* --- TEMA SOFT UI --- */
+        :root {
+            --bg-main: #f0f4f8; --text-dark: #2d3748; --text-muted: #718096;
+            --shadow-light: #ffffff; --shadow-dark: #d1d9e6;
+            --green-grad: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            --red-grad: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+            --blue-grad: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            --border-line: #e2e8f0;
+        }
+        [data-theme="dark"] {
+            --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0;
+            --shadow-light: #3a4556; --shadow-dark: #202835; --border-line: #4a5568;
+        }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { margin: 0; padding: 0; background-color: var(--bg-main); font-family: 'Poppins', sans-serif; color: var(--text-dark); padding-bottom: 50px; transition: 0.3s; }
+        .app-container { max-width: 1100px; margin: 0 auto; min-height: 100vh; padding: 25px 20px; }
+
+        /* HEADER */
+        .nav-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
+        .btn-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--bg-main); display: flex; justify-content: center; align-items: center; color: var(--text-dark); box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light); transition: 0.2s; cursor: pointer; border: none; font-size: 16px; }
+        .btn-icon:active { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); }
+        .header-title { font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 800; margin: 0; color: var(--text-dark); }
+
+        /* PANEL FILTER */
+        .filter-panel { background: var(--bg-main); border-radius: 20px; padding: 20px; box-shadow: 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light); margin-bottom: 25px; }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; margin-left: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .input-control { width: 100%; padding: 12px 15px; border: none; border-radius: 12px; background: var(--bg-main); font-family: 'Poppins', sans-serif; font-size: 12px; color: var(--text-dark); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); outline: none; transition: 0.3s; }
+        
+        .action-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn { flex: 1; padding: 14px 15px; border: none; border-radius: 12px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 12px; color: white; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s; box-shadow: 4px 4px 10px rgba(0,0,0,0.1); }
+        .btn:active { transform: translateY(2px); box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2); }
+        .btn-blue { background: var(--blue-grad); }
+        .btn-green { background: var(--green-grad); }
+        .btn-red { background: var(--red-grad); }
+
+        /* SUMMARY PANEL */
+        .summary-panel { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .summary-card { background: var(--bg-main); border-radius: 20px; padding: 20px; box-shadow: 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light); display: flex; justify-content: space-between; align-items: center; }
+        .summary-text p { margin: 0 0 5px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .summary-text h3 { margin: 0; font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 800; color: #22c55e; }
+        .summary-icon { width: 50px; height: 50px; border-radius: 15px; background: rgba(34, 197, 94, 0.1); display: flex; justify-content: center; align-items: center; color: #22c55e; font-size: 24px; box-shadow: inset 3px 3px 6px rgba(0,0,0,0.05); }
+
+        /* TABLE */
+        .table-wrapper { background: var(--bg-main); border-radius: 20px; padding: 10px 15px 15px; box-shadow: 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 12px; text-align: left; }
+        th { color: var(--text-muted); font-weight: 700; padding: 15px 12px; border-bottom: 2px solid var(--border-line); font-family: 'Montserrat', sans-serif; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; }
+        td { padding: 15px 12px; border-bottom: 1px solid var(--border-line); color: var(--text-dark); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        
+        .tx-id { font-family: monospace; font-size: 11px; font-weight: 600; color: var(--text-muted); background: rgba(209, 217, 230, 0.2); padding: 3px 8px; border-radius: 6px; }
+        .nominal-text { font-family: monospace; font-size: 13px; font-weight: 700; color: #22c55e; }
+        
+        /* Empty State & Loader */
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); font-weight: 500; }
+        .empty-state i { font-size: 40px; margin-bottom: 15px; display: block; opacity: 0.3; }
+
+        /* KOP SURAT (SEMBUNYI SAAT NORMAL, MUNCUL SAAT PRINT) */
+        .print-header { display: none; text-align: center; border-bottom: 3px solid black; padding-bottom: 15px; margin-bottom: 20px; }
+        .print-header h1 { font-family: 'Times New Roman', serif; font-size: 22px; margin: 0; font-weight: bold; text-transform: uppercase; }
+        .print-header p { font-family: 'Times New Roman', serif; font-size: 12px; margin: 3px 0 0; }
+        .print-title { display: none; text-align: center; font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; text-decoration: underline; }
+
+        /* MEDIA QUERIES UNTUK CETAK PDF (PRINT) */
+        @media print {
+            body { background: white; color: black; padding: 0; }
+            .nav-top, .filter-panel, .btn-icon { display: none !important; }
+            .summary-panel { display: flex; justify-content: space-between; margin-bottom: 20px; }
+            .summary-card { box-shadow: none; border: 1px solid #ccc; padding: 10px 15px; border-radius: 0; }
+            .summary-icon { display: none; }
+            
+            .table-wrapper { box-shadow: none; border-radius: 0; padding: 0; overflow: visible; }
+            table { width: 100%; border-collapse: collapse; }
+            table, th, td { border: 1px solid black; }
+            th { background-color: #f2f2f2 !important; color: black; -webkit-print-color-adjust: exact; }
+            .tx-id { background: transparent; padding: 0; }
+            
+            .print-header, .print-title { display: block !important; }
+        }
+        
+        @media (max-width: 768px) {
+            .summary-panel { grid-template-columns: 1fr; }
+            .action-btns { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="nav-top">
+            <button class="btn-icon" onclick="window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
+            <h1 class="header-title">Riwayat Pemasukan</h1>
+            <button class="btn-icon" onclick="tarikDataPemasukan()" title="Refresh Data"><i class="fa-solid fa-rotate" style="color: #3b82f6;"></i></button>
+        </div>
+
+        <div class="print-header">
+            <h1>MADRASAH MIFTahul ULUM IBTIDAIYAH</h1>
+            <p>Ranting B-77 Jrebeng Kulon</p>
+            <p style="font-style: italic;">Jl. Musi, Kelurahan Jrebeng Kulon, Kecamatan Kedopok, Kota Probolinggo</p>
+        </div>
+        <div class="print-title" id="judulLaporanPrint">Laporan Pemasukan Keuangan</div>
+
+        <div class="filter-panel">
+            <div class="filter-grid">
+                <div class="input-group">
+                    <label>Dari Tanggal</label>
+                    <input type="date" class="input-control" id="tglAwal">
+                </div>
+                <div class="input-group">
+                    <label>Sampai Tanggal</label>
+                    <input type="date" class="input-control" id="tglAkhir">
+                </div>
+                <div class="input-group">
+                    <label>Filter Kelas</label>
+                    <select class="input-control" id="filterKelas">
+                        <option value="SEMUA">-- Semua Kelas --</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Filter Pos Keuangan</label>
+                    <select class="input-control" id="filterPos">
+                        <option value="SEMUA">-- Semua Pos --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="action-btns">
+                <button class="btn btn-blue" onclick="terapkanFilter()"><i class="fa-solid fa-filter"></i> Terapkan Filter</button>
+                <button class="btn btn-green" onclick="eksporExcel()"><i class="fa-solid fa-file-excel"></i> Ekspor Excel</button>
+                <button class="btn btn-red" onclick="eksporPDF()"><i class="fa-solid fa-file-pdf"></i> Ekspor ke PDF</button>
+            </div>
+        </div>
+
+        <div class="summary-panel">
+            <div class="summary-card">
+                <div class="summary-text">
+                    <p>Total Pemasukan (Sesuai Filter)</p>
+                    <h3 id="txtTotalUang">Rp 0</h3>
+                </div>
+                <div class="summary-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-text">
+                    <p>Jumlah Transaksi</p>
+                    <h3 id="txtTotalTx" style="color: var(--text-dark);">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table id="tabelPemasukan">
+                <thead>
+                    <tr>
+                        <th>Waktu</th>
+                        <th>ID Transaksi</th>
+                        <th>Penyetor (Santri)</th>
+                        <th>Kelas</th>
+                        <th>Pos Pemasukan</th>
+                        <th>Keterangan</th>
+                        <th>Penerima (Kasir)</th>
+                        <th>Nominal Masuk</th>
+                    </tr>
+                </thead>
+                <tbody id="tabel-body">
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 24px; color: #3b82f6; opacity: 1;"></i>
+                                <p style="margin-top: 10px;">Menarik riwayat pemasukan dari server...</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // ========================================================
+        // URL GOOGLE APPS SCRIPT
+        // ========================================================
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzYAJEid9Z9XVxeP_YEF9P8m6EozFh1vrE-V2GPgukGLXSD71QVgN0MSJCKNBcbu3577Q/exec'; 
+        
+        let dataGlobal = []; // Menyimpan data mentah dari server
+
+        function formatRupiah(angka) {
+            return 'Rp ' + parseInt(angka || 0).toLocaleString('id-ID');
+        }
+
+        // Set Default Tanggal Hari Ini saat halaman dibuka
+        window.onload = function() {
+            let today = new Date().toISOString().split('T')[0];
+            document.getElementById('tglAwal').value = today;
+            document.getElementById('tglAkhir').value = today;
+            
+            tarikDataPemasukan();
+        };
+
+        function tarikDataPemasukan() {
+            let tbody = document.getElementById('tabel-body');
+            tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin" style="color:#3b82f6; opacity:1;"></i><p>Menyinkronkan data...</p></div></td></tr>`;
+
+            // Asumsi data transaksi disimpan di sheet 'RiwayatTransaksi'
+            fetch(scriptURL + "?sheet_name=RiwayatTransaksi")
+            .then(res => res.json())
+            .then(res => {
+                let dataMentah = res.data || [];
+                
+                // FILTER 1: Hanya ambil data yang sifatnya 'Pemasukan'
+                dataGlobal = dataMentah.filter(row => {
+                    let jenis = String(row.Jenis || row.jenis || "").toLowerCase();
+                    return jenis === 'pemasukan' || jenis === 'masuk';
+                });
+
+                isiDropdownFilter(dataGlobal);
+                terapkanFilter(); // Jalankan filter awal (Hari ini)
+            })
+            .catch(err => {
+                tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-triangle-exclamation" style="color:#ef4444; opacity:1;"></i><p>Gagal terhubung ke server.</p></div></td></tr>`;
+            });
+        }
+
+        // --- MENGISI DROPDOWN FILTER OTOMATIS ---
+        function isiDropdownFilter(data) {
+            let setKelas = new Set();
+            let setPos = new Set();
+
+            data.forEach(row => {
+                if(row.Kelas || row.kelas) setKelas.add(row.Kelas || row.kelas);
+                let pos = (row.Kode_Uang || row.kode_uang || "") + " - " + (row.Nama_Pos || row.nama_pos || row.Pos_Keuangan || "");
+                if(pos.trim() !== "-") setPos.add(pos);
+            });
+
+            let optKelas = '<option value="SEMUA">-- Semua Kelas --</option>';
+            Array.from(setKelas).sort().forEach(k => optKelas += `<option value="${k}">${k}</option>`);
+            document.getElementById('filterKelas').innerHTML = optKelas;
+
+            let optPos = '<option value="SEMUA">-- Semua Pos Keuangan --</option>';
+            Array.from(setPos).sort().forEach(p => optPos += `<option value="${p}">${p}</option>`);
+            document.getElementById('filterPos').innerHTML = optPos;
+        }
+
+        // --- FUNGSI FILTER UTAMA ---
+        function terapkanFilter() {
+            let tglAwal = document.getElementById('tglAwal').value;
+            let tglAkhir = document.getElementById('tglAkhir').value;
+            let kelas = document.getElementById('filterKelas').value;
+            let pos = document.getElementById('filterPos').value;
+
+            // Update Judul Cetak PDF
+            document.getElementById('judulLaporanPrint').innerText = `Laporan Pemasukan (${tglAwal} s/d ${tglAkhir})`;
+
+            let dataTersaring = dataGlobal.filter(row => {
+                // Konversi tanggal format "dd/MM/yyyy HH:mm" ke objek Date untuk perbandingan
+                let wktString = String(row.Waktu || row.waktu || row.Tanggal || "");
+                let tglValid = true;
+                
+                if (tglAwal && tglAkhir && wktString) {
+                    let parts = wktString.split(' ')[0].split('/'); // Ambil dd/MM/yyyy
+                    if(parts.length === 3) {
+                        let tglRow = new Date(parts[2], parts[1] - 1, parts[0]);
+                        let start = new Date(tglAwal); start.setHours(0,0,0,0);
+                        let end = new Date(tglAkhir); end.setHours(23,59,59,999);
+                        tglValid = (tglRow >= start && tglRow <= end);
+                    }
+                }
+
+                let kelasMatch = (kelas === "SEMUA" || String(row.Kelas || row.kelas) === kelas);
+                
+                let posString = (row.Kode_Uang || row.kode_uang || "") + " - " + (row.Nama_Pos || row.nama_pos || row.Pos_Keuangan || "");
+                let posMatch = (pos === "SEMUA" || posString === pos);
+
+                return tglValid && kelasMatch && posMatch;
+            });
+
+            renderTabel(dataTersaring);
+        }
+
+        function renderTabel(data) {
+            let tbody = document.getElementById('tabel-body');
+            tbody.innerHTML = '';
+
+            let totalUang = 0;
+            let totalTx = 0;
+
+            if(data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fa-regular fa-folder-open"></i><p>Belum ada penerimaan pada periode & filter ini.</p></div></td></tr>`;
+                document.getElementById('txtTotalUang').innerText = "Rp 0";
+                document.getElementById('txtTotalTx').innerText = "0";
+                return;
+            }
+
+            data.forEach(row => {
+                let nom = parseFloat(row.Nominal || row.nominal || 0);
+                totalUang += nom;
+                totalTx++;
+
+                let penyetor = row.Nama_Santri || row.nama_santri || row.Penyetor || "Hamba Allah";
+                let penerima = row.Kasir || row.kasir || row.Penerima || "Admin";
+                let idTx = row.ID_Transaksi || row.id_transaksi || "-";
+                let wkt = row.Waktu || row.waktu || row.Tanggal || "-";
+                let kls = row.Kelas || row.kelas || "-";
+                let nmPos = row.Nama_Pos || row.nama_pos || row.Pos_Keuangan || "-";
+                let ket = row.Keterangan || row.keterangan || "-";
+
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${wkt}</td>
+                    <td><span class="tx-id">${idTx}</span></td>
+                    <td style="font-weight: 600;">${penyetor}</td>
+                    <td>${kls}</td>
+                    <td>${nmPos}</td>
+                    <td>${ket}</td>
+                    <td style="font-size:11px;">${penerima}</td>
+                    <td class="nominal-text">${formatRupiah(nom)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Update Kartu Ringkasan
+            document.getElementById('txtTotalUang').innerText = formatRupiah(totalUang);
+            document.getElementById('txtTotalTx').innerText = totalTx;
+        }
+
+        // --- FUNGSI EKSPOR PDF (PRINT) ---
+        function eksporPDF() {
+            window.print();
+        }
+
+        // --- FUNGSI EKSPOR EXCEL (SEDERHANA) ---
+        function eksporExcel() {
+            let tglAwal = document.getElementById('tglAwal').value;
+            let table = document.getElementById("tabelPemasukan");
+            
+            // Format HTML khusus agar dikenali sebagai Excel
+            let html = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+                <head><meta charset="UTF-8"></head>
+                <body>
+                    <h2>Laporan Pemasukan Madrasah</h2>
+                    ${table.outerHTML}
+                </body>
+                </html>
+            `;
+            
+            let url = 'data:application/vnd.ms-excel;charset=utf-8,' + encodeURIComponent(html);
+            let downloadLink = document.createElement("a");
+            downloadLink.href = url;
+            downloadLink.download = "Laporan_Pemasukan_" + tglAwal + ".xls";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+    </script>
+</body>
+</html>

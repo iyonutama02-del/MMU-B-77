@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#f0f4f8" id="meta-theme-color">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <title>Profil & Pengaturan - Keuangan MMU B-77</title>
+    
+    <link rel="icon" type="image/png" href="Logo-Favicon.png">
+    <link rel="apple-touch-icon" href="Logo-Favicon.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        (function() {
+            let pref = localStorage.getItem('themePref') || 'light';
+            let isDark = false;
+            if (pref === 'dark') { isDark = true; }
+            else if (pref === 'auto_sys') { isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
+            else if (pref === 'auto_time') { let jam = new Date().getHours(); isDark = (jam >= 18 || jam < 6); }
+            if (isDark) document.documentElement.setAttribute('data-theme', 'dark');
+        })();
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('PWA Gagal', err));
+            });
+        }
+    </script>
+
+    <style>
+        /* --- TEMA SOFT UI ASLI MAS KHOIRON --- */
+        :root {
+            --bg-main: #f0f4f8; 
+            --text-dark: #2d3748;
+            --text-muted: #718096;
+            --shadow-light: #ffffff;
+            --shadow-dark: #d1d9e6;
+            --green-grad: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            --red-grad: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+            
+            /* Warna 5 Kasta Hak Akses */
+            --role-dev: #8b5cf6;
+            --role-admin: #ef4444;
+            --role-supervisor: #14b8a6;
+            --role-operator: #3b82f6;
+            --role-demo: #6b7280;
+        }
+        
+        [data-theme="dark"] {
+            --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0;
+            --shadow-light: #3a4556; --shadow-dark: #202835;
+        }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+
+        body {
+            margin: 0; padding: 0; background-color: var(--bg-main);
+            font-family: 'Poppins', sans-serif; color: var(--text-dark);
+            user-select: none; padding-bottom: 120px; 
+            opacity: 0; animation: fadeInPage 0.4s ease-out forwards;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        @keyframes fadeInPage { 0% { opacity: 0; } 100% { opacity: 1; } }
+        body.fade-out { opacity: 0; transition: 0.3s ease-out; }
+        
+        .app-container { max-width: 450px; margin: 0 auto; min-height: 100vh; padding: 20px; }
+
+        /* --- TOAST NOTIFIKASI --- */
+        #toast { visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600;}
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
+        @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+
+        /* --- NAVIGASI ATAS --- */
+        .nav-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
+        .btn-icon {
+            width: 40px; height: 40px; border-radius: 12px; background: var(--bg-main);
+            display: flex; justify-content: center; align-items: center; color: var(--text-dark); text-decoration: none;
+            box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light);
+            transition: 0.3s; cursor: pointer; border: none; font-size: 16px;
+        }
+        .btn-icon:active { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); }
+        .header-title { font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 700; margin: 0; }
+
+        /* --- BLOK 1: IDENTITAS UTAMA --- */
+        .profile-card {
+            background: var(--bg-main); border-radius: 20px; padding: 25px 20px; margin-bottom: 25px;
+            box-shadow: 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light);
+            text-align: center; position: relative; transition: 0.3s;
+        }
+        .avatar-container {
+            width: 90px; height: 90px; margin: 0 auto 15px; border-radius: 50%;
+            background: var(--bg-main); position: relative;
+            box-shadow: 5px 5px 12px var(--shadow-dark), -5px -5px 12px var(--shadow-light);
+            display: flex; justify-content: center; align-items: center; border: 3px solid var(--bg-main); transition: 0.3s;
+        }
+        .avatar-container img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: none; }
+        .avatar-container i { font-size: 40px; color: var(--text-muted); }
+        .btn-cam {
+            position: absolute; bottom: 0; right: -5px; width: 32px; height: 32px; border-radius: 50%;
+            background: var(--green-grad); color: white; display: flex; justify-content: center; align-items: center;
+            box-shadow: 2px 2px 8px rgba(34, 197, 94, 0.4); border: 2px solid var(--bg-main); font-size: 12px; cursor: pointer;
+        }
+        
+        .profile-name { font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 800; margin: 0 0 5px; color: var(--text-dark); text-transform: uppercase; }
+        .profile-role { font-size: 12px; color: var(--text-muted); font-weight: 500; margin: 0 0 10px; }
+        
+        .profile-last-login {
+            font-size: 10px; color: var(--text-muted); font-family: monospace; margin-bottom: 15px;
+            background: rgba(113, 128, 150, 0.1); padding: 6px 12px; border-radius: 8px; display: inline-block; font-weight: 600;
+        }
+        
+        .badge-status {
+            display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 700;
+            background: var(--bg-main); color: var(--text-dark); box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);
+            margin-bottom: 20px; letter-spacing: 0.5px; transition: 0.3s;
+        }
+
+        .btn-edit-profil {
+            background: var(--bg-main); color: var(--text-dark); border: none; padding: 10px 20px; border-radius: 10px;
+            font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer;
+            box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light); transition: 0.3s;
+        }
+        .btn-edit-profil:active { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); }
+
+        /* --- BLOK MENU --- */
+        .menu-section {
+            background: var(--bg-main); border-radius: 20px; padding: 15px; margin-bottom: 25px;
+            box-shadow: 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light); transition: 0.3s;
+        }
+        .section-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin: 0 0 10px 10px; letter-spacing: 1px; }
+
+        .menu-item {
+            display: flex; justify-content: space-between; align-items: center; padding: 15px 10px;
+            border-bottom: 1px solid rgba(209, 217, 230, 0.2); cursor: pointer; transition: 0.3s;
+        }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-info { display: flex; align-items: center; gap: 15px; }
+        .menu-icon {
+            width: 35px; height: 35px; border-radius: 10px; background: var(--bg-main);
+            box-shadow: 3px 3px 8px var(--shadow-dark), -3px -3px 8px var(--shadow-light);
+            display: flex; justify-content: center; align-items: center; color: #22c55e; font-size: 14px; transition: 0.3s;
+        }
+        .menu-text h4 { margin: 0; font-size: 13px; font-weight: 600; color: var(--text-dark); }
+        .menu-text p { margin: 2px 0 0; font-size: 10px; color: var(--text-muted); }
+        .menu-action { color: var(--text-muted); font-size: 14px; font-weight: 600; }
+
+        /* --- DROPDOWN TEMA NEUMORPHISM --- */
+        .select-theme {
+            background: var(--bg-main); color: var(--text-dark); border: none; padding: 8px 12px;
+            border-radius: 10px; font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 600;
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+            outline: none; cursor: pointer; transition: 0.3s; appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23718096'%3E%3Cpath d='M7 10l5 5 5-5H7z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 8px center; background-size: 16px;
+            padding-right: 28px;
+        }
+        [data-theme="dark"] .select-theme {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23a0aec0'%3E%3Cpath d='M7 10l5 5 5-5H7z'/%3E%3C/svg%3E");
+        }
+
+        /* --- SOFT TOGGLE SWITCH (BIOMETRIK) --- */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--bg-main); transition: .4s; border-radius: 34px;
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px;
+            background-color: var(--text-muted); transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background: var(--green-grad); box-shadow: none; }
+        input:checked + .slider:before { transform: translateX(20px); background-color: white; }
+
+        /* --- BLOK TOMBOL AKSI & FOOTER --- */
+        .btn-logout {
+            width: 100%; padding: 16px; border: none; border-radius: 15px; background: var(--red-grad);
+            color: white; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 700;
+            box-shadow: 4px 4px 15px rgba(239, 68, 68, 0.4); cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px;
+        }
+        .btn-logout:active { transform: translateY(2px); box-shadow: 2px 2px 10px rgba(239, 68, 68, 0.4); }
+        
+        .footer-text { text-align: center; margin-top: 25px; font-size: 11px; color: var(--text-muted); line-height: 1.6; font-weight: 500; }
+
+        /* --- NAVIGASI BAWAH (SLIDER) --- */
+        .nav-wrapper { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 360px; z-index: 1000; }
+        .bottom-nav { background-color: var(--bg-main); display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; border-radius: 30px; box-shadow: 10px 10px 20px var(--shadow-dark), -10px -10px 20px var(--shadow-light); position: relative; transition: 0.3s; }
+        .nav-indicator { position: absolute; top: 10px; left: 0; width: 60px; height: 60px; border-radius: 20px; background-color: var(--bg-main); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 1; pointer-events: none; }
+        .nav-item { text-decoration: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; width: 60px; height: 60px; border-radius: 20px; transition: color 0.3s ease; z-index: 2; background: transparent; cursor: pointer; }
+        .nav-item i { font-size: 20px; margin-bottom: 5px; }
+        .nav-item span { font-size: 10px; font-weight: 600; }
+        .nav-item.active { color: #22c55e; }
+        .nav-item:hover:not(.active) { color: var(--text-dark); }
+
+        /* --- MODAL GLOBAL --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 2000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(3px); }
+        .modal-content {
+            background: var(--bg-main); width: 100%; max-width: 350px; border-radius: 20px; padding: 30px 20px;
+            box-shadow: 10px 10px 30px rgba(0,0,0,0.3); position: relative;
+            animation: slideUp 0.3s ease-out forwards;
+        }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .modal-label { display: block; text-align: left; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; margin-left: 5px; }
+        .input-edit {
+            width: 100%; padding: 14px 15px; border: none; border-radius: 12px;
+            background: var(--bg-main); font-family: 'Poppins', sans-serif; font-size: 13px; color: var(--text-dark);
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            outline: none; margin-bottom: 20px; box-sizing: border-box; transition: 0.3s;
+        }
+        .input-edit:focus { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light), 0 0 0 2px rgba(34, 197, 94, 0.3); }
+        
+        .btn-modal {
+            background: var(--bg-main); border: none; padding: 12px 0; width: 100%; border-radius: 12px; font-family: 'Poppins'; font-size: 12px; font-weight: 600; color: var(--text-dark);
+            box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light); cursor: pointer; transition: 0.3s;
+        }
+        .btn-modal:active { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); }
+        .btn-modal.primary { background: var(--green-grad); color: white; box-shadow: 4px 4px 10px rgba(34, 197, 94, 0.3); }
+        .modal-actions { display: flex; gap: 15px; margin-top: 10px; }
+
+        .modal-info-content { display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .modal-logo { width: 75px; margin-bottom: 15px; object-fit: contain; }
+        .modal-title-center { font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 800; color: #22c55e; margin: 0 0 15px; }
+        .modal-text-center { font-size: 12px; color: var(--text-muted); line-height: 1.8; margin-bottom: 25px; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+    <div id="toast"><i class="fa-solid fa-circle-info"></i> <span id="toastMsg">Pesan Notifikasi</span></div>
+
+    <div class="app-container">
+        <div class="nav-top">
+            <button class="btn-icon" onclick="pindahHalaman('beranda.html')"><i class="fa-solid fa-angle-left"></i></button>
+            <h1 class="header-title">Profil Pengguna</h1>
+            <div style="width: 40px;"></div>
+        </div>
+
+        <div class="profile-card">
+            <div class="avatar-container">
+                <img src="" alt="Foto Profil" id="imgProfil">
+                <i class="fa-solid fa-user" id="ikonDefault"></i>
+                
+                <input type="file" id="inputFoto" accept="image/*" style="display: none;">
+                <div class="btn-cam" onclick="document.getElementById('inputFoto').click()"><i class="fa-solid fa-camera"></i></div>
+            </div>
+            
+            <h2 class="profile-name" id="namaTampil">MEMUAT...</h2>
+            <p class="profile-role" id="jabatanTampil">-</p>
+            
+            <div class="profile-last-login">
+                <i class="fa-regular fa-clock"></i> Akses Terakhir: <span id="txtLastLogin">Baru saja</span>
+            </div>
+            <br>
+            
+            <div class="badge-status" id="txtStatusRole">MEMUAT...</div>
+            <br>
+            <button class="btn-edit-profil" onclick="bukaModalEdit()">Edit Data Profil</button>
+        </div>
+
+        <div class="menu-section">
+            <div class="section-title">Pengaturan Tampilan</div>
+            <div class="menu-item" style="cursor: default;">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: #f59e0b;"><i class="fa-solid fa-palette"></i></div>
+                    <div class="menu-text">
+                        <h4>Tema Aplikasi</h4>
+                        <p>Pilih mode warna kenyamanan Anda</p>
+                    </div>
+                </div>
+                <select class="select-theme" id="pilihanTema" onchange="ubahTemaPreferensi()">
+                    <option value="light">Terang</option>
+                    <option value="dark">Gelap</option>
+                    <option value="auto_sys">Auto (Sistem HP)</option>
+                    <option value="auto_time">Auto (Waktu)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="section-title">Keamanan Akun</div>
+            
+            <div class="menu-item" style="cursor: default;">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: var(--text-muted);"><i class="fa-solid fa-at"></i></div>
+                    <div class="menu-text">
+                        <h4>Username Login</h4>
+                        <p id="txtUsername">@username</p>
+                    </div>
+                </div>
+                <div class="menu-action" style="font-size: 10px;"><i class="fa-solid fa-lock"></i></div>
+            </div>
+
+            <div class="menu-item" style="cursor: default;">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: #25D366;"><i class="fa-brands fa-whatsapp"></i></div>
+                    <div class="menu-text">
+                        <h4>Nomor WhatsApp Aktif</h4>
+                        <p id="txtWA">Memuat...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-item" onclick="bukaModalSandi()">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: #ef4444;"><i class="fa-solid fa-key"></i></div>
+                    <div class="menu-text">
+                        <h4>Ubah Kata Sandi / PIN</h4>
+                        <p>Ubah untuk keamanan akun Anda</p>
+                    </div>
+                </div>
+                <div class="menu-action"><i class="fa-solid fa-angle-right"></i></div>
+            </div>
+
+            <div class="menu-item" onclick="bukaModalBiometrik()">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: #8b5cf6;"><i class="fa-solid fa-fingerprint"></i></div>
+                    <div class="menu-text">
+                        <h4>Keamanan Biometrik</h4>
+                        <p>Pengaturan Face ID & Sidik Jari</p>
+                    </div>
+                </div>
+                <div class="menu-action"><i class="fa-solid fa-angle-right"></i></div>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="section-title">Pusat Informasi</div>
+            
+            <div class="menu-item" id="menuInstalApp" onclick="instalAplikasiAndroid()" style="display: none;">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: #10b981;"><i class="fa-brands fa-android"></i></div>
+                    <div class="menu-text">
+                        <h4>Instal Aplikasi Android</h4>
+                        <p>Pasang di layar utama HP Anda</p>
+                    </div>
+                </div>
+                <div class="menu-action" style="color: #10b981;"><i class="fa-solid fa-download"></i></div>
+            </div>
+
+            <div class="menu-item" onclick="bukaModalInfo()">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: #3b82f6;"><i class="fa-solid fa-circle-info"></i></div>
+                    <div class="menu-text">
+                        <h4>Tentang Lembaga</h4>
+                        <p>Madrasah Miftahul Ulum B-77</p>
+                    </div>
+                </div>
+                <div class="menu-action"><i class="fa-solid fa-angle-right"></i></div>
+            </div>
+        </div>
+
+        <button class="btn-logout" onclick="keluarSistemManual()">
+            <i class="fa-solid fa-power-off"></i> KELUAR SISTEM
+        </button>
+
+        <div class="footer-text">
+            Copyright &copy; 2026 Madrasah Financial System |<br>Developed by Achmad Khoiron
+        </div>
+    </div>
+
+    <div class="nav-wrapper" id="bottomNav">
+        <div class="bottom-nav">
+            <div class="nav-indicator" id="navIndicator"></div>
+            
+            <a onclick="navSlide(event, this, 'profil.html')" class="nav-item active">
+                <i class="fa-solid fa-user"></i>
+                <span>Profil</span>
+            </a>
+            <a onclick="navSlide(event, this, 'beranda.html')" class="nav-item">
+                <i class="fa-solid fa-house"></i>
+                <span>Beranda</span>
+            </a>
+            <a onclick="navSlide(event, this, 'dashboard.html')" class="nav-item">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalEditProfil">
+        <div class="modal-content" style="text-align: left;">
+            <h2 class="modal-title" style="color: var(--text-dark); margin-bottom: 20px; text-align: center;">Edit Profil</h2>
+            
+            <label class="modal-label">Nama Lengkap</label>
+            <input type="text" class="input-edit" id="inputEditNama" placeholder="Masukkan nama lengkap">
+            
+            <label class="modal-label">Jabatan Struktural</label>
+            <input type="text" class="input-edit" id="inputEditJabatan" placeholder="Cth: Bendahara / Operator">
+            
+            <label class="modal-label">Nomor WhatsApp Aktif</label>
+            <input type="tel" class="input-edit" id="inputEditWA" placeholder="Cth: 081234567890">
+            
+            <div class="modal-actions">
+                <button class="btn-modal" onclick="tutupModalEdit()">Batal</button>
+                <button class="btn-modal primary" id="btnSimpanProfil" onclick="simpanEditProfilFirebase()">Simpan Data</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalUbahSandi">
+        <div class="modal-content" style="text-align: left;">
+            <h2 class="modal-title" style="color: var(--text-dark); margin-bottom: 20px; text-align: center;">Ubah Kata Sandi</h2>
+            <label class="modal-label">Kata Sandi Lama</label>
+            <input type="password" class="input-edit" id="inputSandiLama" placeholder="••••••••">
+            
+            <label class="modal-label">Kata Sandi Baru</label>
+            <input type="password" class="input-edit" id="inputSandiBaru" placeholder="••••••••">
+            
+            <label class="modal-label">Konfirmasi Sandi Baru</label>
+            <input type="password" class="input-edit" id="inputSandiKonfirm" placeholder="••••••••">
+            
+            <div class="modal-actions">
+                <button class="btn-modal" onclick="tutupModalSandi()">Batal</button>
+                <button class="btn-modal primary" id="btnSimpanSandi" onclick="simpanSandiFirebase()">Perbarui</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalInfo">
+        <div class="modal-content modal-info-content">
+            <img src="Lambang-Keuangan.png" alt="Logo" class="modal-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3353/3353138.png'">
+            <h2 class="modal-title-center">Tentang Lembaga</h2>
+            <div class="modal-text-center">
+                Madrasah Diniyah Miftahul Ulum merupakan unit pendidikan yang berada di bawah naungan Yayasan Miftahul Ulum Al-Cholil, berlokasi di Jl. Musi, Kel. Jrebeng Kulon, Kec. Kedopok, Kota Probolinggo.<br><br>
+                Sejak tahun 2023, lembaga pendidikan diniyah ini telah berafiliasi dengan Madrasah Miftahul Ulum Ibtidaiyah Pondok Pesantren Sidogiri dan menggunakan nama resmi <b>Madrasah Miftahul Ulum Ibtidaiyah Ranting B-77 Jrebeng Kulon</b>.
+            </div>
+            <button class="btn-modal primary" onclick="tutupModalInfo()" style="font-weight: 800;">Tutup Informasi</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalBiometrik">
+        <div class="modal-content" style="text-align: left;">
+            <h2 class="modal-title" style="color: var(--text-dark); margin-bottom: 20px; text-align: center;">Keamanan Biometrik</h2>
+            
+            <div class="menu-item" style="padding: 10px 0; border-bottom: 1px solid rgba(209, 217, 230, 0.2); cursor: default;">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: #8b5cf6; width: 35px; height: 35px;"><i class="fa-solid fa-face-smile"></i></div>
+                    <div class="menu-text">
+                        <h4 style="font-size: 12px;">Login Face ID</h4>
+                        <p style="font-size: 9px;">Akses masuk sensor wajah</p>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggleFaceID" onchange="toggleBiometrik('FaceID')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="menu-item" style="padding: 10px 0; border-bottom: none; cursor: default;">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: #f59e0b; width: 35px; height: 35px;"><i class="fa-solid fa-fingerprint"></i></div>
+                    <div class="menu-text">
+                        <h4 style="font-size: 12px;">Login Fingerprint</h4>
+                        <p style="font-size: 9px;">Akses masuk sidik jari</p>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggleFingerprint" onchange="toggleBiometrik('Fingerprint')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="modal-actions" style="margin-top: 25px;">
+                <button class="btn-modal primary" onclick="tutupModalBiometrik()">Selesai</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- INISIALISASI DASAR ---
+        let userAktif = localStorage.getItem('usernameAsli');
+
+        function setIndicatorPosition() {
+            const activeItem = document.querySelector('.nav-item.active');
+            const indicator = document.getElementById('navIndicator');
+            if(activeItem && indicator) { indicator.style.transform = `translateX(${activeItem.offsetLeft}px)`; }
+        }
+        window.addEventListener('resize', setIndicatorPosition);
+
+        function navSlide(e, element, url) {
+            e.preventDefault();
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active'); setIndicatorPosition();
+            document.body.classList.add('fade-out');
+            setTimeout(() => { window.location.href = url; }, 300);
+        }
+
+        function pindahHalaman(url) {
+            document.body.classList.add('fade-out');
+            setTimeout(() => { window.location.href = url; }, 300);
+        }
+
+        function showToast(msg) {
+            let toast = document.getElementById("toast");
+            document.getElementById("toastMsg").innerText = msg;
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        // --- SISTEM AUTO-KICK (LOGOUT OTOMATIS) JIKA MENGANGGUR 15 MENIT ---
+        let idleTime = 0;
+        document.addEventListener('mousemove', () => idleTime = 0);
+        document.addEventListener('keypress', () => idleTime = 0);
+        document.addEventListener('touchstart', () => idleTime = 0);
+        setInterval(() => {
+            idleTime++;
+            if(idleTime > 15) { 
+                localStorage.removeItem('usernameAsli');
+                window.location.href = 'index.html'; 
+            }
+        }, 60000);
+
+        // --- LOGIKA TEMA (4 OPSI) ---
+        function ubahTemaPreferensi() {
+            let val = document.getElementById('pilihanTema').value;
+            localStorage.setItem('themePref', val);
+            terapkanTemaUI();
+            showToast("Tema aplikasi diperbarui.");
+        }
+
+        function terapkanTemaUI() {
+            let pref = localStorage.getItem('themePref') || 'light';
+            let isDark = false;
+            
+            if (pref === 'dark') { isDark = true; }
+            else if (pref === 'auto_sys') { isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
+            else if (pref === 'auto_time') { let jam = new Date().getHours(); isDark = (jam >= 18 || jam < 6); }
+
+            if(isDark) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.getElementById('meta-theme-color').setAttribute('content', '#2d3748');
+                // Simpan juga ke 'theme' biasa agar index.html & beranda.html tetap sinkron
+                localStorage.setItem('theme', 'dark'); 
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                document.getElementById('meta-theme-color').setAttribute('content', '#f0f4f8');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        // Listener jika Mode Sistem HP berubah saat aplikasi sedang dibuka
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if(localStorage.getItem('themePref') === 'auto_sys') terapkanTemaUI();
+        });
+
+        // --- LOGIKA BIOMETRIK ---
+        function bukaModalBiometrik() { document.getElementById('modalBiometrik').style.display = 'flex'; }
+        function tutupModalBiometrik() { document.getElementById('modalBiometrik').style.display = 'none'; }
+        
+        function toggleBiometrik(tipe) {
+            let isActive = tipe === 'FaceID' ? document.getElementById('toggleFaceID').checked : document.getElementById('toggleFingerprint').checked;
+            if(isActive) {
+                localStorage.setItem(tipe === 'FaceID' ? 'useFaceID' : 'useFingerprint', 'true');
+                showToast(`Keamanan ${tipe === 'FaceID' ? 'Face ID' : 'Sidik Jari'} berhasil diaktifkan.`);
+            } else {
+                localStorage.setItem(tipe === 'FaceID' ? 'useFaceID' : 'useFingerprint', 'false');
+                showToast(`Keamanan dinonaktifkan.`);
+            }
+        }
+
+        // --- FIREBASE REAL-TIME LISTENER ---
+        window.onload = function() {
+            setIndicatorPosition();
+            if(!userAktif) { window.location.href = 'index.html'; return; }
+
+            // Setel UI dasar
+            let currentPref = localStorage.getItem('themePref') || 'light';
+            document.getElementById('pilihanTema').value = currentPref;
+            terapkanTemaUI(); // Terapkan segera
+            
+            if(localStorage.getItem('useFaceID') === 'true') document.getElementById('toggleFaceID').checked = true;
+            if(localStorage.getItem('useFingerprint') === 'true') document.getElementById('toggleFingerprint').checked = true;
+
+            // Atur Label Waktu Login
+            let lastLogin = localStorage.getItem('lastLoginTime');
+            if(lastLogin) { document.getElementById('txtLastLogin').innerText = lastLogin; } 
+            else {
+                let now = new Date();
+                let formatWaktu = `${now.getDate()} ${now.toLocaleString('id-ID', {month:'short'})} ${now.getFullYear()} - ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} WIB`;
+                document.getElementById('txtLastLogin').innerText = formatWaktu;
+                localStorage.setItem('lastLoginTime', formatWaktu);
+            }
+
+            document.getElementById('txtUsername').innerText = '@' + userAktif;
+
+            // AUTO-KICK & CLOUD SYNC REALTIME
+            database.ref('users/' + userAktif).on('value', snapshot => {
+                if (!snapshot.exists()) {
+                    keluarSistemPaksa("Akun Anda telah dihapus dari server secara permanen.");
+                    return;
+                }
+
+                let data = snapshot.val();
+                
+                // Cek Status Pemblokiran
+                if(String(data.Status || data.status).toLowerCase() === 'nonaktif') {
+                    keluarSistemPaksa("Akses Ditolak: Akun Anda telah diblokir oleh Administrator.");
+                    return;
+                }
+
+                // Cek Perubahan Role
+                let roleSaatIni = data.Role || data.role || 'Operator';
+                if(localStorage.getItem('hakAkses') !== roleSaatIni) {
+                    localStorage.setItem('hakAkses', roleSaatIni);
+                    showToast("Hak Akses Anda baru saja diubah oleh Server!");
+                }
+
+                // Update UI Tampilan
+                let namaAsli = data.NamaLengkap || data.Nama_Lengkap || data.nama_lengkap || 'PENGGUNA';
+                document.getElementById('namaTampil').innerText = namaAsli.toUpperCase();
+                document.getElementById('txtWA').innerText = data.NomorWA || data.nomor_wa || '-';
+                
+                let jabatan = localStorage.getItem('jabatanPengguna_' + userAktif) || '-';
+                document.getElementById('jabatanTampil').innerText = jabatan;
+
+                // Tarik Cloud Image (Foto Profil Firebase)
+                let cloudFoto = data.FotoProfil;
+                if(cloudFoto) {
+                    document.getElementById('imgProfil').src = cloudFoto;
+                    document.getElementById('imgProfil').style.display = 'block';
+                    document.getElementById('ikonDefault').style.display = 'none';
+                }
+
+                // Warnai Kasta Hak Akses
+                let roleLower = roleSaatIni.toLowerCase();
+                let badgeEl = document.getElementById('txtStatusRole');
+                badgeEl.innerText = roleSaatIni.toUpperCase();
+                if(roleLower === 'developer') badgeEl.style.color = 'var(--role-dev)';
+                else if(roleLower === 'administrator') badgeEl.style.color = 'var(--role-admin)';
+                else if(roleLower === 'supervisor') badgeEl.style.color = 'var(--role-supervisor)';
+                else if(roleLower === 'demo') badgeEl.style.color = 'var(--role-demo)';
+                else badgeEl.style.color = 'var(--role-operator)';
+            });
+        };
+
+        function keluarSistemPaksa(pesan) {
+            alert(pesan);
+            localStorage.removeItem('namaPengguna');
+            localStorage.removeItem('hakAkses'); 
+            localStorage.removeItem('usernameAsli'); 
+            window.location.href = 'index.html'; 
+        }
+
+        // --- UPLOAD FOTO PROFIL KE FIREBASE CLOUD ---
+        const inputFoto = document.getElementById('inputFoto');
+        inputFoto.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const base64String = event.target.result;
+                    // Tembak ke Firebase
+                    database.ref('users/' + userAktif).update({
+                        FotoProfil: base64String
+                    }).then(() => {
+                        showToast("Foto Profil berhasil disinkronisasi ke server!");
+                    }).catch(err => showToast("Gagal mengunggah foto ke server."));
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // --- FAST UPDATE PROFIL FIREBASE (0.1 DETIK) ---
+        function bukaModalEdit() {
+            document.getElementById('inputEditNama').value = document.getElementById('namaTampil').innerText;
+            let currentJab = document.getElementById('jabatanTampil').innerText;
+            document.getElementById('inputEditJabatan').value = currentJab === '-' ? '' : currentJab;
+            
+            let currentWA = document.getElementById('txtWA').innerText;
+            document.getElementById('inputEditWA').value = currentWA === '-' ? '' : currentWA;
+            document.getElementById('modalEditProfil').style.display = 'flex';
+        }
+        function tutupModalEdit() { document.getElementById('modalEditProfil').style.display = 'none'; }
+
+        async function simpanEditProfilFirebase() {
+            let namaBaru = document.getElementById('inputEditNama').value.trim();
+            let jabatanBaru = document.getElementById('inputEditJabatan').value.trim() || '-';
+            let waBaru = document.getElementById('inputEditWA').value.trim();
+            
+            if(!namaBaru || !waBaru) { showToast("Nama dan Nomor WA wajib diisi!"); return; }
+
+            let btn = document.getElementById('btnSimpanProfil');
+            btn.innerHTML = "Menyimpan..."; btn.disabled = true;
+
+            try {
+                await database.ref('users/' + userAktif).update({
+                    NamaLengkap: namaBaru,
+                    NomorWA: waBaru
+                });
+                
+                // Jabatan cukup kita simpan di memori lokal per kasir
+                localStorage.setItem('jabatanPengguna_' + userAktif, jabatanBaru);
+                localStorage.setItem('namaPengguna', namaBaru);
+                
+                showToast("Profil diperbarui dalam hitungan milidetik!");
+                tutupModalEdit();
+            } catch(e) {
+                showToast("Gagal menghubungi server.");
+            }
+            btn.innerHTML = "Simpan Data"; btn.disabled = false;
+        }
+
+        // --- VALIDASI SANDI LAMA & UPDATE SANDI BARU FIREBASE ---
+        function bukaModalSandi() { 
+            document.getElementById('inputSandiLama').value = '';
+            document.getElementById('inputSandiBaru').value = '';
+            document.getElementById('inputSandiKonfirm').value = '';
+            document.getElementById('modalUbahSandi').style.display = 'flex'; 
+        }
+        function tutupModalSandi() { document.getElementById('modalUbahSandi').style.display = 'none'; }
+
+        async function simpanSandiFirebase() {
+            let sandiLama = document.getElementById('inputSandiLama').value;
+            let sandiBaru = document.getElementById('inputSandiBaru').value;
+            let konfirm = document.getElementById('inputSandiKonfirm').value;
+
+            if(!sandiLama || !sandiBaru || !konfirm) { showToast("Semua kolom sandi wajib diisi!"); return; }
+            if(sandiBaru !== konfirm) { showToast("Konfirmasi sandi baru tidak cocok!"); return; }
+
+            let btn = document.getElementById('btnSimpanSandi');
+            btn.innerHTML = "Memeriksa Sandi..."; btn.disabled = true;
+
+            try {
+                // Validasi Ke Server Asli
+                let snapshot = await database.ref('users/' + userAktif).once('value');
+                let data = snapshot.val();
+                let dbPass = data.Password || data.password;
+
+                if(String(dbPass) !== String(sandiLama)) {
+                    showToast("Gagal: Kata sandi lama yang Anda masukkan salah.");
+                } else {
+                    btn.innerHTML = "Mereset...";
+                    await database.ref('users/' + userAktif).update({
+                        Password: sandiBaru
+                    });
+                    showToast("Kata Sandi berhasil diperbarui!");
+                    tutupModalSandi();
+                }
+            } catch(e) {
+                showToast("Gagal koneksi jaringan server.");
+            }
+            btn.innerHTML = "Perbarui"; btn.disabled = false;
+        }
+
+        // --- TENTANG LEMBAGA ---
+        function bukaModalInfo() { 
+            document.getElementById('modalInfo').style.display = 'flex'; 
+            let ucapanInfo = new SpeechSynthesisUtterance("Madrasah Diniyah Miftahul Ulum merupakan unit pendidikan yang berada di bawah naungan Yayasan Miftahul Ulum Al-Cholil. Berafiliasi dengan Madrasah Sidogiri.");
+            ucapanInfo.lang = 'id-ID';
+            window.speechSynthesis.speak(ucapanInfo);
+        }
+        function tutupModalInfo() { 
+            document.getElementById('modalInfo').style.display = 'none'; 
+            window.speechSynthesis.cancel();
+        }
+
+        // --- PWA INSTAL ---
+        let deferredPrompt;
+        const installMenu = document.getElementById('menuInstalApp');
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); deferredPrompt = e;
+            if(installMenu) installMenu.style.display = 'flex';
+        });
+
+        async function instalAplikasiAndroid() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') showToast('⏳ Aplikasi sedang diinstal...');
+                deferredPrompt = null;
+                if(installMenu) installMenu.style.display = 'none';
+            }
+        }
+        window.addEventListener('appinstalled', () => {
+            if(installMenu) installMenu.style.display = 'none';
+            deferredPrompt = null; showToast('✅ Aplikasi berhasil diinstal!');
+        });
+
+        // --- LOGOUT MANUAL ---
+        function keluarSistemManual() {
+            if(confirm("Apakah Anda yakin ingin keluar dari sistem?")) {
+                localStorage.removeItem('namaPengguna');
+                localStorage.removeItem('hakAkses'); 
+                localStorage.removeItem('usernameAsli'); 
+                window.location.href = 'index.html'; 
+            }
+        }
+    </script>
+</body>
+</html>
