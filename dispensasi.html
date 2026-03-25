@@ -19,13 +19,14 @@
     <script>
         const role = localStorage.getItem('hakAkses');
         if(role === 'Operator' || role === 'Demo') {
-            alert("🔒 AKSES DIBATASI: Khusus Administrator.");
+            alert("🔒 AKSES DIBATASI: Khusus Administrator/Pimpinan yang berhak memberi Dispensasi.");
             window.location.replace('beranda.html');
         }
         if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
     </script>
 
     <style>
+        /* --- TEMA NEUMORPHISM PREMIUM --- */
         :root {
             --bg-main: #e0e5ec; --text-dark: #31344b; --text-muted: #8C96A3;
             --shadow-dark: rgba(163, 177, 198, 0.6); --shadow-light: rgba(255, 255, 255, 0.6);
@@ -47,9 +48,11 @@
         .btn-icon:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
         .header-title { font-family:'Montserrat'; font-size:18px; font-weight:900; margin:0; text-transform:uppercase; letter-spacing:1px; }
 
+        /* WIDGET TOTAL */
         .summary-card { background: var(--bg-main); border-radius: 25px; padding: 25px; margin-bottom: 25px; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); display: flex; align-items: center; gap: 20px; border-bottom: 4px solid var(--c-orange);}
         .summary-card i { font-size: 35px; color: var(--c-orange); text-shadow: 2px 2px 4px var(--shadow-dark); }
         
+        /* TABS */
         .tab-container { display: flex; background: var(--bg-main); border-radius: 15px; padding: 8px; margin-bottom: 25px; box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); }
         .tab-btn { flex: 1; text-align: center; padding: 12px 0; border-radius: 12px; font-size: 12px; font-weight: 700; color: var(--text-muted); cursor: pointer; transition: 0.3s; }
         .tab-btn.active { background: var(--bg-main); color: var(--c-orange); box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); }
@@ -57,25 +60,30 @@
         .form-section { display: none; animation: fadeIn 0.4s ease; }
         .form-section.active { display: block; }
 
+        /* SEARCH AREA */
         .panel-card { background: var(--bg-main); border-radius: 20px; padding: 20px; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); margin-bottom:20px;}
         .input-group { margin-bottom: 15px; position: relative;}
         .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; margin-left: 5px; }
-        .input-edit { width: 100%; padding: 15px 20px; border: none; border-radius: 15px; background: var(--bg-main); font-family: 'Poppins'; font-size: 13px; color: var(--text-dark); box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); outline: none; transition: 0.3s; font-weight:500;}
-        
+        .input-edit { width: 100%; padding: 15px 20px; border: none; border-radius: 15px; background: var(--bg-main); font-family: 'Poppins'; font-size: 13px; color: var(--text-dark); box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); outline: none; transition: 0.3s; font-weight:600; appearance: none;}
+        .input-edit:focus { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light), 0 0 0 2px rgba(245, 158, 11, 0.3); }
+
+        /* AUTOCOMPLETE */
         .sug-box { position: absolute; top: 100%; left: 0; width: 100%; background: var(--bg-main); border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 100; max-height: 200px; overflow-y: auto; display: none; margin-top: 8px; padding: 5px;}
         .sug-item { padding: 12px 15px; border-radius: 10px; cursor: pointer; font-size: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); font-weight:600;}
         .sug-item:hover { background: rgba(245, 158, 11, 0.1); color: var(--c-orange); }
 
+        /* CARD TAGIHAN (HASIL CARI) */
         .card-tagihan { background: var(--bg-main); border-radius: 18px; padding: 20px; margin-bottom: 15px; box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--c-orange);}
         .btn-beri { background: var(--bg-main); color: var(--c-orange); border: none; padding: 10px 15px; border-radius: 10px; font-size: 11px; font-weight: 800; font-family:'Montserrat'; cursor: pointer; box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); transition:0.2s;}
         .btn-beri:active { box-shadow: inset 2px 2px 5px var(--shadow-dark); }
 
+        /* RIWAYAT TABLE */
         .table-wrapper { overflow-x: auto; background: var(--bg-main); padding: 15px; border-radius: 20px; box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); }
         table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; }
         th { color: var(--text-muted); padding: 15px 12px; border-bottom: 2px dashed rgba(0,0,0,0.1); font-family: 'Montserrat'; font-weight:800;}
-        td { padding: 15px 12px; border-bottom: 1px solid rgba(0,0,0,0.05); font-weight:500;}
+        td { padding: 15px 12px; border-bottom: 1px solid rgba(0,0,0,0.05); font-weight:600;}
 
-        /* MODAL NEUMORPHIC */
+        /* MODAL AUDIT NEUMORPHIC */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(224, 229, 236, 0.8); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
         [data-theme="dark"] .modal-overlay { background: rgba(45, 55, 72, 0.8); }
         .modal-content { background: var(--bg-main); width: 100%; max-width: 350px; border-radius: 25px; padding: 30px; box-shadow: 10px 10px 30px rgba(0,0,0,0.2); }
@@ -83,9 +91,16 @@
         .btn-modal-ok { width: 100%; padding: 15px; background: var(--bg-main); color: var(--c-green); border: none; border-radius: 15px; font-weight: 800; font-family:'Montserrat'; cursor: pointer; box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light); margin-top: 10px;}
         .btn-modal-ok:active { box-shadow: inset 2px 2px 5px var(--shadow-dark); }
         .btn-modal-cancel { width: 100%; margin-top: 15px; padding: 10px; border: none; background: transparent; color: var(--c-red); font-weight:700; cursor: pointer; }
+
+        #toast { visibility: hidden; min-width: 250px; background-color: #31344b; color: #fff; text-align: center; border-radius: 15px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
+        @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
     </style>
 </head>
 <body>
+
+    <div id="toast"><span>Pesan</span></div>
 
     <div class="app-container">
         <div class="nav-top">
@@ -104,7 +119,7 @@
 
         <div class="tab-container">
             <div class="tab-btn active" onclick="bukaTab('beri', this)">Beri Baru</div>
-            <div class="tab-btn" onclick="bukaTab('riwayat', this)">Riwayat</div>
+            <div class="tab-btn" onclick="bukaTab('riwayat', this)">Riwayat / Log</div>
         </div>
 
         <div class="form-section active" id="sec-beri">
@@ -116,35 +131,38 @@
                 </div>
             </div>
             <div id="hasilPencarian">
-                <p style="text-align:center; color:var(--text-muted); font-size:12px; font-weight:600; margin-top:30px;"><i class="fa-solid fa-magnifying-glass" style="font-size:30px; margin-bottom:10px; opacity:0.5;"></i><br>Masukkan nama santri.</p>
+                <p style="text-align:center; color:var(--text-muted); font-size:12px; font-weight:600; margin-top:30px;"><i class="fa-solid fa-magnifying-glass" style="font-size:30px; margin-bottom:10px; opacity:0.5;"></i><br>Pilih santri untuk melihat daftar tagihan aktifnya.</p>
             </div>
         </div>
 
         <div class="form-section" id="sec-riwayat">
             <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>Tanggal</th><th>Santri</th><th>Pos</th><th style="text-align:right;">Nominal</th></tr></thead>
+                    <thead><tr><th>Tanggal</th><th>Santri</th><th>Pos Tagihan</th><th style="text-align:right;">Nominal Bebas</th></tr></thead>
                     <tbody id="bodyRiwayat"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
+    <!-- MODAL AUDIT DISPENSASI -->
     <div class="modal-overlay" id="modalDisp">
         <div class="modal-content">
             <h2 style="font-family:'Montserrat'; font-size:18px; font-weight:900; color:var(--c-orange); margin-top:0; text-align:center;">Bebaskan Tagihan</h2>
+            <p style="text-align:center; font-size:11px; color:var(--text-muted); margin-bottom:20px;">Aksi ini akan terekam secara permanen di server dengan nama akun Anda.</p>
             <form id="formDisp">
                 <input type="hidden" id="mIdTagihan">
                 <div class="input-group">
-                    <label>Alasan Audit</label>
-                    <select class="input-edit" id="mAlasan" required>
+                    <label>Pilih Alasan Audit</label>
+                    <select class="input-edit" id="mAlasan" required style="cursor: pointer;">
                         <option value="Beasiswa Yatim">Beasiswa Yatim / Piatu</option>
-                        <option value="Keluarga Kurang Mampu">Keluarga Kurang Mampu</option>
+                        <option value="Keluarga Kurang Mampu">Keluarga Kurang Mampu / Dhuafa</option>
                         <option value="Kebijakan Pimpinan">Kebijakan Khusus Pimpinan</option>
                         <option value="Beasiswa Prestasi">Penghargaan / Prestasi</option>
+                        <option value="Lainnya">Lainnya...</option>
                     </select>
                 </div>
-                <button type="submit" class="btn-modal-ok">KONFIRMASI</button>
+                <button type="submit" class="btn-modal-ok"><i class="fa-solid fa-check-double"></i> KONFIRMASI BEBASKAN</button>
                 <button type="button" class="btn-modal-cancel" onclick="tutupModal()">Batalkan</button>
             </form>
         </div>
@@ -153,6 +171,7 @@
     <script>
         let listTagihan = []; let listRiwayat = [];
         const formatRupiah = (n) => 'Rp ' + parseInt(n || 0).toLocaleString('id-ID');
+        function showToast(msg) { let t = document.getElementById("toast"); t.querySelector("span").innerText = msg; t.className = "show"; setTimeout(() => { t.className = ""; }, 3000); }
 
         window.onload = function() {
             database.ref('tagihan').on('value', snap => {
@@ -160,7 +179,12 @@
                 snap.forEach(c => {
                     let r = c.val();
                     if(r.Status === 'Belum Lunas' || r.Status === 'Cicilan') listTagihan.push(r);
-                    else if(String(r.Status).includes('Dispensasi')) { listRiwayat.push(r); total += parseInt(r.Nominal || 0); }
+                    else if(String(r.Status).includes('Dispensasi')) { 
+                        listRiwayat.push(r); 
+                        // Kalkulasi hanya sisa tagihan jika sebelumnya sudah ada cicilan
+                        let sisa = r.Status === 'Cicilan' ? (r.Nominal - (r.Terbayar || 0)) : r.Nominal;
+                        total += parseInt(sisa || 0); 
+                    }
                 });
                 document.getElementById('sumDana').innerText = formatRupiah(total);
                 renderRiwayat();
@@ -173,6 +197,7 @@
             el.classList.add('active'); document.getElementById('sec-' + tipe).classList.add('active');
         }
 
+        // PENCARIAN SMART AUTOCOMPLETE (Fix Error: Nama_Lengkap)
         function tampilkanSaran() {
             let input = document.getElementById('cariPintar').value.toLowerCase();
             let box = document.getElementById('sugBox'); box.innerHTML = '';
@@ -181,14 +206,15 @@
             // Filter santri unik yang punya tagihan aktif
             let hasilUnik = [];
             listTagihan.forEach(t => {
-                if((t.Nama_Santri.toLowerCase().includes(input) || String(t.ID_Murid).includes(input)) && !hasilUnik.find(x => x.ID_Murid === t.ID_Murid)) {
-                    hasilUnik.push({ ID_Murid: t.ID_Murid, Nama_Santri: t.Nama_Santri });
+                let namaValid = String(t.Nama_Lengkap || t.Nama_Santri || "").toLowerCase();
+                if((namaValid.includes(input) || String(t.ID_Murid).includes(input)) && !hasilUnik.find(x => x.ID_Murid === t.ID_Murid)) {
+                    hasilUnik.push({ ID_Murid: t.ID_Murid, Nama_Santri: (t.Nama_Lengkap || t.Nama_Santri) });
                 }
             });
 
             hasilUnik.slice(0, 5).forEach(s => {
                 let div = document.createElement('div'); div.className = 'sug-item';
-                div.innerHTML = `<b>${s.Nama_Santri}</b>`;
+                div.innerHTML = `<b>${s.Nama_Santri}</b> <span style="font-size:10px; color:var(--text-muted);">(${s.ID_Murid})</span>`;
                 div.onclick = () => { document.getElementById('cariPintar').value = s.Nama_Santri; box.style.display = 'none'; renderFilter(s.ID_Murid); };
                 box.appendChild(div);
             });
@@ -199,6 +225,12 @@
             let wadah = document.getElementById('hasilPencarian');
             let res = listTagihan.filter(t => String(t.ID_Murid) === String(id));
             wadah.innerHTML = '';
+            
+            if(res.length === 0) {
+                 wadah.innerHTML = '<p style="text-align:center; color:var(--c-green); font-size:12px; font-weight:700; margin-top:20px;"><i class="fa-solid fa-check-circle" style="font-size:30px; margin-bottom:10px;"></i><br>Tidak ada tagihan aktif untuk santri ini.</p>';
+                 return;
+            }
+
             res.forEach(t => {
                 let sisa = t.Status === 'Cicilan' ? (t.Nominal - (t.Terbayar || 0)) : t.Nominal;
                 wadah.innerHTML += `<div class="card-tagihan">
@@ -208,35 +240,58 @@
             });
         }
 
+        // KENDALI MODAL AUDIT
         function bukaModal(id) { document.getElementById('mIdTagihan').value = id; document.getElementById('modalDisp').style.display = 'flex'; }
         function tutupModal() { document.getElementById('modalDisp').style.display = 'none'; }
 
+        // EKSEKUSI PEMBEBASAN DENGAN AUDIT TRAIL
         document.getElementById('formDisp').onsubmit = async (e) => {
             e.preventDefault();
             let id = document.getElementById('mIdTagihan').value;
             let alasan = document.getElementById('mAlasan').value;
+            let adminName = localStorage.getItem('namaPengguna') || 'Admin Keuangan';
             
-            // Tombol loading state
             let btn = document.querySelector('.btn-modal-ok');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MEMPROSES...'; btn.disabled = true;
 
-            await database.ref('tagihan/' + id).update({ 
-                Status: 'Dispensasi: ' + alasan, 
-                Tgl_Dispensasi: new Date().toLocaleString('id-ID'), 
-                Admin_Eksekutor: localStorage.getItem('namaPengguna') || 'Admin' 
-            });
+            try {
+                await database.ref('tagihan/' + id).update({ 
+                    Status: 'Dispensasi: ' + alasan, 
+                    Tgl_Dispensasi: new Date().toLocaleString('id-ID'), 
+                    Admin_Eksekutor: adminName 
+                });
+                
+                tutupModal(); document.getElementById('cariPintar').value = '';
+                document.getElementById('hasilPencarian').innerHTML = '<p style="text-align:center; color:var(--c-green); font-size:12px; font-weight:700; margin-top:20px;"><i class="fa-solid fa-check-circle" style="font-size:30px; margin-bottom:10px;"></i><br>Berhasil Dibebaskan & Dicatat dalam Log Audit!</p>';
+            } catch(err) {
+                showToast("Gagal memproses ke server.");
+            }
             
-            btn.innerHTML = 'KONFIRMASI'; btn.disabled = false;
-            tutupModal(); document.getElementById('cariPintar').value = '';
-            document.getElementById('hasilPencarian').innerHTML = '<p style="text-align:center; color:var(--c-green); font-size:12px; font-weight:700; margin-top:20px;"><i class="fa-solid fa-check-circle" style="font-size:30px; margin-bottom:10px;"></i><br>Berhasil Dibebaskan!</p>';
+            btn.innerHTML = '<i class="fa-solid fa-check-double"></i> KONFIRMASI BEBASKAN'; btn.disabled = false;
         };
 
+        // RENDER TABEL RIWAYAT LOG
         function renderRiwayat() {
             let b = document.getElementById('bodyRiwayat'); b.innerHTML = '';
-            listRiwayat.sort((x,y) => new Date(y.Tgl_Dispensasi || 0) - new Date(x.Tgl_Dispensasi || 0)).forEach(r => {
-                b.innerHTML += `<tr><td>${(r.Tgl_Dispensasi || '-').split(' ')[0]}</td><td><b>${r.Nama_Santri}</b></td><td>${r.Nama_Pos}</td><td style="text-align:right; text-decoration:line-through; color:#ef4444; font-weight:700;">${formatRupiah(r.Nominal)}</td></tr>`;
+            
+            if(listRiwayat.length === 0) {
+                 b.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--text-muted);">Belum ada riwayat pembebasan tagihan.</td></tr>';
+                 return;
+            }
+
+            listRiwayat.sort((x,y) => new Date(y.Tgl_Dispensasi.split(' ')[0].split('/').reverse().join('-')) - new Date(x.Tgl_Dispensasi.split(' ')[0].split('/').reverse().join('-'))).forEach(r => {
+                let sisaBebas = r.Status === 'Cicilan' ? (r.Nominal - (r.Terbayar || 0)) : r.Nominal;
+                let namaTampil = r.Nama_Lengkap || r.Nama_Santri || "Hamba Allah";
+
+                b.innerHTML += `<tr>
+                    <td>${(r.Tgl_Dispensasi || '-').split(' ')[0]}<br><span style="font-size:9px; color:var(--text-muted);">Oleh: ${r.Admin_Eksekutor || '-'}</span></td>
+                    <td><b>${namaTampil}</b><br><span style="font-size:9px; color:var(--c-orange);">${r.Status}</span></td>
+                    <td>${r.Nama_Pos}</td>
+                    <td style="text-align:right; text-decoration:line-through; color:#ef4444; font-weight:700;">${formatRupiah(sisaBebas)}</td>
+                </tr>`;
             });
         }
+        
         document.addEventListener('click', e => { if(e.target.id !== 'cariPintar') document.getElementById('sugBox').style.display = 'none'; });
     </script>
 </body>
