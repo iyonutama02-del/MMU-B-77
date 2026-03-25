@@ -270,20 +270,24 @@
             }
         }
 
-        // PENCARIAN SANTRI INDIVIDU
+        // PENCARIAN SANTRI INDIVIDU (Fix Error: Nama_Lengkap)
         function cariSantri() {
             let input = document.getElementById('i_search').value.toLowerCase();
             let box = document.getElementById('i_sug'); box.innerHTML = '';
             if(input.length < 2) { box.style.display = 'none'; return; }
 
-            let res = dbSantri.filter(s => s.Nama_Santri.toLowerCase().includes(input) || String(s.ID_Murid).includes(input)).slice(0, 5);
+            let res = dbSantri.filter(s => {
+                let namaValid = String(s.Nama_Lengkap || s.Nama_Santri || "").toLowerCase();
+                return namaValid.includes(input) || String(s.ID_Murid).includes(input);
+            }).slice(0, 5);
             
             res.forEach(s => {
+                let namaTampil = s.Nama_Lengkap || s.Nama_Santri || "Hamba Allah";
                 let div = document.createElement('div'); div.className = 'sug-item';
-                div.innerHTML = `<b>${s.Nama_Santri}</b> <span style="font-size:10px; color:var(--text-muted);">(${s.Kelas})</span>`;
+                div.innerHTML = `<b>${namaTampil}</b> <span style="font-size:10px; color:var(--text-muted);">(${s.Kelas})</span>`;
                 div.onclick = () => {
                     document.getElementById('i_search').value = '';
-                    document.getElementById('i_nama_display').value = s.Nama_Santri;
+                    document.getElementById('i_nama_display').value = namaTampil;
                     document.getElementById('i_nis').value = s.ID_Murid;
                     document.getElementById('i_kelas').value = s.Kelas;
                     box.style.display = 'none';
@@ -319,8 +323,11 @@
 
                     targetSantri.forEach((s, idx) => {
                         let invID = `INV-${s.ID_Murid}-${kodeUang}-${timestamp}-${idx}`;
+                        // FIX: Ambil Nama_Lengkap, jika tidak ada fallback ke Nama_Santri, jika kosong juga ke "Hamba Allah"
+                        let namaValid = s.Nama_Lengkap || s.Nama_Santri || "Hamba Allah"; 
+
                         updates[`tagihan/${invID}`] = { 
-                            ID_Tagihan: invID, ID_Murid: s.ID_Murid, Nama_Santri: s.Nama_Santri, Kelas: s.Kelas, 
+                            ID_Tagihan: invID, ID_Murid: s.ID_Murid, Nama_Santri: namaValid, Kelas: s.Kelas, 
                             Kode_Uang: kodeUang, Nama_Pos: posName, Nominal: parseInt(nominal), 
                             Keterangan: ket, Tanggal_Buat: tglIndo, Status: 'Belum Lunas', Admin_Pembuat: admin 
                         };
@@ -348,16 +355,12 @@
 
                 progressTxt.innerText = `Mengirim ke Server Firebase...`;
                 
-                // --- INI PERINTAH SAKTI YANG LANGSUNG MENYEBAR KE FIREBASE ---
                 await database.ref().update(updates);
-                // -------------------------------------------------------------
                 
                 showToast("🚀 Tagihan berhasil didistribusikan ke server!");
-                
                 if(tipe === 'massal') document.getElementById('formMassal').reset(); 
                 else { document.getElementById('formIndividu').reset(); document.getElementById('i_nama_display').value = ''; }
                 
-                // Pastikan nama admin tidak hilang setelah form direset
                 document.getElementById('m_admin').value = admin;
                 document.getElementById('i_admin').value = admin;
                 
