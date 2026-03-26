@@ -188,7 +188,17 @@
 
     <script>
         window.onload = function() {
-            if(localStorage.getItem('usernameAsli')) { window.location.href = 'beranda.html'; return; }
+            // [PERBAIKAN] Mencegah Back Button Cache setelah Logout
+            window.history.pushState(null, "", window.location.href);
+            window.onpopstate = function () {
+                window.history.pushState(null, "", window.location.href);
+            };
+
+            // Cek sesi
+            if(localStorage.getItem('usernameAsli')) { 
+                window.location.replace('beranda.html'); 
+                return; 
+            }
             setTimeout(function() {
                 document.getElementById('splash-screen').style.opacity = '0';
                 document.getElementById('splash-screen').style.visibility = 'hidden';
@@ -226,7 +236,6 @@
             return buffer.buffer;
         }
 
-        // --- FUNGSI EKSEKUSI LOGIN YANG SUDAH DIPERBAIKI SESUAI SCREENSHOT DATABASE ---
         function eksekusiLoginSukses(dataAkun, usernameAsli) {
             let namaValid = dataAkun.NamaLengkap || dataAkun.Nama_Lengkap || dataAkun.nama_lengkap || "Pengguna";
             let waValid = dataAkun.NomorWA || dataAkun.Nomor_WA || dataAkun.nomor_wa || "";
@@ -243,12 +252,18 @@
             ucapan.pitch = (gender === 'P' || gender === 'PEREMPUAN') ? 1.5 : 0.8; 
             window.speechSynthesis.speak(ucapan);
 
-            setTimeout(() => { window.location.href = 'beranda.html'; }, 1500);
+            // [PERBAIKAN] Replace state agar tidak bisa di-back
+            window.history.replaceState(null, null, window.location.href);
+            setTimeout(() => { window.location.replace('beranda.html'); }, 1500);
         }
 
         async function daftarBiometrikAsli(username, namaLengkap) {
             if (!window.PublicKeyCredential || window.location.protocol === 'file:') return true;
-            if (localStorage.getItem('webAuthnId')) return true;
+            
+            // [PERBAIKAN] Jika pengguna yang login sama dengan yang terdaftar di Biometrik, lewati.
+            // Namun, jika pengguna BARU login dengan kata sandi, timpa pendaftaran biometriknya!
+            let existingUser = localStorage.getItem('webAuthnUser');
+            if (existingUser === username && localStorage.getItem('webAuthnId')) return true;
 
             try {
                 showToast("Tautkan Biometrik HP... Silakan sentuh sensor Sidik Jari/Wajah Anda.");
@@ -268,7 +283,7 @@
                 if (cred) {
                     localStorage.setItem('webAuthnId', bufferToBase64url(cred.rawId));
                     localStorage.setItem('webAuthnUser', username);
-                    showToast("Sensor HP Anda berhasil ditautkan!");
+                    showToast("Sensor HP Anda berhasil ditautkan ke akun ini!");
                 }
                 return true;
             } catch (e) {
@@ -304,6 +319,7 @@
                         }
 
                         let namaLengkapData = dataAkun.NamaLengkap || dataAkun.Nama_Lengkap || "Pengguna";
+                        // Panggil daftar biometrik untuk memperbarui ID perangkat dengan user ini
                         await daftarBiometrikAsli(usrInput, namaLengkapData);
                         
                         showToast("Berhasil Login! Memuat sistem...");
@@ -343,7 +359,7 @@
             try {
                 const challenge = new Uint8Array(32); window.crypto.getRandomValues(challenge);
                 
-                // MUNCULKAN POPUP VERIFIKASI ASLI OS (SIDIK JARI/WAJAH VIVO Y27)
+                // MUNCULKAN POPUP VERIFIKASI ASLI OS
                 const assertion = await navigator.credentials.get({
                     publicKey: {
                         challenge: challenge,
