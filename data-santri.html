@@ -216,17 +216,24 @@
         <div class="nav-top">
             <button class="btn-icon" onclick="window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
             <h1 class="header-title">Database Santri</h1>
-            <button class="btn-icon" onclick="muatDataFirebase()" title="Refresh Sinkronisasi"><i class="fa-solid fa-rotate" style="color: var(--green-text);"></i></button>
+            <button class="btn-icon" onclick="vibrateClick(); muatDataFirebase()" title="Refresh Sinkronisasi"><i class="fa-solid fa-rotate" style="color: var(--green-text);"></i></button>
         </div>
 
         <div class="search-filter-row">
             <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="searchInput" placeholder="Cari nama atau NIS..." onkeyup="cariTabel()">
+                <input type="text" id="searchInput" placeholder="Cari nama atau ID..." onkeyup="cariTabel()">
             </div>
             <div class="filter-box">
                 <select id="filterKelas" onchange="cariTabel()">
                     <option value="semua">Semua Kelas</option>
+                </select>
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <div class="filter-box">
+                <select id="filterStatus" onchange="cariTabel()">
+                    <option value="aktif">Aktif Saja</option>
+                    <option value="semua">Semua Data</option>
                 </select>
                 <i class="fa-solid fa-chevron-down"></i>
             </div>
@@ -239,14 +246,15 @@
             <button class="btn-action" onclick="document.getElementById('uploadExcel').click();"><i class="fa-solid fa-file-import" style="color: #f59e0b;"></i> Impor Excel</button>
         </div>
         
-        <button class="btn-add-main" onclick="bukaModalTambah()"><i class="fa-solid fa-user-plus"></i> Tambah Data Santri Baru</button>
+        <button class="btn-add-main" onclick="bukaModalFormTambah()"><i class="fa-solid fa-user-plus"></i> Tambah Data Santri Baru</button>
 
         <div class="table-container">
             <div class="table-scroll-wrapper">
                 <table id="tabelSantri">
                     <thead>
                         <tr>
-                            <th>NIS</th>
+                            <th>ID SANTRI</th>
+                            <th>ID MURID</th>
                             <th>NAMA LENGKAP</th>
                             <th>L/P</th>
                             <th>KELAS</th>
@@ -255,7 +263,7 @@
                         </tr>
                     </thead>
                     <tbody id="tabel-body">
-                        <tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin" style="color:var(--green-text); font-size: 24px; margin-bottom:10px;"></i><br>Menghubungkan ke Server...</div></td></tr>
+                        <tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin" style="color:var(--green-text); font-size: 24px; margin-bottom:10px;"></i><br>Menghubungkan ke Server...</div></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -275,13 +283,18 @@
                 
                 <div class="grid-2">
                     <div class="input-group">
-                        <label class="modal-label">ID Murid (NIS Utama)</label>
-                        <input type="text" class="input-edit" id="id_murid" required placeholder="Cth: 2601001">
+                        <label class="modal-label">ID Santri (Sistem)</label>
+                        <input type="text" class="input-edit readonly" id="id_santri" required readonly placeholder="Auto Generate">
                     </div>
                     <div class="input-group">
-                        <label class="modal-label">Nama Lengkap</label>
-                        <input type="text" class="input-edit" id="nama" required placeholder="Sesuai KK">
+                        <label class="modal-label">ID Murid (NIS Manual)</label>
+                        <input type="text" class="input-edit" id="id_murid" placeholder="Cth: 2601001">
                     </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="modal-label">Nama Lengkap</label>
+                    <input type="text" class="input-edit" id="nama" required placeholder="Sesuai KK">
                 </div>
                 
                 <div class="grid-2">
@@ -326,7 +339,8 @@
                 <div class="biodata-rapor">
                     <table style="width: 100%; border:none;">
                         <tr><td style="width: 110px; border:none; padding:2px;">Nama Santri</td><td style="border:none; padding:2px;">: <b id="rprNama" style="text-transform: uppercase;">Fulan</b></td></tr>
-                        <tr><td style="border:none; padding:2px;">NIS / ID</td><td style="border:none; padding:2px;">: <span id="rprNIS">0000</span></td></tr>
+                        <tr><td style="border:none; padding:2px;">ID Santri</td><td style="border:none; padding:2px;">: <span id="rprIDSantri">-</span></td></tr>
+                        <tr><td style="border:none; padding:2px;">ID Murid</td><td style="border:none; padding:2px;">: <span id="rprIDMurid">-</span></td></tr>
                         <tr><td style="border:none; padding:2px;">Kelas</td><td style="border:none; padding:2px;">: <span id="rprKelas">1 Ibtidaiyah</span></td></tr>
                         <tr><td style="border:none; padding:2px;">Tanggal Cetak</td><td style="border:none; padding:2px;">: <span id="rprTanggal" style="font-family: monospace; font-weight: 600; color: #3b82f6;">-</span></td></tr>
                     </table>
@@ -350,6 +364,33 @@
     </div>
 
     <script>
+        // --- PENGAMANAN ANTARMUKA (Anti-Snooping & Haptic) ---
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        };
+
+        function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
+        function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); }
+        function vibrateSuccess() { if (navigator.vibrate) navigator.vibrate([30, 50, 30]); }
+
+        // --- HISTORY API ANDROID ---
+        function bukaModalAman(id) {
+            vibrateClick();
+            document.getElementById(id).style.display = 'flex';
+            window.history.pushState({ modalOpen: true, modalId: id }, "", window.location.href);
+        }
+
+        window.addEventListener('popstate', function(event) {
+            let modForm = document.getElementById('modalFormSantri');
+            let modRapor = document.getElementById('modalRapor');
+            if (modForm.style.display === 'flex') modForm.style.display = 'none';
+            if (modRapor.style.display === 'flex') modRapor.style.display = 'none';
+        });
+
         // --- 1. INISIALISASI DASAR & AUTO-LOGOUT ---
         let usernameAsli = localStorage.getItem('usernameAsli');
         if(!usernameAsli) { window.location.href = 'index.html'; }
@@ -365,12 +406,10 @@
         
         function formatRupiah(angka) { return 'Rp ' + parseInt(angka || 0).toLocaleString('id-ID'); }
         
-        // --- SOLUSI FILTER WA PINTAR (ANTI ANGKA 8) ---
         function formatWALink(noWA) {
             if(!noWA) return '';
             let strWA = String(noWA).replace(/\D/g,'');
             if(strWA.startsWith('0')) return '62' + strWA.substring(1);
-            // Paksa nambah 62 kalau Excel mencuri angka 0
             if(strWA.startsWith('8')) return '62' + strWA;
             return strWA;
         }
@@ -379,7 +418,6 @@
             if(!noWA || String(noWA).trim() === '-') return '-';
             let strWA = String(noWA).replace(/\D/g,'');
             if(strWA.startsWith('62')) return '0' + strWA.substring(2);
-            // Paksa nambah 0 di layar kalau Excel mencuri angka 0
             if(strWA.startsWith('8')) return '0' + strWA;
             return strWA;
         }
@@ -414,7 +452,7 @@
                     let setKelas = new Set();
                     
                     if (!snapshot.exists()) {
-                        tabelBody.innerHTML = `<tr><td colspan="6"><div class="empty-state">Data Santri Masih Kosong di Server. Silakan Import Excel.</div></td></tr>`;
+                        tabelBody.innerHTML = `<tr><td colspan="7"><div class="empty-state">Data Santri Masih Kosong di Server. Silakan Import Excel.</div></td></tr>`;
                         loadingEl.style.display = 'none';
                         return;
                     } 
@@ -422,6 +460,9 @@
                     snapshot.forEach(childSnapshot => {
                         let row = childSnapshot.val();
                         if(typeof row !== 'object' || row === null) return;
+                        
+                        // ID Santri sekarang adalah Kunci Firebase Mutlak (Sistem)
+                        let idSistemNode = childSnapshot.key; 
 
                         if(row.Kelas) setKelas.add(row.Kelas);
                         
@@ -434,21 +475,39 @@
 
                         let escapedNama = String(row.Nama_Lengkap || "").replace(/'/g, "\\'").replace(/"/g, '&quot;');
                         let escapedKet = String(row.Keterangan || "").replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        
+                        // JEMBATAN PINTAR: Jika data lama, ID manual mungkin ada di "ID_Santri".
+                        let idMuridManual = "-";
+                        if (row.ID_Murid !== undefined) {
+                            idMuridManual = row.ID_Murid; // Standar format baru
+                        } else {
+                            idMuridManual = row.ID_Santri || row.NIS || "-"; // Format lama yg tertinggal
+                        }
+                        if (idMuridManual === "") idMuridManual = "-";
+
+                        let st = String(row.Status || 'Aktif').toLowerCase();
+                        let statusTag = '';
+                        if(st === 'nonaktif') statusTag = '<br><span style="font-size:9px; color:#ef4444; font-weight:700;">(NONAKTIF)</span>';
+                        else if(st === 'lulus') statusTag = '<br><span style="font-size:9px; color:#8C96A3; font-weight:700;">(LULUS)</span>';
 
                         let tr = document.createElement('tr');
                         tr.className = "baris-data";
                         tr.setAttribute("data-kelas", row.Kelas || "");
+                        tr.setAttribute("data-status", st);
+                        
+                        // Render Kolom: 1. ID Santri (Sistem), 2. ID Murid (Manual)
                         tr.innerHTML = `
-                            <td><strong>${row.ID_Murid || '-'}</strong></td>
-                            <td style="font-weight:600;">${row.Nama_Lengkap || '-'}</td>
+                            <td><strong>${idSistemNode}</strong></td>
+                            <td style="color:var(--text-muted); font-family:monospace; font-size:11px;">${idMuridManual}</td>
+                            <td style="font-weight:600;">${row.Nama_Lengkap || '-'}${statusTag}</td>
                             <td>${row.LP || '-'}</td>
                             <td style="font-weight:600; color:var(--text-muted);">${row.Kelas || '-'}</td>
                             <td>${btnWAHTML}</td>
                             <td>
                                 <div class="action-btns">
-                                    <button class="btn-aksi-tabel btn-edit" title="Edit Profil" onclick="bukaModalEdit('${row.ID_Murid}', '${escapedNama}', '${row.LP}', '${row.Kelas}', '${row.WA_Wali}', '${escapedKet}')"><i class="fa-solid fa-pen"></i></button>
-                                    <button class="btn-aksi-tabel btn-rapor" title="Buku Riwayat Administrasi" onclick="bukaRapor('${row.ID_Murid}', '${escapedNama}', '${row.Kelas}')"><i class="fa-solid fa-file-invoice"></i></button>
-                                    <button class="btn-aksi-tabel btn-mutasi" title="Pindah/Boyong Santri" onclick="window.location.href='mutasi-kelas.html?nis=${row.ID_Murid}'"><i class="fa-solid fa-right-left"></i></button>
+                                    <button class="btn-aksi-tabel btn-edit" title="Edit Profil" onclick="bukaModalFormEdit('${idSistemNode}', '${idMuridManual}', '${escapedNama}', '${row.LP}', '${row.Kelas}', '${row.WA_Wali}', '${escapedKet}')"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="btn-aksi-tabel btn-rapor" title="Buku Riwayat Administrasi" onclick="bukaRapor('${idSistemNode}', '${idMuridManual}', '${escapedNama}', '${row.Kelas}')"><i class="fa-solid fa-file-invoice"></i></button>
+                                    <button class="btn-aksi-tabel btn-mutasi" title="Pindah/Boyong Santri" onclick="vibrateClick(); window.location.href='mutasi-kelas.html?nis=${idSistemNode}'"><i class="fa-solid fa-right-left"></i></button>
                                 </div>
                             </td>
                         `;
@@ -481,42 +540,48 @@
             }
         }
 
+        // --- FILTERING LOGIC ---
         function cariTabel() {
-            let inputNamaNIS = document.getElementById("searchInput").value.toLowerCase();
+            let inputPencarian = document.getElementById("searchInput").value.toLowerCase();
             let filterKls = document.getElementById("filterKelas").value;
+            let filterSts = document.getElementById("filterStatus").value; 
+            
             let tr = document.querySelectorAll(".baris-data");
             
             tr.forEach(baris => {
-                let teksBaris = baris.cells[0].innerText.toLowerCase() + " " + baris.cells[1].innerText.toLowerCase();
+                let teksBaris = baris.cells[0].innerText.toLowerCase() + " " + baris.cells[1].innerText.toLowerCase() + " " + baris.cells[2].innerText.toLowerCase();
                 let kelasSiswa = baris.getAttribute("data-kelas");
+                let statusSiswa = baris.getAttribute("data-status");
                 
-                let cocokNama = teksBaris.includes(inputNamaNIS);
+                let cocokTeks = teksBaris.includes(inputPencarian);
                 let cocokKelas = (filterKls === "semua" || kelasSiswa === filterKls);
+                let cocokStatus = (filterSts === "semua" || statusSiswa === "aktif");
 
-                baris.style.display = (cocokNama && cocokKelas) ? "" : "none";
+                baris.style.display = (cocokTeks && cocokKelas && cocokStatus) ? "" : "none";
             });
         }
 
-        // --- 3. FUNGSI FORM ---
-        function bukaModalTambah() { 
+        // --- 3. FUNGSI FORM (TAMBAH / EDIT) ---
+        function bukaModalFormTambah() { 
             document.getElementById('formMode').value = 'tambah';
             document.getElementById('modalFormTitle').innerHTML = '<i class="fa-solid fa-user-plus"></i> Tambah Santri Baru';
-            document.getElementById('id_murid').readOnly = false;
-            document.getElementById('id_murid').classList.remove('readonly');
+            
+            document.getElementById('id_santri').value = "ID-" + new Date().getTime().toString().slice(-6); // Auto
+            document.getElementById('id_murid').value = ""; // Kosongkan manualnya
+            
             document.getElementById('btnSimpan').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan ke Firebase';
             document.getElementById('btnSimpan').className = 'btn-submit';
             
             document.getElementById('formSantri').reset();
-            document.getElementById('modalFormSantri').style.display = 'flex'; 
+            bukaModalAman('modalFormSantri'); 
         }
 
-        function bukaModalEdit(id, nama, lp, kelas, wa, ket) {
+        function bukaModalFormEdit(id_sistem, id_manual, nama, lp, kelas, wa, ket) {
             document.getElementById('formMode').value = 'edit';
             document.getElementById('modalFormTitle').innerHTML = '<i class="fa-solid fa-pen-to-square" style="color:#f59e0b;"></i> Edit Data Santri';
             
-            document.getElementById('id_murid').value = id;
-            document.getElementById('id_murid').readOnly = true;
-            document.getElementById('id_murid').classList.add('readonly'); 
+            document.getElementById('id_santri').value = id_sistem;
+            document.getElementById('id_murid').value = (id_manual === '-' || id_manual === 'undefined') ? '' : id_manual;
             
             document.getElementById('nama').value = nama;
             document.getElementById('lp').value = lp;
@@ -527,19 +592,28 @@
             document.getElementById('btnSimpan').innerHTML = '<i class="fa-solid fa-check-double"></i> Perbarui Firebase';
             document.getElementById('btnSimpan').className = 'btn-submit btn-edit-mode';
             
-            document.getElementById('modalFormSantri').style.display = 'flex';
+            bukaModalAman('modalFormSantri');
         }
 
         function tutupModalForm() { 
+            vibrateClick();
             document.getElementById('modalFormSantri').style.display = 'none'; 
             document.getElementById('formSantri').reset(); 
         }
 
         document.getElementById('formSantri').addEventListener('submit', async function(e) {
             e.preventDefault();
+            vibrateClick();
             
+            if(!navigator.onLine) {
+                showToast('Koneksi terputus! Penyimpanan dibatalkan.');
+                vibrateHeavy();
+                return;
+            }
+
             let mode = document.getElementById('formMode').value;
-            let idMurid = document.getElementById('id_murid').value.trim();
+            let idSistem = document.getElementById('id_santri').value.trim(); // Key Utama Firebase
+            let idManual = document.getElementById('id_murid').value.trim() || "-"; 
             
             let btnSimpan = document.getElementById('btnSimpan');
             let textAsli = btnSimpan.innerHTML;
@@ -547,7 +621,8 @@
             btnSimpan.disabled = true;
 
             let dataSimpan = {
-                ID_Murid: idMurid,
+                ID_Santri: idSistem,
+                ID_Murid: idManual,
                 Nama_Lengkap: document.getElementById('nama').value.trim(),
                 LP: document.getElementById('lp').value,
                 Kelas: document.getElementById('kelas').value.trim(),
@@ -557,35 +632,50 @@
 
             try {
                 if (mode === 'tambah') {
-                    let cekEksis = await database.ref('santri/' + idMurid).once('value');
+                    let cekEksis = await database.ref('santri/' + idSistem).once('value');
                     if (cekEksis.exists()) {
-                        showToast('Peringatan: NIS tersebut sudah dipakai santri lain!');
+                        showToast('Peringatan: ID Sistem bentrok! Coba simpan ulang.');
+                        document.getElementById('id_santri').value = "ID-" + new Date().getTime().toString().slice(-6);
                         btnSimpan.innerHTML = textAsli; btnSimpan.disabled = false;
+                        vibrateHeavy();
                         return;
                     }
-                    await database.ref('santri/' + idMurid).set(dataSimpan);
+                    dataSimpan.Status = 'Aktif'; 
+                    await database.ref('santri/' + idSistem).set(dataSimpan);
                     showToast('Data Santri Baru Diciptakan!');
+                    vibrateSuccess();
                 } else {
-                    await database.ref('santri/' + idMurid).update(dataSimpan);
+                    await database.ref('santri/' + idSistem).update(dataSimpan);
                     showToast('Data Santri Diperbarui!');
+                    vibrateSuccess();
                 }
                 tutupModalForm();
             } catch (error) {
-                showToast('Terjadi kesalahan jaringan.');
+                showToast('Terjadi kesalahan jaringan Firebase.');
+                vibrateHeavy();
             }
             
             btnSimpan.innerHTML = textAsli; btnSimpan.disabled = false; 
         });
 
-        // --- 4. SISTEM IMPORT EXCEL ---
+        // --- 4. SISTEM IMPORT / EXPORT EXCEL ---
         function downloadTemplateExcel() {
-            const templateData = [ ["ID_Murid", "Nama_Lengkap", "LP", "Kelas", "WA_Wali", "Keterangan"], ["2601001", "Ahmad Fulan", "L", "I - SATU", "081234567890", "Hapus baris contoh ini sebelum import"] ];
-            const ws = XLSX.utils.aoa_to_sheet(templateData); ws['!cols'] = [ {wch:15}, {wch:35}, {wch:5}, {wch:15}, {wch:15}, {wch:35} ];
+            vibrateClick();
+            const templateData = [ ["ID_Santri", "ID_Murid", "Nama_Lengkap", "LP", "Kelas", "WA_Wali", "Keterangan", "Status"], ["", "2601001", "Ahmad Fulan", "L", "I - SATU", "081234567890", "-", "Aktif"] ];
+            const ws = XLSX.utils.aoa_to_sheet(templateData); ws['!cols'] = [ {wch:15}, {wch:15}, {wch:35}, {wch:5}, {wch:15}, {wch:15}, {wch:35}, {wch:15} ];
             const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Template_Santri");
             XLSX.writeFile(wb, "Template_Import_Santri_B77.xlsx");
         }
 
         document.getElementById('uploadExcel').addEventListener('change', function(e) {
+            vibrateClick();
+            if(!navigator.onLine) {
+                showToast('Koneksi offline! Import dibatalkan untuk cegah data rusak.');
+                vibrateHeavy();
+                document.getElementById('uploadExcel').value = "";
+                return;
+            }
+
             let file = e.target.files[0]; if (!file) return;
             document.getElementById('importLoading').style.display = 'flex';
             document.getElementById('importStatusText').innerText = "Membaca file Excel...";
@@ -607,27 +697,36 @@
                     let jumlahValid = 0;
 
                     jsonData.forEach(row => { 
-                        let nid = String(row['ID_Murid'] || '').trim();
-                        if(nid !== "") {
-                            updates[nid] = { 
-                                ID_Murid: nid, 
-                                Nama_Lengkap: String(row['Nama_Lengkap'] || '').trim(), 
+                        let nidSistem = String(row['ID_Santri'] || '').trim();
+                        if(nidSistem === "") nidSistem = "ID-" + new Date().getTime().toString().slice(-6) + Math.floor(Math.random()*100);
+                        
+                        let nidManual = String(row['ID_Murid'] || row['NIS'] || '-').trim();
+                        let namaBaris = String(row['Nama_Lengkap'] || '').trim();
+                        
+                        if(namaBaris !== "") {
+                            updates['santri/' + nidSistem] = { 
+                                ID_Santri: nidSistem, 
+                                ID_Murid: nidManual,
+                                Nama_Lengkap: namaBaris, 
                                 LP: String(row['LP'] || '').trim(), 
                                 Kelas: String(row['Kelas'] || '').trim(), 
                                 WA_Wali: String(row['WA_Wali'] || '').trim(), 
-                                Keterangan: String(row['Keterangan'] || '').trim() || '-'
+                                Keterangan: String(row['Keterangan'] || '').trim() || '-',
+                                Status: String(row['Status'] || 'Aktif').trim()
                             }; 
                             jumlahValid++;
                         }
                     });
 
-                    await database.ref('santri').update(updates);
+                    await database.ref().update(updates);
                     
                     document.getElementById('importLoading').style.display = 'none';
                     showToast(`Sukses Import ${jumlahValid} Data Kilat!`);
+                    vibrateSuccess();
                 } catch(error) {
                     document.getElementById('importLoading').style.display = 'none'; 
                     showToast('Kesalahan sistem saat membaca Excel.'); 
+                    vibrateHeavy();
                 }
                 
                 document.getElementById('uploadExcel').value = ""; 
@@ -637,6 +736,7 @@
 
         // --- 5. EXPORT PDF ---
         function exportPDF() {
+            vibrateClick();
             const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
             doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.text("Buku Induk Santri MMU B-77", 14, 20);
             
@@ -646,33 +746,39 @@
             
             let bodyData = [];
             document.querySelectorAll("#tabelSantri tbody tr").forEach(row => {
-                let cols = row.querySelectorAll("td");
-                if (cols.length > 1 && row.style.display !== "none") bodyData.push([cols[0].innerText, cols[1].innerText, cols[2].innerText, cols[3].innerText, cols[4].innerText]);
+                if (row.style.display !== "none" && row.classList.contains("baris-data")) {
+                    let cols = row.querySelectorAll("td");
+                    let namaBersih = cols[2].innerText.replace('(NONAKTIF)', '').replace('(LULUS)', '').trim();
+                    bodyData.push([cols[0].innerText, cols[1].innerText, namaBersih, cols[3].innerText, cols[4].innerText, cols[5].innerText]);
+                }
             });
 
             if(bodyData.length === 0) { showToast("Tidak ada data untuk PDF!"); return; }
 
-            doc.autoTable({ head: [['ID Murid', 'Nama Lengkap', 'L/P', 'Kelas', 'WA Wali']], body: bodyData, startY: 35, theme: 'grid', headStyles: { fillColor: [6, 209, 111], textColor: 255 }, styles: { fontSize: 9 } });
+            doc.autoTable({ head: [['ID Santri', 'ID Murid', 'Nama Lengkap', 'L/P', 'Kelas', 'WA Wali']], body: bodyData, startY: 35, theme: 'grid', headStyles: { fillColor: [6, 209, 111], textColor: 255 }, styles: { fontSize: 8 } });
             doc.save('Database_Santri_B77.pdf');
+            vibrateSuccess();
         }
 
-        // --- 6. FITUR BUKU RIWAYAT ---
+        // --- 6. FITUR BUKU RIWAYAT (RAPOR) ---
         let currentRaporNama = "";
-        async function bukaRapor(id_murid, nama, kelas) {
+        async function bukaRapor(id_sistem, id_manual, nama, kelas) {
             document.getElementById('importLoading').style.display = 'flex';
             document.getElementById('importStatusText').innerText = "Menarik Rekam Jejak...";
             
             currentRaporNama = nama;
             document.getElementById('rprNama').innerText = nama; 
-            document.getElementById('rprNIS').innerText = id_murid;
+            document.getElementById('rprIDSantri').innerText = id_sistem;
+            document.getElementById('rprIDMurid').innerText = id_manual;
             document.getElementById('rprKelas').innerText = kelas; 
             
             let now = new Date();
-            let dString = `${now.getDate()} ${now.toLocaleString('id-ID', {month:'long'})} ${now.getFullYear()} - ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')} WIB`;
+            let dString = `${now.getDate()} ${now.toLocaleString('id-ID', {month:'long'})} ${now.getFullYear()} - ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} WIB`;
             document.getElementById('rprTanggal').innerText = dString;
 
             try {
-                let snapshot = await database.ref('tagihan').orderByChild('ID_Murid').equalTo(id_murid).once('value');
+                // Di Tagihan, data selalu disimpan berdasarkan Key Sistem yang kita sebut "ID_Murid" di tabel tagihan. Jadi equalTo tetap id_sistem.
+                let snapshot = await database.ref('tagihan').orderByChild('ID_Murid').equalTo(id_sistem).once('value');
                 
                 let tbody = document.getElementById('bodyRaporList'); 
                 tbody.innerHTML = '';
@@ -696,16 +802,21 @@
                     });
                 }
                 document.getElementById('importLoading').style.display = 'none'; 
-                document.getElementById('modalRapor').style.display = 'flex';
+                bukaModalAman('modalRapor');
             } catch(e) {
                 document.getElementById('importLoading').style.display = 'none'; 
                 showToast("Gagal memuat rekam jejak server.");
+                vibrateHeavy();
             }
         }
 
-        function tutupRapor() { document.getElementById('modalRapor').style.display = 'none'; }
+        function tutupRapor() { 
+            vibrateClick();
+            document.getElementById('modalRapor').style.display = 'none'; 
+        }
 
         function unduhRaporPDF() {
+            vibrateClick();
             showToast("Mempersiapkan PDF Transparansi...");
             let printArea = document.getElementById('area-cetak-rapor');
 
@@ -716,7 +827,10 @@
                 html2canvas: { scale: 2, useCORS: true }, 
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } 
             };
-            html2pdf().set(opt).from(printArea).save().then(() => { showToast("File PDF berhasil diunduh!"); });
+            html2pdf().set(opt).from(printArea).save().then(() => { 
+                showToast("File PDF berhasil diunduh!"); 
+                vibrateSuccess();
+            });
         }
     </script>
 </body>
