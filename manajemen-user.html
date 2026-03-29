@@ -15,6 +15,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="firebase-config.js"></script>
@@ -130,7 +132,7 @@
         <div class="nav-top">
             <button class="btn-icon" onclick="window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
             <h1 class="header-title">Daftar Pengguna</h1>
-            <button class="btn-icon" onclick="muatDataUsersRealtime()" title="Refresh Sinkronisasi"><i class="fa-solid fa-rotate" style="color: #06d16f;"></i></button>
+            <button class="btn-icon" onclick="vibrateClick(); muatDataUsersRealtime();" title="Refresh Sinkronisasi"><i class="fa-solid fa-rotate" style="color: #06d16f;"></i></button>
         </div>
 
         <div class="search-box">
@@ -245,6 +247,28 @@
     </div>
 
     <script>
+        // --- 0. PENGAMANAN DASAR ANTARMUKA (Anti-Snooping) ---
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        };
+
+        // --- HAPTIC FEEDBACK (Vibration API) ---
+        function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
+        function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); }
+        function vibrateSuccess() { if (navigator.vibrate) navigator.vibrate([30, 50, 30]); }
+
+        // --- HISTORY API ANDROID (Untuk Modal) ---
+        window.addEventListener('popstate', function(event) {
+            let modalU = document.getElementById('modalUser');
+            let modalR = document.getElementById('modalResetSandi');
+            if (modalU && modalU.style.display === 'flex') { modalU.style.display = 'none'; }
+            if (modalR && modalR.style.display === 'flex') { modalR.style.display = 'none'; }
+        });
+
         // --- INISIALISASI KEAMANAN & FIREBASE ---
         let hakAksesLokal = localStorage.getItem('hakAkses');
         let usernameAsliLokal = localStorage.getItem('usernameAsli');
@@ -255,12 +279,16 @@
         }
 
         function toggleSandi(inputId, iconId) {
+            vibrateClick();
             let inputSandi = document.getElementById(inputId); let iconSandi = document.getElementById(iconId);
             if (inputSandi.type === "password") { inputSandi.type = "text"; iconSandi.classList.replace("fa-eye", "fa-eye-slash"); } 
             else { inputSandi.type = "password"; iconSandi.classList.replace("fa-eye-slash", "fa-eye"); }
         }
 
-        function tutupModal(id) { document.getElementById(id).style.display = 'none'; }
+        function tutupModal(id) { 
+            vibrateClick();
+            document.getElementById(id).style.display = 'none'; 
+        }
 
         window.onload = function() {
             if(!usernameAsliLokal) { window.location.href = 'index.html'; return; }
@@ -303,7 +331,6 @@
                     let statusClass = statusAwal.toLowerCase() === 'nonaktif' ? 'status-nonaktif' : 'status-aktif';
 
                     // PROTEKSI ANTI-KUDETA (GEMBOK UNTUK DEVELOPER)
-                    // Baris ini memastikan HANYA Developer itu sendiri yang bisa melihat tombol edit untuk akunnya.
                     let aksiHtml = '';
                     if (roleLower === 'developer' && hakAksesLokal !== 'Developer') {
                         aksiHtml = `<button class="btn-aksi-tabel" style="opacity: 0.5; cursor: not-allowed; background: transparent; box-shadow: none;" title="Akses Dilindungi Tingkat Dewa"><i class="fa-solid fa-lock"></i></button>`;
@@ -346,10 +373,8 @@
             });
         }
 
-        // FUNGSI MENGUNCI JABATAN DEVELOPER AGAR TIDAK BISA DITAMBAHKAN BARU
         function aturOpsiRole(currentRole) {
             let optDev = document.getElementById('opt_developer');
-            // Opsi Developer HANYA dimunculkan jika sedang mengedit akun yang sudah menjabat Developer
             if (currentRole === 'Developer') {
                 optDev.style.display = 'block';
                 optDev.disabled = false;
@@ -360,11 +385,11 @@
         }
 
         function bukaModalUser() {
+            vibrateClick();
             document.getElementById('formMode').value = 'tambah';
             document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-user-plus"></i> Tambah Pengguna Baru';
             document.getElementById('formUser').reset();
             
-            // Kunci mutlak: Tidak ada yang bisa menambah Developer baru
             aturOpsiRole(''); 
             
             document.getElementById('grupPassword').style.display = 'block';
@@ -377,14 +402,16 @@
             
             document.getElementById('u_password').required = true;
             document.getElementById('btnSimpanUser').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Buat Pengguna Firebase';
+            
             document.getElementById('modalUser').style.display = 'flex';
+            window.history.pushState({ modalOpen: true }, "", window.location.href);
         }
 
         function bukaModalEditRole(username, currentRole, currentStatus) {
+            vibrateClick();
             document.getElementById('formMode').value = 'edit_role';
             document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-sliders"></i> Ubah Hak Akses / Status';
             
-            // Opsi akan menyesuaikan. Jika dia Developer, opsi terbuka. Jika bukan, disembunyikan.
             aturOpsiRole(currentRole);
             
             document.getElementById('u_username').value = username;
@@ -401,19 +428,31 @@
             
             document.getElementById('u_password').required = false;
             document.getElementById('btnSimpanUser').innerHTML = '<i class="fa-solid fa-check-double"></i> Perbarui Firebase';
+            
             document.getElementById('modalUser').style.display = 'flex';
+            window.history.pushState({ modalOpen: true }, "", window.location.href);
         }
 
         function bukaModalReset(username) {
+            vibrateClick();
             document.getElementById('reset_username').value = username;
             document.getElementById('reset_label_user').innerText = username;
             document.getElementById('formResetSandi').reset();
+            
             document.getElementById('modalResetSandi').style.display = 'flex';
+            window.history.pushState({ modalOpen: true }, "", window.location.href);
         }
 
         // --- 2. LOGIKA SIMPAN & UPDATE FIREBASE ---
         document.getElementById('formUser').addEventListener('submit', async function(e) {
             e.preventDefault();
+            vibrateClick();
+
+            if (!navigator.onLine) {
+                showToast("Sinyal Terputus. Gagal menghubungi Firebase.");
+                vibrateHeavy(); return;
+            }
+
             let mode = document.getElementById('formMode').value;
             let usernameInput = document.getElementById('u_username').value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
             let roleDipilih = document.getElementById('u_role').value;
@@ -424,24 +463,26 @@
 
             try {
                 if (mode === 'tambah') {
-                    // Proteksi Lapis Kedua (Hack-proof)
                     if(roleDipilih === 'Developer') {
                         showToast("Sistem Menolak: Anda tidak bisa menciptakan Developer baru.");
+                        vibrateHeavy();
                         btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false; return;
                     }
 
-                    // Cek Duplikat Username
                     let snapshot = await database.ref('users/' + usernameInput).once('value');
                     if (snapshot.exists()) {
                         showToast("Aksi Ditolak: Username tersebut sudah dipakai!");
-                        btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false;
-                        return;
+                        vibrateHeavy();
+                        btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false; return;
                     }
 
-                    // Tembak Data Baru ke Server
+                    // --- ENKRIPSI SANDI LEVEL DEWA ---
+                    let plainPassword = document.getElementById('u_password').value;
+                    let hashedPassword = CryptoJS.SHA256(plainPassword + usernameInput).toString();
+
                     await database.ref('users/' + usernameInput).set({
                         Username: usernameInput,
-                        Password: document.getElementById('u_password').value,
+                        Password: hashedPassword, // Disimpan dalam bentuk Enkripsi Hash
                         NamaLengkap: document.getElementById('u_nama').value.trim(),
                         Role: roleDipilih,
                         Gender: document.getElementById('u_gender').value,
@@ -451,35 +492,38 @@
                     });
                     
                     showToast('Pengguna baru berhasil diciptakan!');
+                    vibrateSuccess();
                     tutupModal('modalUser');
 
                 } else if (mode === 'edit_role') {
                     let statusBaru = document.getElementById('u_status').value;
 
-                    // PROTEKSI ANTI BUNUH DIRI (SELF-LOCKOUT) DAN ANTI TURUN PANGKAT
                     if (usernameInput === usernameAsliLokal) {
                         if (statusBaru === 'Nonaktif') {
                             showToast("Gagal: Anda tidak diizinkan memblokir akun Anda sendiri!");
+                            vibrateHeavy();
                             btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false; return;
                         }
                         if (hakAksesLokal === 'Developer' && roleDipilih !== 'Developer') {
                             showToast("Gagal: Jabatan Developer adalah mutlak dan tidak bisa diturunkan.");
+                            vibrateHeavy();
                             btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false; return;
                         }
                     }
 
-                    // Update Data Spesifik (Hanya Role & Status)
                     await database.ref('users/' + usernameInput).update({
                         Role: roleDipilih,
                         Status: statusBaru
                     });
                     
                     showToast('Hak akses berhasil diperbarui!');
+                    vibrateSuccess();
                     tutupModal('modalUser');
                 }
             } catch (err) {
                 console.error(err);
                 showToast('Terjadi kesalahan jaringan Firebase!');
+                vibrateHeavy();
             }
             
             btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false;
@@ -488,8 +532,18 @@
         // --- 3. EKSEKUSI PAKSA RESET SANDI (FIREBASE) ---
         document.getElementById('formResetSandi').addEventListener('submit', async function(e) {
             e.preventDefault();
+            vibrateClick();
+
+            if (!navigator.onLine) {
+                showToast("Sinyal Terputus. Gagal menghubungi Firebase.");
+                vibrateHeavy(); return;
+            }
+
             let usernameTarget = document.getElementById('reset_username').value;
             let passBaru = document.getElementById('new_reset_password').value;
+
+            // --- ENKRIPSI SANDI LEVEL DEWA SAAT RESET ---
+            let hashedPassword = CryptoJS.SHA256(passBaru + usernameTarget).toString();
 
             let btnSimpan = document.getElementById('btnSimpanReset');
             let txtAsli = btnSimpan.innerHTML;
@@ -497,12 +551,14 @@
 
             try {
                 await database.ref('users/' + usernameTarget).update({
-                    Password: passBaru
+                    Password: hashedPassword // Menggunakan sandi yang sudah dienkripsi
                 });
-                showToast('Sandi berhasil diganti secara paksa!');
+                showToast('Sandi berhasil diganti & dienkripsi!');
+                vibrateSuccess();
                 tutupModal('modalResetSandi');
             } catch (err) {
                 showToast('Gagal menghubungi server Firebase.');
+                vibrateHeavy();
             }
             
             btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false;
