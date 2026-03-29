@@ -52,6 +52,7 @@
             --shadow-light: rgba(255, 255, 255, 0.6);
             --green-grad: linear-gradient(135deg, #37f08c 0%, #06d16f 100%);
             --orange-grad: linear-gradient(135deg, #fbbd23 0%, #f59e0b 100%);
+            --red-grad: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
             --border-line: #d1d9e6;
         }
         [data-theme="dark"] {
@@ -59,6 +60,7 @@
             --shadow-dark: #202835; --shadow-light: #3a4556;
             --green-grad: linear-gradient(135deg, #009245 0%, #007A39 100%);
             --orange-grad: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            --red-grad: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
             --border-line: #4a5568;
         }
 
@@ -122,6 +124,7 @@
         }
         .btn-cari { background: var(--green-grad); color: white; box-shadow: 4px 4px 10px rgba(34, 197, 94, 0.3); }
         .btn-mutasi { background: var(--orange-grad); color: white; box-shadow: 4px 4px 10px rgba(245, 158, 11, 0.3); }
+        .btn-hapus-mode { background: var(--red-grad) !important; box-shadow: 4px 4px 10px rgba(239, 68, 68, 0.3) !important; }
         
         .btn-action:active { transform: translateY(2px); box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2); }
         .btn-action:disabled { background: var(--border-line); box-shadow: none; cursor: not-allowed; color: var(--text-muted); transform: none; }
@@ -209,8 +212,8 @@
                         <div class="select-wrapper">
                             <select class="input-edit" id="jenisAksi" style="cursor: pointer;" onchange="cekTampilanKelasTujuan()">
                                 <option value="Naik Kelas">Naik / Pindah Kelas</option>
-                                <option value="Lulus">Lulus / Alumni</option>
                                 <option value="Nonaktif">Berhenti / Nonaktif</option>
+                                <option value="Hapus" style="color: #ef4444; font-weight: 800;">🗑️ Hapus Data (Permanen)</option>
                             </select>
                             <i class="fa-solid fa-chevron-down icon-select"></i>
                         </div>
@@ -242,16 +245,17 @@
                                 <span class="checkmark"></span>
                             </label>
                         </th>
-                        <th>ID Murid</th>
-                        <th>Nama Lengkap</th>
+                        <th>ID SANTRI</th>
+                        <th>ID MURID</th>
+                        <th>NAMA LENGKAP</th>
                         <th>L/P</th>
-                        <th>Kelas Saat Ini</th>
-                        <th>Keterangan</th>
+                        <th>KELAS SAAT INI</th>
+                        <th>KETERANGAN</th>
                     </tr>
                 </thead>
                 <tbody id="tabel-body">
                     <tr>
-                        <td colspan="6">
+                        <td colspan="7">
                             <div class="empty-state">
                                 <i class="fa-solid fa-circle-notch fa-spin" style="color: #22c55e; font-size: 30px;"></i>
                                 <p>Menarik data dari server Firebase...</p>
@@ -265,6 +269,22 @@
     </div>
 
     <script>
+        // --- 0. LEVEL DEWA: ANTI-SNOOPING & HAPTIC FEEDBACK ---
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        };
+
+        function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
+        function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); }
+        function vibrateSuccess() { if (navigator.vibrate) navigator.vibrate([30, 50, 30]); }
+
+        window.addEventListener('online', () => { showToast("Sinyal Internet Kembali Normal."); vibrateSuccess(); });
+        window.addEventListener('offline', () => { showToast("Sinyal Terputus. Sebagian fitur diblokir."); vibrateHeavy(); });
+
         function showToast(msg) {
             let toast = document.getElementById("toast"); document.getElementById("toastMsg").innerText = msg;
             toast.className = "show"; setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
@@ -273,12 +293,9 @@
         let semuaDataSantri = []; 
         let targetAutoSelectNIS = null;
 
-        // 0. JALANKAN OTOMATIS SAAT HALAMAN DIBUKA
         window.onload = function() {
-            // Cek URL apakah ada titipan NIS dari halaman Data Santri (Auto-Select Feature)
             const urlParams = new URLSearchParams(window.location.search);
             targetAutoSelectNIS = urlParams.get('nis');
-
             muatDaftarKelasDanData();
         };
 
@@ -292,11 +309,26 @@
                     snapshot.forEach(child => {
                         let row = child.val();
                         if(typeof row === 'object' && row !== null) {
-                            // Abaikan yang sudah nonaktif/lulus agar tidak menuhi tabel mutasi, kecuali sedang dicari khusus
-                            let status = String(row.Status || row.Kelas || '').toLowerCase();
-                            semuaDataSantri.push(row);
-                            if(row.Kelas && String(row.Kelas).trim() !== '' && status !== 'lulus' && status !== 'nonaktif') {
-                                setKelas.add(String(row.Kelas).trim());
+                            
+                            let status = String(row.Status || 'Aktif').toLowerCase();
+                            
+                            if(status === 'aktif') {
+                                row.idSistemNode = child.key; // ID Santri
+                                
+                                let idMuridManual = "-";
+                                if (row.ID_Murid !== undefined) {
+                                    idMuridManual = row.ID_Murid;
+                                } else {
+                                    idMuridManual = row.ID_Santri || row.NIS || "-";
+                                }
+                                if (idMuridManual === "") idMuridManual = "-";
+                                row.idMuridManual = idMuridManual;
+
+                                semuaDataSantri.push(row);
+
+                                if(row.Kelas && String(row.Kelas).trim() !== '') {
+                                    setKelas.add(String(row.Kelas).trim());
+                                }
                             }
                         }
                     });
@@ -317,30 +349,28 @@
                 
                 if(valAsalLama) selectAsal.value = valAsalLama;
 
-                // Eksekusi Auto-Select jika ada titipan NIS
                 if(targetAutoSelectNIS) {
-                    let targetSantri = semuaDataSantri.find(s => String(s.ID_Murid) === targetAutoSelectNIS);
+                    let targetSantri = semuaDataSantri.find(s => String(s.idSistemNode) === targetAutoSelectNIS);
                     if(targetSantri) {
-                        selectAsal.value = targetSantri.Kelas; // Auto set dropdown filter
-                        tarikDataBerdasarkanKelas(); // Tampilkan & centang
-                        targetAutoSelectNIS = null; // Reset agar tidak loop
+                        selectAsal.value = targetSantri.Kelas; 
+                        tarikDataBerdasarkanKelas(); 
+                        targetAutoSelectNIS = null; 
                         return;
                     }
                 }
 
                 tarikDataBerdasarkanKelas(); 
             }, error => {
-                document.getElementById('tabel-body').innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; font-size: 30px;"></i><p>Akses ditolak atau terputus dari Firebase.</p></div></td></tr>';
+                document.getElementById('tabel-body').innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; font-size: 30px;"></i><p>Akses ditolak atau terputus dari Firebase.</p></div></td></tr>';
             });
         }
 
-        // FUNGSI RENDER TABEL (DIPISAH AGAR RAPI)
         function renderTabel(dataArray) {
             let tabelBody = document.getElementById('tabel-body');
             tabelBody.innerHTML = '';
 
             if(dataArray.length === 0) {
-                tabelBody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="fa-regular fa-folder-open" style="font-size: 30px;"></i><p>Tidak ada data santri ditemukan.</p></div></td></tr>`;
+                tabelBody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="fa-regular fa-folder-open" style="font-size: 30px;"></i><p>Tidak ada data santri aktif ditemukan.</p></div></td></tr>`;
                 document.getElementById('infoJumlahKelas').innerText = `(0 Anak)`;
                 return;
             }
@@ -348,23 +378,23 @@
             document.getElementById('infoJumlahKelas').innerText = `(${dataArray.length} Anak)`;
 
             dataArray.forEach(row => {
-                let isAutoChecked = (targetAutoSelectNIS && String(row.ID_Murid) === targetAutoSelectNIS) ? 'checked' : '';
+                let isAutoChecked = (targetAutoSelectNIS && String(row.idSistemNode) === targetAutoSelectNIS) ? 'checked' : '';
                 let bgRowClass = isAutoChecked ? 'terpilih' : '';
 
                 let tr = document.createElement('tr');
                 tr.className = `baris-data ${bgRowClass}`;
-                tr.id = `row_${row.ID_Murid}`;
-                // Smart Row Click: Baris diklik -> Checkbox berubah
-                tr.onclick = function() { toggleRowClick(row.ID_Murid); };
+                tr.id = `row_${row.idSistemNode}`;
+                tr.onclick = function() { toggleRowClick(row.idSistemNode); };
                 
                 tr.innerHTML = `
                     <td style="padding-left: 15px;">
                         <label class="cb-container">
-                            <input type="checkbox" class="check-item" id="cb_${row.ID_Murid}" value="${row.ID_Murid}" ${isAutoChecked}>
+                            <input type="checkbox" class="check-item" id="cb_${row.idSistemNode}" value="${row.idSistemNode}" ${isAutoChecked}>
                             <span class="checkmark"></span>
                         </label>
                     </td>
-                    <td><strong>${row.ID_Murid}</strong></td>
+                    <td><strong>${row.idSistemNode}</strong></td>
+                    <td style="color:var(--text-muted); font-family:monospace; font-size:11px;">${row.idMuridManual}</td>
                     <td style="font-weight: 600;">${row.Nama_Lengkap}</td>
                     <td>${row.LP}</td>
                     <td><span style="background: rgba(34, 197, 94, 0.15); color: var(--green-text); padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 10px;">${row.Kelas}</span></td>
@@ -374,11 +404,12 @@
             });
             
             document.getElementById('checkAll').checked = false;
-            updateCounter(); // Perbarui tulisan di tombol Proses
+            updateCounter(); 
         }
 
         // --- FITUR ADVANCE: SMART ROW CLICK & COUNTER ---
         function toggleRowClick(id) {
+            vibrateClick();
             let cb = document.getElementById(`cb_${id}`);
             let row = document.getElementById(`row_${id}`);
             cb.checked = !cb.checked;
@@ -392,14 +423,25 @@
         function updateCounter() {
             let checkedBoxes = document.querySelectorAll('.check-item:checked');
             let btnProses = document.getElementById('btnProses');
+            let aksi = document.getElementById('jenisAksi').value;
+            
             if(checkedBoxes.length > 0) {
-                btnProses.innerHTML = `<i class="fa-solid fa-bolt"></i> Proses Mutasi (${checkedBoxes.length} Terpilih)`;
+                if (aksi === 'Hapus') {
+                    btnProses.innerHTML = `<i class="fa-solid fa-trash"></i> Hapus Permanen (${checkedBoxes.length} Terpilih)`;
+                } else {
+                    btnProses.innerHTML = `<i class="fa-solid fa-bolt"></i> Proses Mutasi (${checkedBoxes.length} Terpilih)`;
+                }
             } else {
-                btnProses.innerHTML = `<i class="fa-solid fa-bolt"></i> Proses Mutasi Terpilih`;
+                if (aksi === 'Hapus') {
+                    btnProses.innerHTML = `<i class="fa-solid fa-trash"></i> Hapus Data Terpilih`;
+                } else {
+                    btnProses.innerHTML = `<i class="fa-solid fa-bolt"></i> Proses Mutasi Terpilih`;
+                }
             }
         }
 
         function toggleAll(source) {
+            vibrateClick();
             let checkboxes = document.querySelectorAll('.check-item');
             checkboxes.forEach(cb => {
                 cb.checked = source.checked;
@@ -412,17 +454,29 @@
 
         // 2. FUNGSI MENAMPILKAN / MENYEMBUNYIKAN KOLOM KELAS TUJUAN
         function cekTampilanKelasTujuan() {
+            vibrateClick();
             let aksi = document.getElementById('jenisAksi').value;
             let grupTujuan = document.getElementById('grupKelasTujuan');
+            let btnProses = document.getElementById('btnProses');
+            
+            // Ubah Warna Tombol jika Mode Hapus Terpilih
+            if(aksi === 'Hapus') {
+                btnProses.classList.add('btn-hapus-mode');
+            } else {
+                btnProses.classList.remove('btn-hapus-mode');
+            }
+            
             if(aksi === 'Naik Kelas') {
                 grupTujuan.style.display = 'block';
             } else {
                 grupTujuan.style.display = 'none';
             }
+            
+            updateCounter();
         }
 
-        // 3. FUNGSI MUNCULKAN KOLOM KETIK JIKA PILIH "BUAT KELAS BARU"
         function cekKelasBaru() {
+            vibrateClick();
             let select = document.getElementById('kelasTujuanDropdown');
             let inputManual = document.getElementById('kelasTujuanManual');
             
@@ -434,8 +488,8 @@
             }
         }
 
-        // 5. MENAMPILKAN DATA BERDASARKAN KELAS YANG DIPILIH
         function tarikDataBerdasarkanKelas() {
+            vibrateClick();
             let kelasDicari = document.getElementById('kelasAsal').value;
             let btnCari = document.getElementById('btnCari');
             
@@ -444,42 +498,58 @@
             setTimeout(() => {
                 let hasilFilter = semuaDataSantri;
                 if(kelasDicari !== "") {
-                    // Filter berdasarkan kelas yang diplih, dan jangan sembunyikan anak itu meski status lulus (jika khusus dicari lewat url)
                     hasilFilter = semuaDataSantri.filter(row => row.Kelas && String(row.Kelas).trim() === kelasDicari);
                 }
                 
                 renderTabel(hasilFilter);
                 btnCari.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Tampilkan Santri'; btnCari.disabled = false;
-            }, 300); // Simulasi delay agar UI terasa smooth
+            }, 300); 
         }
 
         // 6. FITUR ADVANCE: BATCH UPDATE FIREBASE & BLACK BOX LOGGING
         async function prosesMutasi() {
+            vibrateClick();
+            
+            if (!navigator.onLine) {
+                showToast("Sinyal Terputus! Aksi diblokir untuk mencegah data korup di Server.");
+                vibrateHeavy(); 
+                return;
+            }
+
             let jenisAksi = document.getElementById('jenisAksi').value;
             let kelasFinal = '';
             
             if(jenisAksi === 'Naik Kelas') {
                 let pilihanDropdown = document.getElementById('kelasTujuanDropdown').value;
-                if(!pilihanDropdown) { showToast("Pilih Kelas Tujuan (Baru) terlebih dahulu!"); return; }
+                if(!pilihanDropdown) { showToast("Pilih Kelas Tujuan (Baru) terlebih dahulu!"); vibrateHeavy(); return; }
                 
                 if(pilihanDropdown === 'BARU') {
                     kelasFinal = document.getElementById('kelasTujuanManual').value.trim();
-                    if(!kelasFinal) { showToast("Ketik nama kelas baru yang ingin dibuat!"); return; }
+                    if(!kelasFinal) { showToast("Ketik nama kelas baru yang ingin dibuat!"); vibrateHeavy(); return; }
                 } else {
                     kelasFinal = pilihanDropdown;
                 }
+            } else if (jenisAksi === 'Hapus') {
+                kelasFinal = 'Dihapus'; // Log flag
             } else {
-                kelasFinal = jenisAksi; // Untuk "Lulus" / "Nonaktif"
+                kelasFinal = jenisAksi; // Untuk Status "Nonaktif"
             }
 
             let checkedBoxes = document.querySelectorAll('.check-item:checked');
             let idTerpilih = Array.from(checkedBoxes).map(cb => cb.value);
 
             if(idTerpilih.length === 0) {
-                showToast("Anda belum mencentang santri satupun!"); return;
+                showToast("Anda belum mencentang santri satupun!"); vibrateHeavy(); return;
             }
 
-            if(!confirm(`PERINGATAN: Anda akan memindahkan ${idTerpilih.length} anak ke [${kelasFinal.toUpperCase()}]. Lanjutkan?`)) return;
+            // POP UP KONFIRMASI (Beda Pesan Berdasarkan Aksi)
+            let pesanKonfirmasi = `PERINGATAN: Anda akan memindahkan/mengubah status ${idTerpilih.length} anak ke [${kelasFinal.toUpperCase()}]. Lanjutkan?`;
+            
+            if (jenisAksi === 'Hapus') {
+                pesanKonfirmasi = `⚠️ BAHAYA! ⚠️\n\nAnda akan MENGHAPUS SECARA PERMANEN ${idTerpilih.length} data santri dari Database Firebase.\nData yang dihapus TIDAK BISA DIKEMBALIKAN.\n\nAnda yakin 100% ingin melanjutkan?`;
+            }
+
+            if(!confirm(pesanKonfirmasi)) return;
 
             let btnProses = document.getElementById('btnProses');
             btnProses.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Menyuntik Database...'; btnProses.disabled = true;
@@ -487,7 +557,6 @@
             try {
                 let updatesObject = {};
                 
-                // Siapkan Jejak Digital (Black Box)
                 let logData = {
                     Waktu: new Date().toLocaleString('id-ID'),
                     Eksekutor: localStorage.getItem('namaPengguna') || 'Admin',
@@ -497,36 +566,45 @@
                     DaftarNIS: idTerpilih.join(', ')
                 };
 
-                // Rakit Batch Update untuk Santri
                 idTerpilih.forEach(id => {
-                    if(jenisAksi === 'Nonaktif' || jenisAksi === 'Lulus') {
+                    if (jenisAksi === 'Hapus') {
+                        // Null value di Firebase berarti Delete node tersebut dari server
+                        updatesObject[`santri/${id}`] = null; 
+                    } else if (jenisAksi === 'Nonaktif') {
+                        // Jika di-nonaktifkan, ubah status dan kelasnya
                         updatesObject[`santri/${id}/Status`] = kelasFinal; 
                         updatesObject[`santri/${id}/Kelas`] = kelasFinal; 
                     } else {
+                        // Jika naik/pindah kelas
                         updatesObject[`santri/${id}/Kelas`] = kelasFinal;
                         updatesObject[`santri/${id}/Status`] = "Aktif"; 
                     }
                 });
 
-                // Eksekusi Massal ke Firebase
                 await database.ref().update(updatesObject);
-                
-                // Simpan Jejak Digital
                 await database.ref('log_mutasi').push(logData);
 
-                showToast(`Sukses! ${idTerpilih.length} santri dipindahkan.`);
+                if (jenisAksi === 'Hapus') {
+                    showToast(`Sukses! ${idTerpilih.length} santri telah dihanguskan.`);
+                } else {
+                    showToast(`Sukses! ${idTerpilih.length} santri dieksekusi.`);
+                }
                 
-                // Reset form UI
+                vibrateSuccess();
+                
                 document.getElementById('kelasTujuanDropdown').value = '';
                 document.getElementById('kelasTujuanManual').value = '';
                 document.getElementById('kelasTujuanManual').style.display = 'none';
                 
             } catch(e) {
-                showToast("Gagal memproses mutasi. Periksa koneksi internet.");
+                showToast("Gagal mengeksekusi data. Periksa koneksi internet.");
+                vibrateHeavy();
                 console.error(e);
             }
             
-            btnProses.innerHTML = '<i class="fa-solid fa-bolt"></i> Proses Mutasi Terpilih'; btnProses.disabled = false;
+            // Reset state tombol sesuai modenya
+            updateCounter(); 
+            btnProses.disabled = false;
         }
     </script>
 </body>
