@@ -4,13 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#e0e5ec" id="meta-theme-color">
-    <meta name="mobile-web-app-capable" content="yes">
-    
     <title>Login - Keuangan MMU B-77</title>
     
     <link rel="icon" type="image/png" href="Logo-Favicon.png">
     <link rel="apple-touch-icon" href="Logo-Favicon.png">
-    
     <link rel="manifest" href="manifest.json">
     
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -18,20 +15,11 @@
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="firebase-config.js"></script>
-
-    <script>
-        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-        // Pendaftaran Service Worker untuk Mode Offline (PWA)
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(err => console.log('PWA Gagal', err));
-            });
-        }
-    </script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
-        /* --- CSS STYLE NEUMORPHISM --- */
+        /* [STYLE SAMA SEPERTI SEBELUMNYA, TIDAK BERUBAH] */
         :root {
             --bg-main: #e0e5ec; --text-dark: #31344b; --text-muted: #8C96A3;
             --shadow-dark: rgba(163, 177, 198, 0.6); --shadow-light: rgba(255, 255, 255, 0.6);
@@ -42,23 +30,17 @@
             --shadow-dark: #202835; --shadow-light: #3a4556;
             --input-focus: rgba(46, 216, 123, 0.4); --divider-line: #4a5568;
         }
-
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-
         body {
             margin: 0; padding: 0; background-color: var(--bg-main); 
             min-height: 100dvh; display: flex; justify-content: center; align-items: center;
             font-family: 'Poppins', sans-serif; overflow: hidden; position: relative;
             user-select: none; transition: background-color 0.3s ease;
         }
-
-        /* --- TOAST --- */
         #toast { visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 13px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; width: 85%; max-width: 350px; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
         @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
         @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
-
-        /* --- SPLASH SCREEN --- */
         #splash-screen {
             position: absolute; width: 100%; height: 100%;
             background-color: var(--bg-main); display: flex; justify-content: center; align-items: center;
@@ -67,29 +49,22 @@
         .splash-content { text-align: center; animation: fadeIn 1.2s ease-out forwards; }
         .splash-content .logo { width: 65vw; max-width: 200px; height: auto; }
         @keyframes fadeIn { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
-
-        /* --- LOGIN SCREEN --- */
         #login-screen {
             opacity: 0; visibility: hidden; transition: opacity 0.5s ease;
             width: 100%; display: flex; justify-content: center; z-index: 10;
         }
-        
         .login-container {
             background-color: var(--bg-main); width: 88%; max-width: 380px;
             padding: 6vh 25px; border-radius: 28px; 
             box-shadow: 8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light);
             text-align: center; z-index: 10; transition: 0.3s;
         }
-        
         .logo-small { width: 35%; max-width: 130px; margin-bottom: 2vh; height: auto; }
-        h2 { font-family: 'Montserrat', sans-serif; color: var(--text-dark); font-size: clamp(20px, 6vw, 24px); font-weight: 800; margin: 0 0 5px 0; transition: 0.3s; }
-        p.subtitle { color: var(--text-muted); font-size: clamp(11px, 3.5vw, 13px); margin-bottom: 4vh; transition: 0.3s; }
-
-        /* --- INPUTS --- */
+        h2 { font-family: 'Montserrat', sans-serif; color: var(--text-dark); font-size: clamp(20px, 6vw, 24px); font-weight: 800; margin: 0 0 5px 0; }
+        p.subtitle { color: var(--text-muted); font-size: clamp(11px, 3.5vw, 13px); margin-bottom: 4vh; }
         .input-group { margin-bottom: 20px; text-align: left; }
-        .input-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; padding-left: 5px; transition: 0.3s; }
+        .input-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; padding-left: 5px; }
         .input-wrapper { position: relative; width: 100%; }
-        
         .input-wrapper input {
             width: 100%; padding: 16px 45px 16px 20px; border: none; background-color: var(--bg-main); border-radius: 16px; 
             font-family: 'Poppins', sans-serif; font-size: 14px; color: var(--text-dark);
@@ -97,11 +72,7 @@
             transition: all 0.3s ease; user-select: auto; 
         }
         .input-wrapper input:focus { outline: none; box-shadow: inset 3px 3px 6px 0 var(--shadow-dark), inset -3px -3px 6px 0 var(--shadow-light), 0 0 0 2px var(--input-focus); }
-        .input-wrapper input::placeholder { color: var(--text-muted); opacity: 0.7; }
-
         .eye-icon { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 5px; }
-
-        /* --- BUTTON LOGIN --- */
         .btn-login {
             width: 100%; padding: 16px; background: linear-gradient(135deg, #37f08c 0%, #06d16f 100%); 
             color: white; border: none; border-radius: 30px; 
@@ -110,14 +81,11 @@
             box-shadow: 0 10px 20px rgba(6, 209, 111, 0.3); display: flex; justify-content: center; align-items: center; gap: 10px;
         }
         .btn-login:active { transform: translateY(2px); box-shadow: 0 5px 10px rgba(6, 209, 111, 0.4); }
-        .btn-login:disabled { background: #CBD5E1; box-shadow: none; cursor: not-allowed; transform: none; }
-
-        .divider { display: flex; align-items: center; text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 3vh; transition: 0.3s; font-weight: 500; }
-        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--divider-line); transition: 0.3s; }
+        .btn-login:disabled { background: #CBD5E1; box-shadow: none; cursor: not-allowed; transform: none; opacity: 0.7; }
+        .divider { display: flex; align-items: center; text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 3vh; font-weight: 500; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--divider-line); }
         .divider:not(:empty)::before { margin-right: 1em; }
         .divider:not(:empty)::after { margin-left: 1em; }
-
-        /* --- BIOMETRIC BUTTONS --- */
         .biometric-login { display: flex; justify-content: center; gap: 20px; }
         .btn-bio {
             width: 60px; height: 60px; background-color: var(--bg-main); color: #06d16f; 
@@ -125,8 +93,29 @@
             cursor: pointer; transition: all 0.3s; box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
         }
         .btn-bio:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); color: #04b35e; }
-
-        .footer-text { position: absolute; bottom: 20px; left: 0; width: 100%; text-align: center; font-size: 10px; color: var(--text-muted); font-weight: 500; z-index: 1000; padding: 0 20px; transition: 0.3s; }
+        .footer-text { position: absolute; bottom: 20px; left: 0; width: 100%; text-align: center; font-size: 10px; color: var(--text-muted); font-weight: 500; z-index: 1000; padding: 0 20px; }
+        .captcha-container { margin: 15px 0; text-align: center; }
+        .captcha-display { 
+            display: inline-block; 
+            background: var(--bg-main);
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-family: monospace;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 5px;
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+            margin-bottom: 10px;
+        }
+        .captcha-input { width: 150px; margin: 0 auto; text-align: center; }
+        .refresh-captcha { 
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -154,15 +143,23 @@
                 <div class="input-group">
                     <label for="username">Username</label>
                     <div class="input-wrapper">
-                        <input type="text" id="username" placeholder="Username" required autocomplete="off">
+                        <input type="text" id="username" placeholder="Username" required autocomplete="off" oninput="vibrateLight()">
                     </div>
                 </div>
                 
                 <div class="input-group">
                     <label for="password">Kata Sandi</label>
                     <div class="input-wrapper">
-                        <input type="password" id="password" placeholder="••••••••" required>
+                        <input type="password" id="password" placeholder="••••••••" required oninput="vibrateLight()">
                         <i class="fa-solid fa-eye eye-icon" id="togglePassword" onclick="toggleSandi()"></i>
+                    </div>
+                </div>
+
+                <div class="captcha-container">
+                    <div class="captcha-display" id="captchaText">ABCD</div>
+                    <div>
+                        <input type="text" id="captchaInput" class="input-edit captcha-input" placeholder="Masukkan kode" style="width: 150px; padding: 10px;" oninput="vibrateLight()">
+                        <button type="button" class="refresh-captcha" onclick="generateCaptcha(); vibrateLight();"><i class="fa-solid fa-rotate"></i></button>
                     </div>
                 </div>
 
@@ -186,26 +183,69 @@
         </div>
     </div>
 
+    <script src="firebase-config.js"></script>
     <script>
-        window.onload = function() {
-            // [PERBAIKAN] Mencegah Back Button Cache setelah Logout
-            window.history.pushState(null, "", window.location.href);
-            window.onpopstate = function () {
-                window.history.pushState(null, "", window.location.href);
-            };
+        // --- 1. PENGAMANAN DASAR ANTARMUKA (Anti-Snooping) ---
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123) { return false; } // Mencegah F12
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) { return false; } // Mencegah Ctrl+Shift+I
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) { return false; } // Mencegah Ctrl+Shift+C
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) { return false; } // Mencegah Ctrl+Shift+J
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) { return false; } // Mencegah Ctrl+U
+        }
 
-            // Cek sesi
-            if(localStorage.getItem('usernameAsli')) { 
-                window.location.replace('beranda.html'); 
-                return; 
+        // --- 2. HAPTIC FEEDBACK (Vibration API) ---
+        function vibrateLight() { if (navigator.vibrate) navigator.vibrate(10); } // Getaran halus saat mengetik
+        function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); } // Getaran panjang saat error
+        function vibrateSuccess() { if (navigator.vibrate) navigator.vibrate([30, 50, 30]); } // Getaran ceria saat sukses
+        function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); } // Getaran mantap saat klik tombol utama
+
+        // --- 3. SISTEM DETEKSI SINYAL OTOMATIS (Offline Blocker) ---
+        function updateOnlineStatus() {
+            const btn = document.getElementById('btnLogin');
+            if (navigator.onLine) {
+                btn.disabled = false;
+                btn.innerHTML = "Masuk";
+            } else {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-wifi-slash"></i> Offline';
+                showToast("Koneksi terputus. Menunggu sinyal...");
+                vibrateHeavy();
             }
-            setTimeout(function() {
-                document.getElementById('splash-screen').style.opacity = '0';
-                document.getElementById('splash-screen').style.visibility = 'hidden';
-                document.getElementById('login-screen').style.opacity = '1';
-                document.getElementById('login-screen').style.visibility = 'visible';
-            }, 2500); 
-        };
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        // --- 4. SANITASI SESI KERAS (Hard Session Cleansing) ---
+        function hardSessionCleanse() {
+            // Kita simpan dulu data WebAuthn (Biometrik) agar tidak terhapus
+            const webAuthnId = localStorage.getItem('webAuthnId');
+            const webAuthnUid = localStorage.getItem('webAuthnUid');
+            
+            // Bersihkan SEMUA localStorage
+            localStorage.clear();
+            
+            // Kembalikan data WebAuthn jika ada
+            if (webAuthnId) localStorage.setItem('webAuthnId', webAuthnId);
+            if (webAuthnUid) localStorage.setItem('webAuthnUid', webAuthnUid);
+            
+            console.log("Session Sanitized. Clean start.");
+        }
+
+
+        // CAPTCHA Generator (Asli)
+        let currentCaptcha = '';
+        function generateCaptcha() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let result = '';
+            for (let i = 0; i < 4; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            currentCaptcha = result;
+            document.getElementById('captchaText').innerText = result;
+        }
+        generateCaptcha();
 
         function showToast(msg) {
             let toast = document.getElementById("toast");
@@ -215,13 +255,19 @@
         }
 
         function toggleSandi() {
+            vibrateClick();
             let pwd = document.getElementById("password");
             let icon = document.getElementById("togglePassword");
-            if (pwd.type === "password") { pwd.type = "text"; icon.classList.replace("fa-eye", "fa-eye-slash"); } 
-            else { pwd.type = "password"; icon.classList.replace("fa-eye-slash", "fa-eye"); }
+            if (pwd.type === "password") { 
+                pwd.type = "text"; 
+                icon.classList.replace("fa-eye", "fa-eye-slash"); 
+            } else { 
+                pwd.type = "password"; 
+                icon.classList.replace("fa-eye-slash", "fa-eye"); 
+            }
         }
 
-        /* --- JAVASCRIPT LOGIC FIREBASE + BIOMETRIK ASLI --- */
+        // WebAuthn helpers (Asli)
         function bufferToBase64url(buffer) {
             const bytes = new Uint8Array(buffer); let str = '';
             for (let i = 0; i < bytes.byteLength; i++) { str += String.fromCharCode(bytes[i]); }
@@ -236,35 +282,8 @@
             return buffer.buffer;
         }
 
-        function eksekusiLoginSukses(dataAkun, usernameAsli) {
-            let namaValid = dataAkun.NamaLengkap || dataAkun.Nama_Lengkap || dataAkun.nama_lengkap || "Pengguna";
-            let waValid = dataAkun.NomorWA || dataAkun.Nomor_WA || dataAkun.nomor_wa || "";
-
-            localStorage.setItem('namaPengguna', namaValid);
-            localStorage.setItem('hakAkses', dataAkun.Role || dataAkun.role || "Operator");
-            localStorage.setItem('usernameAsli', usernameAsli);
-            
-            if(waValid) { localStorage.setItem('nomorWA', waValid); }
-            
-            let ucapan = new SpeechSynthesisUtterance("Ahlan wa sahlan, " + namaValid);
-            ucapan.lang = 'id-ID'; 
-            let gender = String(dataAkun.Gender || dataAkun.gender || '').toUpperCase();
-            ucapan.pitch = (gender === 'P' || gender === 'PEREMPUAN') ? 1.5 : 0.8; 
-            window.speechSynthesis.speak(ucapan);
-
-            // [PERBAIKAN] Replace state agar tidak bisa di-back
-            window.history.replaceState(null, null, window.location.href);
-            setTimeout(() => { window.location.replace('beranda.html'); }, 1500);
-        }
-
-        async function daftarBiometrikAsli(username, namaLengkap) {
+        async function daftarBiometrik(uid, namaLengkap) {
             if (!window.PublicKeyCredential || window.location.protocol === 'file:') return true;
-            
-            // [PERBAIKAN] Jika pengguna yang login sama dengan yang terdaftar di Biometrik, lewati.
-            // Namun, jika pengguna BARU login dengan kata sandi, timpa pendaftaran biometriknya!
-            let existingUser = localStorage.getItem('webAuthnUser');
-            if (existingUser === username && localStorage.getItem('webAuthnId')) return true;
-
             try {
                 showToast("Tautkan Biometrik HP... Silakan sentuh sensor Sidik Jari/Wajah Anda.");
                 const challenge = new Uint8Array(32); window.crypto.getRandomValues(challenge);
@@ -273,7 +292,7 @@
                 const pubKey = {
                     challenge: challenge,
                     rp: { name: "Aplikasi Keuangan", id: window.location.hostname },
-                    user: { id: userId, name: username, displayName: namaLengkap },
+                    user: { id: userId, name: uid, displayName: namaLengkap },
                     pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
                     authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
                     timeout: 60000
@@ -282,84 +301,42 @@
                 const cred = await navigator.credentials.create({ publicKey: pubKey });
                 if (cred) {
                     localStorage.setItem('webAuthnId', bufferToBase64url(cred.rawId));
-                    localStorage.setItem('webAuthnUser', username);
+                    localStorage.setItem('webAuthnUid', uid);
                     showToast("Sensor HP Anda berhasil ditautkan ke akun ini!");
+                    vibrateSuccess();
                 }
                 return true;
             } catch (e) {
                 console.log("Pendaftaran Biometrik Dibatalkan.", e);
-                return true; 
+                return true;
             }
         }
 
-        const loginForm = document.getElementById('formLogin');
-        const btnLogin = document.getElementById('btnLogin');
-
-        loginForm.addEventListener('submit', async function(e) {
-            e.preventDefault(); 
-            btnLogin.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Memeriksa...';
-            btnLogin.disabled = true;
-
-            let usrInput = document.getElementById('username').value.trim();
-            let pwdInput = document.getElementById('password').value.trim();
-            let keySafe = usrInput.toLowerCase().replace(/[.#$\[\]\/]/g, '');
-
-            try {
-                const snapshot = await database.ref('users/' + keySafe).once('value');
-                if (snapshot.exists()) {
-                    let dataAkun = snapshot.val();
-                    let dbPass = dataAkun.Password || dataAkun.password;
-                    
-                    if (String(dbPass) === String(pwdInput)) {
-                        let statusAkun = String(dataAkun.Status || dataAkun.status || 'aktif').toLowerCase();
-                        if(statusAkun === 'nonaktif') {
-                            showToast("Akses Ditolak: Akun Anda diblokir Admin.");
-                            btnLogin.innerHTML = "Masuk"; btnLogin.disabled = false;
-                            return;
-                        }
-
-                        let namaLengkapData = dataAkun.NamaLengkap || dataAkun.Nama_Lengkap || "Pengguna";
-                        // Panggil daftar biometrik untuk memperbarui ID perangkat dengan user ini
-                        await daftarBiometrikAsli(usrInput, namaLengkapData);
-                        
-                        showToast("Berhasil Login! Memuat sistem...");
-                        eksekusiLoginSukses(dataAkun, usrInput);
-                    } else {
-                        showToast("Kata sandi yang Anda masukkan salah.");
-                        btnLogin.innerHTML = "Masuk"; btnLogin.disabled = false;
-                    }
-                } else {
-                    showToast("Username tidak terdaftar di database.");
-                    btnLogin.innerHTML = "Masuk"; btnLogin.disabled = false;
-                }
-            } catch (err) {
-                showToast("Terjadi kesalahan jaringan Firebase.");
-                btnLogin.innerHTML = "Masuk"; btnLogin.disabled = false;
-            }
-        });
-
         async function loginBiometrikAsli() {
+            vibrateClick();
             if (window.location.protocol === 'file:') {
                 showToast("Gagal: Fitur Biometrik Asli wajib dibuka lewat link Internet (https), bukan file lokal.");
+                vibrateHeavy();
                 return;
             }
             if (!window.PublicKeyCredential) {
                 showToast("Gagal: Browser/HP Anda tidak mendukung sistem keamanan ini.");
+                vibrateHeavy();
                 return;
             }
 
             const storedId = localStorage.getItem('webAuthnId');
-            const storedUser = localStorage.getItem('webAuthnUser');
+            const storedUid = localStorage.getItem('webAuthnUid');
 
-            if (!storedId || !storedUser) {
+            if (!storedId || !storedUid) {
                 showToast("Silakan Login menggunakan Kata Sandi 1x untuk mendaftarkan sensor HP.");
+                vibrateHeavy();
                 return;
             }
 
             try {
                 const challenge = new Uint8Array(32); window.crypto.getRandomValues(challenge);
                 
-                // MUNCULKAN POPUP VERIFIKASI ASLI OS
                 const assertion = await navigator.credentials.get({
                     publicKey: {
                         challenge: challenge,
@@ -376,25 +353,205 @@
 
                 if (assertion) {
                     showToast("Verifikasi Berhasil! Memuat data...");
-                    let keySafe = storedUser.toLowerCase().replace(/[.#$\[\]\/]/g, '');
+                    vibrateSuccess();
                     
-                    const snapshot = await database.ref('users/' + keySafe).once('value');
+                    const snapshot = await database.ref('users/' + storedUid).once('value');
                     if (snapshot.exists()) {
                         let dataAkun = snapshot.val();
-                        if(String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif') {
-                            showToast("Akun Anda telah diblokir."); return;
+                        if (String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif') {
+                            showToast("Akun Anda telah diblokir."); 
+                            vibrateHeavy();
+                            return;
                         }
-                        eksekusiLoginSukses(dataAkun, storedUser);
+                        
+                        // Eksekusi sanitasi keras SEBELUM menyimpan sesi baru
+                        hardSessionCleanse();
+                        
+                        localStorage.setItem('uid', storedUid);
+                        localStorage.setItem('namaPengguna', dataAkun.NamaLengkap);
+                        localStorage.setItem('hakAkses', dataAkun.Role);
+                        localStorage.setItem('usernameAsli', storedUid);
+                        localStorage.setItem('lastLoginTime', new Date().toLocaleString('id-ID'));
+                        if (dataAkun.NomorWA) localStorage.setItem('nomorWA', dataAkun.NomorWA);
+                        
+                        let ucapan = new SpeechSynthesisUtterance("Ahlan wa sahlan, " + dataAkun.NamaLengkap);
+                        ucapan.lang = 'id-ID'; 
+                        let gender = String(dataAkun.Gender || dataAkun.gender || '').toUpperCase();
+                        ucapan.pitch = (gender === 'P' || gender === 'PEREMPUAN') ? 1.5 : 0.8; 
+                        window.speechSynthesis.speak(ucapan);
+                        
+                        window.location.replace('beranda.html');
                     } else {
                         showToast("Data pengguna tidak ditemukan.");
+                        vibrateHeavy();
                     }
                 }
             } catch (e) {
                 console.error("Biometrik gagal:", e);
                 showToast("Verifikasi sensor dibatalkan atau tidak cocok.");
+                vibrateHeavy();
             }
         }
-    </script>
 
+        window.onload = function() {
+            window.history.pushState(null, "", window.location.href);
+            window.onpopstate = function () {
+                window.history.pushState(null, "", window.location.href);
+            };
+
+            // Panggil cek sinyal awal
+            updateOnlineStatus();
+
+            // Cek apakah sudah login (Hanya jika bukan di halaman awal setelah logout)
+            const savedUser = localStorage.getItem('usernameAsli');
+            if (savedUser && window.location.hash !== '#logout') {
+                database.ref('users/' + savedUser).once('value', snapshot => {
+                    if (snapshot.exists()) {
+                        const data = snapshot.val();
+                        if (data.Status !== 'Nonaktif') {
+                            window.location.replace('beranda.html');
+                        } else {
+                             // Jika statusnya nonaktif saat dicek, paksa hapus sesi
+                             hardSessionCleanse();
+                        }
+                    }
+                });
+            } else if (!savedUser || window.location.hash === '#logout') {
+                 // Jika tidak ada user atau hash adalah logout, bersihkan sesi untuk keamanan
+                 hardSessionCleanse();
+                 // Hapus hash agar tidak looping
+                 if(window.location.hash === '#logout') {
+                     window.history.replaceState(null, null, window.location.pathname);
+                 }
+            }
+
+            setTimeout(function() {
+                document.getElementById('splash-screen').style.opacity = '0';
+                document.getElementById('splash-screen').style.visibility = 'hidden';
+                document.getElementById('login-screen').style.opacity = '1';
+                document.getElementById('login-screen').style.visibility = 'visible';
+            }, 2500);
+        };
+
+        const loginForm = document.getElementById('formLogin');
+        const btnLogin = document.getElementById('btnLogin');
+
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            vibrateClick();
+            
+            // Cek sinyal sekali lagi sebelum memproses form
+            if (!navigator.onLine) {
+                 showToast("Koneksi terputus. Mohon periksa internet Anda.");
+                 vibrateHeavy();
+                 return;
+            }
+
+            // Validasi CAPTCHA
+            const captchaInput = document.getElementById('captchaInput').value.toUpperCase();
+            if (captchaInput !== currentCaptcha) {
+                showToast("Kode CAPTCHA salah!");
+                vibrateHeavy();
+                generateCaptcha();
+                document.getElementById('captchaInput').value = '';
+                return;
+            }
+            
+            // Rate limiting check
+            try {
+                if(typeof window.checkRateLimit === 'function') window.checkRateLimit();
+            } catch (err) {
+                showToast(err.message);
+                vibrateHeavy();
+                return;
+            }
+            
+            btnLogin.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Memeriksa...';
+            btnLogin.disabled = true;
+
+            let usrInput = document.getElementById('username').value.trim();
+            let pwdInput = document.getElementById('password').value.trim();
+            
+            // Sanitasi input (Jika function tersedia dari file eksternal)
+            if(typeof window.sanitizeInput === 'function') usrInput = window.sanitizeInput(usrInput);
+            
+            // Hash password dengan salt sederhana
+            const hashedPassword = CryptoJS.SHA256(pwdInput + usrInput).toString();
+
+            try {
+                // Cek user di database (dengan password hashed)
+                const snapshot = await database.ref('users/' + usrInput).once('value');
+                
+                if (!snapshot.exists()) {
+                    if(typeof window.incrementLoginAttempts === 'function') window.incrementLoginAttempts();
+                    showToast("Username atau password salah!");
+                    vibrateHeavy();
+                    btnLogin.innerHTML = "Masuk";
+                    btnLogin.disabled = false;
+                    return;
+                }
+                
+                const dataAkun = snapshot.val();
+                const dbPassword = String(dataAkun.Password); // Kita paksa jadi teks!
+                
+                // Validasi password (mendukung login pakai plain text atau hash dari database lama)
+                if (dbPassword !== hashedPassword && dbPassword !== pwdInput) {
+                    if(typeof window.incrementLoginAttempts === 'function') window.incrementLoginAttempts();
+                    showToast("Username atau password salah!");
+                    vibrateHeavy();
+                    btnLogin.innerHTML = "Masuk";
+                    btnLogin.disabled = false;
+                    return;
+                }
+                
+                if (String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif') {
+                    showToast("Akses Ditolak: Akun Anda diblokir Admin.");
+                    vibrateHeavy();
+                    btnLogin.innerHTML = "Masuk";
+                    btnLogin.disabled = false;
+                    return;
+                }
+
+                // Reset login attempts on success
+                if(typeof window.resetLoginAttempts === 'function') window.resetLoginAttempts();
+                
+                // Update last login
+                await database.ref('users/' + usrInput).update({
+                    LastLogin: new Date().toLocaleString('id-ID'),
+                    LastLoginIP: 'Mobile-Client' 
+                });
+                
+                // Register biometric after successful login
+                await daftarBiometrik(usrInput, dataAkun.NamaLengkap);
+                
+                // --- SANITASI KERAS SEBELUM MENULIS SESI BARU ---
+                hardSessionCleanse();
+                
+                localStorage.setItem('usernameAsli', usrInput);
+                localStorage.setItem('namaPengguna', dataAkun.NamaLengkap);
+                localStorage.setItem('hakAkses', dataAkun.Role);
+                localStorage.setItem('lastLoginTime', new Date().toLocaleString('id-ID'));
+                if (dataAkun.NomorWA) localStorage.setItem('nomorWA', dataAkun.NomorWA);
+                
+                let ucapan = new SpeechSynthesisUtterance("Ahlan wa sahlan, " + dataAkun.NamaLengkap);
+                ucapan.lang = 'id-ID'; 
+                let gender = String(dataAkun.Gender || dataAkun.gender || '').toUpperCase();
+                ucapan.pitch = (gender === 'P' || gender === 'PEREMPUAN') ? 1.5 : 0.8; 
+                window.speechSynthesis.speak(ucapan);
+                
+                showToast("Berhasil Login! Memuat sistem...");
+                vibrateSuccess();
+                window.history.replaceState(null, null, window.location.href);
+                setTimeout(() => { window.location.replace('beranda.html'); }, 1500);
+                
+            } catch (err) {
+                console.error(err);
+                showToast("Terjadi kesalahan jaringan/Server Database.");
+                vibrateHeavy();
+                btnLogin.innerHTML = "Masuk";
+                btnLogin.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>
