@@ -275,22 +275,49 @@
     </div>
 
     <script>
-        // --- 1. KEAMANAN AUTO-LOGOUT 15 MENIT ---
+        // --- 1. PENGAMANAN DASAR ANTARMUKA (Anti-Snooping) ---
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        };
+
+        // --- 2. HAPTIC FEEDBACK (Getaran Fisik Mobile) ---
+        function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
+        function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); }
+
+        // --- 3. SISTEM DETEKSI SINYAL OTOMATIS (Offline Blocker) ---
+        function updateOnlineStatus() {
+            if (!navigator.onLine) {
+                showToast("Sinyal Terputus. Sebagian menu akan diblokir.");
+                vibrateHeavy();
+            } else {
+                showToast("Sinyal Internet Kembali Normal.");
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        // --- 4. KEAMANAN AUTO-LOGOUT 15 MENIT (Diperbarui dengan Vibrate) ---
         let waktuLogout;
         function resetTimerLogout() {
             clearTimeout(waktuLogout);
             waktuLogout = setTimeout(() => {
+                vibrateHeavy();
                 showToast("Sesi habis (15 Menit tidak aktif). Anda dikeluarkan demi keamanan.");
                 setTimeout(() => {
                     localStorage.removeItem('usernameAsli');
-                    window.location.href = 'index.html';
-                }, 2000);
+                    window.location.replace('index.html');
+                }, 2500);
             }, 15 * 60 * 1000); 
         }
         window.onload = resetTimerLogout; document.onmousemove = resetTimerLogout; 
         document.onkeypress = resetTimerLogout; document.ontouchstart = resetTimerLogout;
 
-        // --- 2. TRANSISI HALAMAN SLIDE-IN/OUT YANG DIPERBAIKI ---
+        // --- TRANSISI HALAMAN SLIDE-IN/OUT ---
         function pindahHalaman(url) {
             document.getElementById('main-content').classList.add('fade-out');
             setTimeout(() => { window.location.href = url; }, 300);
@@ -298,6 +325,7 @@
 
         function navSlide(e, element, url) {
             e.preventDefault();
+            vibrateClick();
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             element.classList.add('active'); setIndicatorPosition();
             pindahHalaman(url);
@@ -314,28 +342,52 @@
             toast.className = "show"; setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }
 
+        // --- 5. NAVIGASI BACK BUTTON ANDROID (History API) ---
         function tutupPopupBismillah() {
+            vibrateClick();
             document.getElementById('popupBismillah').style.opacity = '0';
             setTimeout(() => { document.getElementById('popupBismillah').style.display = 'none'; }, 500);
             sessionStorage.setItem('hasSeenPopup', 'true');
         }
 
-        // --- 3. SATPAM GAIB (PENGECEKAN AKSES) ---
+        window.onpopstate = function (e) {
+            // Jika popup sedang terbuka dan tombol back ditekan, tutup popup saja
+            if (document.getElementById('popupBismillah').style.display === 'flex') {
+                tutupPopupBismillah();
+                // Push kembali state agar tombol back selanjutnya tidak langsung keluar app
+                window.history.pushState(null, "", window.location.href);
+            }
+        };
+
+        // --- SATPAM GAIB (PENGECEKAN AKSES & OFFLINE) ---
         function cekAksesDanPindah(url) {
+            vibrateClick();
+            
+            // Cegah masuk menu jika offline
+            if (!navigator.onLine) {
+                showToast("TIDAK ADA SINYAL: Anda harus Online untuk membuka menu ini.");
+                vibrateHeavy();
+                return;
+            }
+
             let role = localStorage.getItem('hakAkses');
             
             // Blokir akses paksa untuk Operator
             if(role === 'Operator') {
                 const aksesTerlarang = ['manajemen-user.html', 'mutasi-kelas.html', 'kode-keuangan.html', 'buat-tagihan.html', 'dispensasi.html'];
                 if(aksesTerlarang.includes(url)) {
-                    showToast("AKSES DITOLAK: Anda masuk sebagai Operator/Kasir."); return;
+                    showToast("AKSES DITOLAK: Anda masuk sebagai Operator/Kasir."); 
+                    vibrateHeavy();
+                    return;
                 }
             }
             
             // Blokir akses paksa untuk Demo
             if(role === 'Demo') {
                 if(url === 'manajemen-user.html' || url === 'kode-keuangan.html' || url === 'mutasi-kelas.html') {
-                    showToast("AKSES DITOLAK: Akun Demo tidak memiliki izin pengaturan Master Data."); return;
+                    showToast("AKSES DITOLAK: Akun Demo tidak memiliki izin pengaturan Master Data."); 
+                    vibrateHeavy();
+                    return;
                 }
             }
             pindahHalaman(url);
@@ -343,7 +395,12 @@
 
         window.addEventListener('DOMContentLoaded', (event) => {
             if (!localStorage.getItem('usernameAsli')) { window.location.href = 'index.html'; return; }
-            if(!sessionStorage.getItem('hasSeenPopup')) { document.getElementById('popupBismillah').style.display = 'flex'; }
+            
+            // Atur Popup Bismillah dan History State
+            if(!sessionStorage.getItem('hasSeenPopup')) { 
+                document.getElementById('popupBismillah').style.display = 'flex'; 
+                window.history.pushState(null, "", window.location.href);
+            }
             
             setIndicatorPosition(); window.addEventListener('resize', setIndicatorPosition);
 
