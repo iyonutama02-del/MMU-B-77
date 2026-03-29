@@ -15,6 +15,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="firebase-config.js"></script>
@@ -163,7 +165,7 @@
                 <i class="fa-solid fa-user-astronaut" id="ikonDefault"></i>
                 
                 <input type="file" id="inputFoto" accept="image/*" style="display: none;">
-                <div class="btn-cam" onclick="document.getElementById('inputFoto').click()"><i class="fa-solid fa-camera"></i></div>
+                <div class="btn-cam" onclick="vibrateClick(); document.getElementById('inputFoto').click();"><i class="fa-solid fa-camera"></i></div>
             </div>
             
             <h2 class="profile-name" id="namaTampil">MEMUAT...</h2>
@@ -264,7 +266,7 @@
                     <div class="menu-icon" style="color: var(--text-dark);"><i class="fa-solid fa-building-columns"></i></div>
                     <div class="menu-text">
                         <h4>Tentang Madrasah</h4>
-                        <p>Sejarah Afiliasi Lembaga</p>
+                        <p>Madrasah Miftahul Ulum B-77 Jrebeng Kulon</p>
                     </div>
                 </div>
                 <div class="menu-action"><i class="fa-solid fa-angle-right"></i></div>
@@ -296,7 +298,6 @@
         </div>
     </div>
 
-    <!-- MODAL EDIT PROFIL -->
     <div class="modal-overlay" id="modalEditProfil">
         <div class="modal-content" style="text-align: left;">
             <h2 class="modal-title" style="color: var(--text-dark); margin: 0 0 25px; text-align: center; font-family:'Montserrat'; font-weight:900;">EDIT PROFIL</h2>
@@ -317,7 +318,6 @@
         </div>
     </div>
 
-    <!-- MODAL UBAH SANDI -->
     <div class="modal-overlay" id="modalUbahSandi">
         <div class="modal-content" style="text-align: left;">
             <h2 class="modal-title" style="color: var(--c-red); margin: 0 0 25px; text-align: center; font-family:'Montserrat'; font-weight:900;"><i class="fa-solid fa-shield-halved"></i> GANTI SANDI</h2>
@@ -338,7 +338,6 @@
         </div>
     </div>
 
-    <!-- MODAL TENTANG KAMI -->
     <div class="modal-overlay" id="modalInfo">
         <div class="modal-content modal-info-content">
             <img src="Lambang-Keuangan.png" alt="Logo" class="modal-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3353/3353138.png'">
@@ -347,11 +346,10 @@
                 Madrasah Diniyah Miftahul Ulum merupakan unit pendidikan yang berada di bawah naungan Yayasan Miftahul Ulum Al-Cholil, berlokasi di Jl. Musi, Kel. Jrebeng Kulon, Kec. Kedopok, Kota Probolinggo.<br><br>
                 Sejak tahun 2023, lembaga ini telah berafiliasi dengan Madrasah Miftahul Ulum Ibtidaiyah Pondok Pesantren Sidogiri dan menggunakan nama resmi <b>Madrasah Miftahul Ulum Ibtidaiyah Ranting B-77 Jrebeng Kulon</b>.
             </div>
-            <button class="btn-modal primary" onclick="tutupModalInfo()">Tutup Profil Madrasah</button>
+            <button class="btn-modal primary" onclick="tutupModal('modalInfo')">Tutup Profil Madrasah</button>
         </div>
     </div>
 
-    <!-- MODAL BIOMETRIK -->
     <div class="modal-overlay" id="modalBiometrik">
         <div class="modal-content" style="text-align: left;">
             <h2 class="modal-title" style="color: var(--text-dark); margin: 0 0 25px; text-align: center; font-family:'Montserrat'; font-weight:900;">LOGIN BIOMETRIK</h2>
@@ -391,8 +389,35 @@
     </div>
 
     <script>
+        // --- 0. PENGAMANAN DASAR ANTARMUKA (Anti-Snooping) ---
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        };
+
+        // --- HAPTIC FEEDBACK ---
+        function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
+        function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); }
+        function vibrateSuccess() { if (navigator.vibrate) navigator.vibrate([30, 50, 30]); }
+
+        // --- SISTEM DETEKSI OFFLINE/ONLINE ---
+        window.addEventListener('online', () => { showToast("Sinyal Internet Kembali Normal."); vibrateSuccess(); });
+        window.addEventListener('offline', () => { showToast("Sinyal Terputus. Sebagian fitur diblokir."); vibrateHeavy(); });
+
+        // --- HISTORY API ANDROID (Penutup Modal Aman) ---
+        window.addEventListener('popstate', function(event) {
+            let modals = ['modalEditProfil', 'modalUbahSandi', 'modalInfo', 'modalBiometrik'];
+            modals.forEach(id => {
+                let m = document.getElementById(id);
+                if (m && m.style.display === 'flex') { m.style.display = 'none'; }
+            });
+        });
+
         // --- INISIALISASI DASAR & KEAMANAN AKUN FIREBASE ---
-        let userAsliFirebase = localStorage.getItem('usernameAsli'); // Kunci Rahasia untuk memanggil data
+        let userAsliFirebase = localStorage.getItem('usernameAsli'); 
         
         function setIndicatorPosition() {
             const activeItem = document.querySelector('.nav-item.active');
@@ -403,6 +428,7 @@
 
         function navSlide(e, element, url) {
             e.preventDefault();
+            vibrateClick();
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             element.classList.add('active'); setIndicatorPosition();
             document.body.classList.add('fade-out');
@@ -410,6 +436,7 @@
         }
 
         function pindahHalaman(url) {
+            vibrateClick();
             document.body.classList.add('fade-out');
             setTimeout(() => { window.location.href = url; }, 300);
         }
@@ -419,7 +446,16 @@
             toast.className = "show"; setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }
         
-        function tutupModal(idModal) { document.getElementById(idModal).style.display = 'none'; }
+        function tutupModal(idModal) { 
+            vibrateClick();
+            document.getElementById(idModal).style.display = 'none'; 
+        }
+
+        function bukaModalDenganHistory(idModal) {
+            vibrateClick();
+            document.getElementById(idModal).style.display = 'flex';
+            window.history.pushState({ modalOpen: true }, "", window.location.href);
+        }
 
         // AUTO LOGOUT JIKA MENGANGGUR
         let idleTime = 0;
@@ -435,6 +471,7 @@
 
         // --- LOGIKA TEMA NEUMORPHISM (4 OPSI) ---
         function ubahTemaPreferensi() {
+            vibrateClick();
             let val = document.getElementById('pilihanTema').value;
             localStorage.setItem('themePref', val);
             terapkanTemaUI();
@@ -465,9 +502,10 @@
         });
 
         // --- BIOMETRIK FAKE/LOCAL SAVE ---
-        function bukaModalBiometrik() { document.getElementById('modalBiometrik').style.display = 'flex'; }
+        function bukaModalBiometrik() { bukaModalDenganHistory('modalBiometrik'); }
         
         function toggleBiometrik(tipe) {
+            vibrateClick();
             let isActive = tipe === 'FaceID' ? document.getElementById('toggleFaceID').checked : document.getElementById('toggleFingerprint').checked;
             if(isActive) {
                 localStorage.setItem(tipe === 'FaceID' ? 'useFaceID' : 'useFingerprint', 'true');
@@ -515,6 +553,7 @@
                 if(localStorage.getItem('hakAkses') !== roleSaatIni) {
                     localStorage.setItem('hakAkses', roleSaatIni);
                     showToast("Hak Akses Anda baru saja diperbarui oleh Administrator Server!");
+                    vibrateHeavy();
                 }
 
                 // KUNCI 3: Update Visual (Nama, Jabatan, WA, Foto)
@@ -546,6 +585,7 @@
         };
 
         function keluarSistemPaksa(pesan) {
+            vibrateHeavy();
             alert(pesan);
             localStorage.removeItem('namaPengguna'); localStorage.removeItem('hakAkses'); localStorage.removeItem('usernameAsli'); 
             window.location.href = 'index.html'; 
@@ -554,6 +594,11 @@
         // --- 2. UPLOAD FOTO (PROFILE PICTURE) ---
         const inputFoto = document.getElementById('inputFoto');
         inputFoto.addEventListener('change', function(e) {
+            if (!navigator.onLine) {
+                showToast("Sinyal Terputus. Gagal mengunggah foto.");
+                vibrateHeavy(); return;
+            }
+
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
@@ -563,7 +608,11 @@
                         FotoProfil: base64String
                     }).then(() => {
                         showToast("Foto Profil telah diamankan di Server!");
-                    }).catch(err => showToast("Gagal mengunggah foto."));
+                        vibrateSuccess();
+                    }).catch(err => {
+                        showToast("Gagal mengunggah foto.");
+                        vibrateHeavy();
+                    });
                 };
                 reader.readAsDataURL(file);
             }
@@ -577,15 +626,18 @@
             
             let currentWA = document.getElementById('txtWA').innerText;
             document.getElementById('inputEditWA').value = currentWA === 'Belum diatur' ? '' : currentWA;
-            document.getElementById('modalEditProfil').style.display = 'flex';
+            bukaModalDenganHistory('modalEditProfil');
         }
 
         async function simpanEditProfilFirebase() {
+            vibrateClick();
+            if (!navigator.onLine) { showToast("Sinyal Terputus!"); vibrateHeavy(); return; }
+
             let namaBaru = document.getElementById('inputEditNama').value.trim();
             let jabatanBaru = document.getElementById('inputEditJabatan').value.trim() || '-';
             let waBaru = document.getElementById('inputEditWA').value.trim();
             
-            if(!namaBaru || !waBaru) { showToast("Sistem menolak: Nama dan No. WA tidak boleh kosong!"); return; }
+            if(!namaBaru || !waBaru) { showToast("Sistem menolak: Nama dan No. WA tidak boleh kosong!"); vibrateHeavy(); return; }
 
             let btn = document.getElementById('btnSimpanProfil');
             btn.innerHTML = "Menyuntik Database..."; btn.disabled = true;
@@ -600,27 +652,32 @@
                 localStorage.setItem('namaPengguna', namaBaru); // Update memori lokal agar sapaan beranda ganti
                 
                 showToast("Identitas berhasil disinkronisasi!");
+                vibrateSuccess();
                 tutupModal('modalEditProfil');
             } catch(e) {
                 showToast("Gagal memperbarui ke server.");
+                vibrateHeavy();
             }
             btn.innerHTML = "Simpan Profil"; btn.disabled = false;
         }
 
-        // --- 4. UBAH PASSWORD (ENCRYPTED) ---
+        // --- 4. UBAH PASSWORD DENGAN ENKRIPSI (LEVEL DEWA) ---
         function bukaModalSandi() { 
             document.getElementById('inputSandiLama').value = ''; document.getElementById('inputSandiBaru').value = ''; document.getElementById('inputSandiKonfirm').value = '';
-            document.getElementById('modalUbahSandi').style.display = 'flex'; 
+            bukaModalDenganHistory('modalUbahSandi'); 
         }
 
         async function simpanSandiFirebase() {
+            vibrateClick();
+            if (!navigator.onLine) { showToast("Sinyal terputus!"); vibrateHeavy(); return; }
+
             let sandiLama = document.getElementById('inputSandiLama').value;
             let sandiBaru = document.getElementById('inputSandiBaru').value;
             let konfirm = document.getElementById('inputSandiKonfirm').value;
 
-            if(!sandiLama || !sandiBaru || !konfirm) { showToast("Sistem menolak: Isi semua kolom keamanan!"); return; }
-            if(sandiBaru !== konfirm) { showToast("Sistem menolak: Konfirmasi sandi berbeda!"); return; }
-            if(sandiBaru.length < 6) { showToast("Sistem menolak: Kata sandi terlalu pendek (Min. 6)!"); return; }
+            if(!sandiLama || !sandiBaru || !konfirm) { showToast("Sistem menolak: Isi semua kolom keamanan!"); vibrateHeavy(); return; }
+            if(sandiBaru !== konfirm) { showToast("Sistem menolak: Konfirmasi sandi berbeda!"); vibrateHeavy(); return; }
+            if(sandiBaru.length < 6) { showToast("Sistem menolak: Kata sandi terlalu pendek (Min. 6)!"); vibrateHeavy(); return; }
 
             let btn = document.getElementById('btnSimpanSandi');
             btn.innerHTML = "Verifikasi Server..."; btn.disabled = true;
@@ -629,24 +686,35 @@
                 // Cross-check Password lama ke Database Asli
                 let snapshot = await database.ref('users/' + userAsliFirebase).once('value');
                 let data = snapshot.val();
-                let dbPass = data.Password || data.password;
+                let dbPass = String(data.Password || data.password);
 
-                if(String(dbPass) !== String(sandiLama)) {
+                // Algoritma Hash untuk mencocokkan input sandi lama dengan hash di Firebase
+                let hashedSandiLama = CryptoJS.SHA256(sandiLama + userAsliFirebase).toString();
+
+                if(dbPass !== hashedSandiLama && dbPass !== sandiLama) {
                     showToast("AKSES DITOLAK: Kata Sandi Lama Anda Salah!");
+                    vibrateHeavy();
                 } else {
                     btn.innerHTML = "Mereset Ulang...";
-                    await database.ref('users/' + userAsliFirebase).update({ Password: sandiBaru });
-                    showToast("BRUTE-FORCE: Sandi utama Anda berhasil diganti!");
+                    // Enkripsi Sandi Baru sebelum dilempar ke server
+                    let hashedSandiBaru = CryptoJS.SHA256(sandiBaru + userAsliFirebase).toString();
+                    
+                    await database.ref('users/' + userAsliFirebase).update({ Password: hashedSandiBaru });
+                    
+                    showToast("BRUTE-FORCE: Sandi utama Anda berhasil diganti dan dienkripsi!");
+                    vibrateSuccess();
                     tutupModal('modalUbahSandi');
                 }
-            } catch(e) { showToast("Gagal verifikasi server Firebase."); }
+            } catch(e) { 
+                showToast("Gagal verifikasi server Firebase."); 
+                vibrateHeavy(); 
+            }
             
             btn.innerHTML = "Update Keamanan"; btn.disabled = false;
         }
 
         // --- 5. TENTANG KAMI & PWA INSTALLER ---
-        function bukaModalInfo() { document.getElementById('modalInfo').style.display = 'flex'; }
-        function tutupModalInfo() { document.getElementById('modalInfo').style.display = 'none'; }
+        function bukaModalInfo() { bukaModalDenganHistory('modalInfo'); }
 
         let deferredPrompt;
         const installMenu = document.getElementById('menuInstalApp');
@@ -656,6 +724,7 @@
         });
 
         async function instalAplikasiAndroid() {
+            vibrateClick();
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
@@ -667,9 +736,11 @@
         window.addEventListener('appinstalled', () => {
             if(installMenu) installMenu.style.display = 'none';
             deferredPrompt = null; showToast('Instalasi Selesai. Cek Layar Utama HP Anda!');
+            vibrateSuccess();
         });
 
         function keluarSistemManual() {
+            vibrateClick();
             if(confirm("Semua sesi akan diakhiri. Yakin ingin Keluar Sistem?")) {
                 localStorage.removeItem('namaPengguna'); localStorage.removeItem('hakAkses'); localStorage.removeItem('usernameAsli'); 
                 window.location.href = 'index.html'; 
