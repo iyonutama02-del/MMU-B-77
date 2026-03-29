@@ -162,9 +162,9 @@
 
     <div class="app-container">
         <div class="nav-top">
-            <button class="btn-icon" onclick="window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
+            <button class="btn-icon" onclick="vibrateClick(); window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
             <h1 class="header-title">Master Kode Keuangan</h1>
-            <button class="btn-icon" onclick="location.reload()" title="Segarkan Layar"><i class="fa-solid fa-rotate" style="color: #22c55e;"></i></button>
+            <button class="btn-icon" onclick="vibrateClick(); location.reload()" title="Segarkan Layar"><i class="fa-solid fa-rotate" style="color: #22c55e;"></i></button>
         </div>
 
         <div class="search-box">
@@ -255,6 +255,28 @@
     </div>
 
     <script>
+        // --- 0. LEVEL DEWA: ANTI-SNOOPING & HAPTIC FEEDBACK ---
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        };
+
+        function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
+        function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); }
+        function vibrateSuccess() { if (navigator.vibrate) navigator.vibrate([30, 50, 30]); }
+
+        window.addEventListener('online', () => { showToast("Sinyal Internet Kembali Normal."); vibrateSuccess(); });
+        window.addEventListener('offline', () => { showToast("Sinyal Terputus. Sebagian fitur diblokir."); vibrateHeavy(); });
+
+        // --- LEVEL DEWA: HISTORY API (ANDROID BACK BUTTON) ---
+        window.addEventListener('popstate', function(event) {
+            let modKode = document.getElementById('modalKode');
+            if (modKode && modKode.style.display === 'flex') modKode.style.display = 'none';
+        });
+
         let hakAksesLokal = localStorage.getItem('hakAkses') || 'Operator';
 
         // 21 KODE STANDAR (PONDASI HYBRID) - Mustahil Dihapus
@@ -366,7 +388,7 @@
                     let isStandard = (kodeInt >= 101 && kodeInt <= 503);
                     let actBtn = '';
                     if (hakAksesLokal === 'Demo') {
-                        actBtn = `<button class="btn-edit-row btn-locked" title="Akses Ditolak" onclick="showToast('Hanya Admin yang bisa mengedit.')"><i class="fa-solid fa-lock"></i></button>`;
+                        actBtn = `<button class="btn-edit-row btn-locked" title="Akses Ditolak" onclick="vibrateClick(); showToast('Hanya Admin yang bisa mengedit.')"><i class="fa-solid fa-lock"></i></button>`;
                     } else {
                         let escapedNama = String(row.Nama_Pos || "").replace(/'/g, "\\'").replace(/"/g, '&quot;');
                         actBtn = `<button class="btn-edit-row" title="Edit Pos" onclick="bukaModal('edit', '${row.Kode_Uang}', '${escapedNama}', '${row.Jenis}', '${nomClean}', '${row.Status}', ${isStandard})"><i class="fa-solid fa-pen"></i></button>`;
@@ -415,6 +437,7 @@
 
         // --- KENDALI MODAL ---
         function bukaModal(mode, kode='', nama='', jenis='Pemasukan', nom=0, status='Aktif', isStandard=false) { 
+            vibrateClick();
             let form = document.getElementById('formKode'); form.reset();
             let inputKode = document.getElementById('kode_uang');
             let inputJenis = document.getElementById('jenis');
@@ -461,13 +484,25 @@
                 document.getElementById('iconGembok').className = "fa-solid fa-chevron-down icon-select";
             }
             document.getElementById('modalKode').style.display = 'flex'; 
+            window.history.pushState({ modalOpen: true, modalId: 'modalKode' }, "", window.location.href);
         }
 
-        function tutupModal() { document.getElementById('modalKode').style.display = 'none'; }
+        function tutupModal() { 
+            vibrateClick();
+            document.getElementById('modalKode').style.display = 'none'; 
+        }
 
-        // --- VALIDASI ANTI-DUPLIKAT 0.1 DETIK & SIMPAN ---
+        // --- VALIDASI ANTI-DUPLIKAT & SIMPAN ---
         document.getElementById('formKode').addEventListener('submit', async function(e) {
             e.preventDefault();
+            vibrateClick();
+
+            if (!navigator.onLine) {
+                showToast('Koneksi terputus! Penyimpanan dibatalkan.');
+                vibrateHeavy();
+                return;
+            }
+
             if(hakAksesLokal === 'Demo') { showToast("Aksi ditolak untuk akun Demo."); return; }
 
             let mode = document.getElementById('formMode').value;
@@ -487,6 +522,7 @@
                     
                     if (cekDb.exists() || isStandarExits) {
                         showToast(`GAGAL: Kode ${inputKodeVal} sudah ada di sistem! Gunakan kode angka lain.`);
+                        vibrateHeavy();
                         btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false;
                         return;
                     }
@@ -508,11 +544,13 @@
                 await database.ref('kode_keuangan/' + inputKodeVal).update(dataSimpan);
                 
                 showToast('Master Kode berhasil diperbarui!'); 
+                vibrateSuccess();
                 tutupModal(); 
 
             } catch (err) {
                 console.error(err);
                 showToast('Kesalahan Jaringan. Gagal menyimpan.');
+                vibrateHeavy();
             }
             
             btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false;
