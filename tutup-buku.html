@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#e0e5ec" id="meta-theme-color">
+    <title>Tutup Buku Bulanan - MMU B-77</title>
+    
+    <link rel="icon" type="image/png" href="Logo-Favicon.png">
+    <link rel="apple-touch-icon" href="Logo-Favicon.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        // PERBAIKAN KEMANAN #1: BLOKIR AKSES TANPA LOGIN
+        if (!localStorage.getItem('usernameAsli')) {
+            window.location.replace('index.html');
+        }
+
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        
+        // PENGAMANAN AKSES MUTLAK (HANYA ADMIN & DEV)
+        const role = localStorage.getItem('hakAkses');
+        if(role === 'Operator' || role === 'Supervisor' || role === 'Demo') {
+            alert("🔒 AKSES DIBATASI: Area eksekutif ini khusus untuk Administrator (Pimpinan) dan Developer.");
+            window.location.replace('beranda.html');
+        }
+    </script>
+
+    <style>
+        /* --- TEMA NEUMORPHISM PREMIUM --- */
+        :root {
+            --bg-main: #e0e5ec; --text-dark: #31344b; --text-muted: #8C96A3;
+            --shadow-dark: rgba(163, 177, 198, 0.6); --shadow-light: rgba(255, 255, 255, 0.6);
+            --c-green: #00d26a; --c-red: #ef4444; --c-blue: #4facfe; --c-orange: #f59e0b;
+            --grad-blue: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --grad-red: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+            --grad-dark: linear-gradient(135deg, #31344b 0%, #1e293b 100%);
+        }
+        [data-theme="dark"] { 
+            --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0; 
+            --shadow-light: #3a4556; --shadow-dark: #202835; 
+        }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { margin: 0; padding: 0; background-color: var(--bg-main); font-family: 'Poppins', sans-serif; color: var(--text-dark); transition: 0.3s; padding-bottom: 50px; }
+        .app-container { max-width: 700px; margin: 0 auto; padding: 25px 20px; animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #toast { visibility: hidden; min-width: 250px; background-color: #31344b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; width: 85%; }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
+        @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+
+        /* HEADER */
+        .nav-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
+        .btn-icon { width: 45px; height: 45px; border-radius: 15px; background: var(--bg-main); display: flex; justify-content: center; align-items: center; color: var(--text-dark); box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); cursor: pointer; border: none; transition: 0.2s; font-size: 16px;}
+        .btn-icon:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
+        .header-title { font-family: 'Montserrat'; font-weight: 900; font-size: 18px; margin: 0; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dark);}
+
+        /* PANEL FILTER BULAN */
+        .panel-card { background: var(--bg-main); border-radius: 25px; padding: 25px; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); margin-bottom: 25px; }
+        .grid-filter { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; margin-left: 5px;}
+        .input-edit { width: 100%; padding: 15px 20px; border: none; border-radius: 15px; background: var(--bg-main); font-family: 'Poppins'; font-size: 13px; font-weight: 700; color: var(--text-dark); box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); outline: none; transition: 0.3s; cursor: pointer; appearance: none;}
+        .input-edit:focus { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light), 0 0 0 2px rgba(79, 172, 254, 0.3); }
+
+        /* KARTU NERACA (FLOATING) */
+        .grid-neraca { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; margin-top: 25px;}
+        .card-neraca { background: var(--bg-main); border-radius: 20px; padding: 20px; box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); text-align: center;}
+        .card-neraca p { margin: 0 0 5px 0; font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;}
+        .card-neraca h3 { margin: 0; font-family: 'Montserrat'; font-weight: 900; font-size: 16px; }
+        .text-in { color: var(--c-green); } .text-out { color: var(--c-red); }
+
+        .card-total { background: var(--grad-blue); border-radius: 20px; padding: 25px; color: white; text-align: center; box-shadow: 6px 6px 15px rgba(79, 172, 254, 0.4); margin-bottom: 25px; position: relative; overflow: hidden;}
+        .card-total::after { content: ''; position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+        .card-total p { margin: 0 0 5px 0; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; opacity: 0.9;}
+        .card-total h2 { margin: 0; font-family: 'Montserrat'; font-weight: 900; font-size: 28px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);}
+
+        /* MASTER SWITCH (KUNCI BULAN) */
+        .lock-panel { border-top: 2px dashed rgba(0,0,0,0.1); padding-top: 25px; text-align: center; }
+        .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 8px 15px; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 15px; }
+        .status-open { background: rgba(34, 197, 94, 0.15); color: var(--c-green); }
+        .status-locked { background: rgba(239, 68, 68, 0.15); color: var(--c-red); }
+
+        .btn-master { width: 100%; padding: 18px; border: none; border-radius: 15px; font-family: 'Montserrat'; font-weight: 900; font-size: 14px; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s; margin-bottom: 15px;}
+        .btn-lock { background: var(--grad-dark); box-shadow: 6px 6px 15px rgba(30, 41, 59, 0.4); }
+        .btn-unlock { background: var(--bg-main); color: var(--c-red); border: 2px solid var(--c-red); box-shadow: 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light); }
+        .btn-master:active { transform: translateY(3px); box-shadow: inset 3px 3px 6px rgba(0,0,0,0.3); }
+
+        .btn-pdf { background: transparent; color: var(--c-blue); border: none; font-family: 'Poppins'; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 15px; border-radius: 15px; transition: 0.2s;}
+        .btn-pdf:active { background: rgba(0,0,0,0.05); }
+
+        .log-kunci { font-size: 10px; color: var(--text-muted); font-weight: 600; margin-top: 15px; display: none; }
+
+        /* CETAK PDF HIDDEN */
+        #print-area { display: none; width: 800px; background: white; padding: 40px 50px; color: black; position: absolute; left: 0; top: 0; z-index: -2000; font-family: Arial, sans-serif; }
+        .pdf-kop { text-align: center; border-bottom: 4px double black; padding-bottom: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px; }
+        .pdf-kop img { width: 80px; }
+        .pdf-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 30px; }
+        .pdf-table td { padding: 12px; border-bottom: 1px solid #ddd; }
+        .td-label { font-weight: bold; width: 60%; }
+        .td-value { text-align: right; font-weight: bold; }
+        .row-total { background: #f2f2f2; font-size: 15px; border-top: 2px solid black; border-bottom: 2px solid black !important; }
+        .pdf-ttd { width: 100%; margin-top: 40px; display: flex; justify-content: space-between; text-align: center; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+    <div id="toast"><i class="fa-solid fa-circle-info"></i> <span id="toastMsg">Pesan</span></div>
+
+    <div class="app-container">
+        <div class="nav-top">
+            <button class="btn-icon" onclick="vibrateClick(); window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
+            <h1 class="header-title">Laporan Tutup Buku</h1>
+            <div style="width:45px;"></div>
+        </div>
+
+        <div class="panel-card">
+            <div class="grid-filter">
+                <div class="input-group">
+                    <label>Tahun Ajaran</label>
+                    <select class="input-edit" id="filterTA" onchange="kalkulasiNeraca()">
+                        <option value="">-- Memuat --</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Bulan Hijriyah</label>
+                    <select class="input-edit" id="filterBulan" onchange="kalkulasiNeraca()">
+                        <option value="Muharram">Muharram</option>
+                        <option value="Safar">Safar</option>
+                        <option value="Rabiul Awal">Rabiul Awal</option>
+                        <option value="Rabiul Akhir">Rabiul Akhir</option>
+                        <option value="Jumadil Awal">Jumadil Awal</option>
+                        <option value="Jumadil Akhir">Jumadil Akhir</option>
+                        <option value="Rajab">Rajab</option>
+                        <option value="Sya'ban">Sya'ban</option>
+                        <option value="Ramadhan">Ramadhan</option>
+                        <option value="Syawal">Syawal</option>
+                        <option value="Dzulqa'dah">Dzulqa'dah</option>
+                        <option value="Dzulhijjah">Dzulhijjah</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <div class="grid-neraca">
+                    <div class="card-neraca">
+                        <p>Penerimaan SPP & Tagihan</p>
+                        <h3 class="text-in" id="valSPP">Rp 0</h3>
+                    </div>
+                    <div class="card-neraca">
+                        <p>Kas Masuk Lainnya</p>
+                        <h3 class="text-in" id="valKasMasuk">Rp 0</h3>
+                    </div>
+                </div>
+                <div class="card-neraca" style="margin-bottom: 15px;">
+                    <p>Total Pengeluaran Kas</p>
+                    <h3 class="text-out" id="valKasKeluar">Rp 0</h3>
+                </div>
+                
+                <div class="card-total">
+                    <p>Saldo Bersih Bulan Ini</p>
+                    <h2 id="valSaldoBersih">Rp 0</h2>
+                </div>
+            </div>
+
+            <div class="lock-panel">
+                <div class="status-badge status-open" id="badgeStatus">
+                    <i class="fa-solid fa-lock-open"></i> Periode Terbuka
+                </div>
+
+                <button class="btn-master btn-lock" id="btnTutupBuku" onclick="eksekusiKunci()"><i class="fa-solid fa-lock"></i> KUNCI & TUTUP BUKU PERIODE INI</button>
+                
+                <p class="log-kunci" id="logKunciTeks"><i class="fa-solid fa-user-shield"></i> Dikunci oleh: <span id="logAdmin">-</span> pada <span id="logWaktu">-</span></p>
+
+                <button class="btn-pdf" onclick="cetakLaporanPDF()"><i class="fa-solid fa-file-pdf"></i> Unduh Laporan Eksekutif (PDF)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="print-area">
+        <div class="pdf-kop">
+            <img src="icon aplikasi.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3353/3353138.png'">
+            <div style="text-align: left;">
+                <h1 style="margin:0; font-family:Arial; font-size: 22px;">MADRASAH MIFTAHUL ULUM B-77</h1>
+                <p style="margin:5px 0 0; font-size:14px;">Laporan Neraca Keuangan Bulanan</p>
+                <p style="margin:5px 0 0; font-size:12px; font-weight:bold;" id="pdfBulan">Periode: -</p>
+            </div>
+        </div>
+
+        <table class="pdf-table">
+            <tr>
+                <td class="td-label">A. Total Penerimaan Tagihan Santri (SPP, dll)</td>
+                <td class="td-value" style="color: green;" id="pdfSPP">Rp 0</td>
+            </tr>
+            <tr>
+                <td class="td-label">B. Total Pemasukan Kas Lainnya (Donatur, dll)</td>
+                <td class="td-value" style="color: green;" id="pdfKasIn">Rp 0</td>
+            </tr>
+            <tr style="background: #eef9f0;">
+                <td class="td-label" style="padding-left: 20px;">TOTAL DEBET (A + B)</td>
+                <td class="td-value" style="color: green;" id="pdfTotalIn">Rp 0</td>
+            </tr>
+            <tr>
+                <td class="td-label">C. Total Pengeluaran Kas (Operasional)</td>
+                <td class="td-value" style="color: red;" id="pdfKasOut">Rp 0</td>
+            </tr>
+            <tr class="row-total">
+                <td class="td-label">SALDO BERSIH BULAN INI (DEBET - KREDIT)</td>
+                <td class="td-value" id="pdfSaldo">Rp 0</td>
+            </tr>
+        </table>
+
+        <p style="font-size: 11px; margin-bottom: 5px;">Status Laporan: <b id="pdfStatusLaporan">TERKUNCI / TUTUP BUKU</b></p>
+        <p style="font-size: 11px; color: #555;">Dokumen ini dicetak otomatis pada: <span id="pdfWaktuCetak"></span></p>
+
+        <div class="pdf-ttd">
+            <div>
+                <p>Mengetahui,</p>
+                <p style="margin-top: 60px; font-weight: bold; text-decoration: underline;">Kepala Madrasah</p>
+            </div>
+            <div>
+                <p>Dibuat Oleh,</p>
+                <p style="margin-top: 60px; font-weight: bold; text-decoration: underline;" id="pdfNamaPembuat">Administrator</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) || (e.ctrlKey && e.keyCode == 85)) return false;
+        };
+
+        function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
+        function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); }
+        function vibrateSuccess() { if (navigator.vibrate) navigator.vibrate([30, 50, 30]); }
+        
+        // PERBAIKAN BUG #4: FUNGSI TOAST YANG BENAR
+        function showToast(msg) { 
+            let toast = document.getElementById("toast"); 
+            document.getElementById("toastMsg").innerText = msg;
+            toast.className = "show"; 
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000); 
+        }
+
+        async function catatAuditTrail(aksi, detail) {
+            try {
+                await database.ref('audit_trail').push({
+                    Waktu: new Date().toLocaleString('id-ID'),
+                    Eksekutor: localStorage.getItem('namaPengguna') || 'Unknown',
+                    Role: localStorage.getItem('hakAkses') || 'Unknown',
+                    Menu: 'Tutup Buku',
+                    Aksi: aksi,
+                    Detail: detail
+                });
+            } catch(e) { console.error("Gagal catat audit", e); }
+        }
+
+        const formatRp = (n) => 'Rp ' + parseInt(n || 0).toLocaleString('id-ID');
+
+        let rawBukuKas = [];
+        let rawStatusBulan = {};
+        let dataBulanIni = { spp: 0, kasIn: 0, kasOut: 0, bersih: 0, isLocked: false };
+
+        window.onload = function() {
+            // Set Default Bulan Hijriyah dari LocalStorage
+            let blnAktif = localStorage.getItem('globalBulanAktif');
+            if(blnAktif && blnAktif !== "Belum Disetel") {
+                document.getElementById('filterBulan').value = blnAktif;
+            }
+
+            // Load Data Jurnal Umum & Set Tahun Ajaran Options
+            database.ref('buku_kas').on('value', snap => {
+                rawBukuKas = [];
+                let taSet = new Set();
+                let taAktif = localStorage.getItem('globalTahunAjaran');
+                if(taAktif && taAktif !== "Belum Disetel") taSet.add(taAktif);
+
+                snap.forEach(c => { 
+                    let d = c.val();
+                    rawBukuKas.push(d); 
+                    if(d.Tahun_Ajaran && d.Tahun_Ajaran !== "Belum Disetel" && d.Tahun_Ajaran !== "Umum") {
+                        taSet.add(d.Tahun_Ajaran);
+                    }
+                });
+
+                let selTA = document.getElementById('filterTA');
+                let optHTML = '';
+                Array.from(taSet).sort().reverse().forEach(ta => {
+                    optHTML += `<option value="${ta}">${ta}</option>`;
+                });
+                selTA.innerHTML = optHTML || '<option value="">-- Kosong --</option>';
+                if(taAktif) selTA.value = taAktif;
+
+                kalkulasiNeraca();
+            });
+
+            // Load Status Tutup Buku
+            database.ref('tutup_buku').on('value', snap => {
+                rawStatusBulan = snap.val() || {};
+                kalkulasiNeraca();
+            });
+        };
+
+        function getPeriodeId() {
+            let ta = document.getElementById('filterTA').value;
+            let bln = document.getElementById('filterBulan').value;
+            if(!ta || !bln) return null;
+            let safeTA = ta.replace(/\//g, '-').replace(/ /g, '');
+            return `${safeTA}_${bln}`;
+        }
+
+        function kalkulasiNeraca() {
+            let filterTA = document.getElementById('filterTA').value;
+            let filterBulanH = document.getElementById('filterBulan').value;
+            if(!filterTA || !filterBulanH) return;
+
+            let spp = 0, kasIn = 0, kasOut = 0;
+
+            rawBukuKas.forEach(d => {
+                if(d.Tahun_Ajaran === filterTA && d.Bulan_Hijriyah === filterBulanH) {
+                    let nom = parseInt(d.Nominal || 0);
+                    if(d.Jenis === 'MASUK') {
+                        if(d.ID_Transaksi.startsWith('PAY')) spp += nom;
+                        else kasIn += nom;
+                    } else if (d.Jenis === 'KELUAR') {
+                        kasOut += nom;
+                    }
+                }
+            });
+
+            let bersih = (spp + kasIn) - kasOut;
+            dataBulanIni = { spp, kasIn, kasOut, bersih, isLocked: false };
+
+            document.getElementById('valSPP').innerText = formatRp(spp);
+            document.getElementById('valKasMasuk').innerText = formatRp(kasIn);
+            document.getElementById('valKasKeluar').innerText = formatRp(kasOut);
+            document.getElementById('valSaldoBersih').innerText = formatRp(bersih);
+
+            cekStatusKunci();
+        }
+
+        function cekStatusKunci() {
+            let periodeId = getPeriodeId();
+            if(!periodeId) return;
+
+            let badge = document.getElementById('badgeStatus');
+            let btnLock = document.getElementById('btnTutupBuku');
+            let logTeks = document.getElementById('logKunciTeks');
+            let roleLokal = localStorage.getItem('hakAkses');
+
+            let status = rawStatusBulan[periodeId];
+
+            if(status && status.Status === 'Terkunci') {
+                dataBulanIni.isLocked = true;
+                badge.className = "status-badge status-locked";
+                badge.innerHTML = '<i class="fa-solid fa-lock"></i> PERIODE INI TELAH DIKUNCI';
+                
+                logTeks.style.display = 'block';
+                document.getElementById('logAdmin').innerText = status.Admin;
+                document.getElementById('logWaktu').innerText = status.Waktu;
+
+                if(roleLokal === 'Developer' || roleLokal === 'Administrator') {
+                    btnLock.className = "btn-master btn-unlock";
+                    btnLock.innerHTML = '<i class="fa-solid fa-key"></i> BUKA KUNCI PERIODE (KHUSUS ADMIN)';
+                    btnLock.onclick = eksekusiBukaKunci;
+                    btnLock.style.display = 'flex';
+                } else {
+                    btnLock.style.display = 'none';
+                }
+            } else {
+                dataBulanIni.isLocked = false;
+                badge.className = "status-badge status-open";
+                badge.innerHTML = '<i class="fa-solid fa-lock-open"></i> Periode Terbuka';
+                logTeks.style.display = 'none';
+                
+                btnLock.style.display = 'flex';
+                btnLock.className = "btn-master btn-lock";
+                btnLock.innerHTML = '<i class="fa-solid fa-lock"></i> KUNCI & TUTUP BUKU PERIODE INI';
+                btnLock.onclick = eksekusiKunci;
+            }
+        }
+
+        async function eksekusiKunci() {
+            vibrateClick();
+            let periodeId = getPeriodeId();
+            let ta = document.getElementById('filterTA').value;
+            let bln = document.getElementById('filterBulan').value;
+            let namaBulanFilter = `${bln} ${ta}`;
+
+            let msg = `⚠️ PERINGATAN TUTUP BUKU ⚠️\n\nAnda akan mengunci seluruh data transaksi untuk periode [${namaBulanFilter}].\nJika sudah dikunci, transaksi pada periode ini menjadi permanen.\n\nLanjutkan eksekusi kunci?`;
+            
+            if(!confirm(msg)) return;
+
+            let admin = localStorage.getItem('namaPengguna') || 'Admin';
+            let tgl = new Date().toLocaleString('id-ID');
+
+            try {
+                await database.ref(`tutup_buku/${periodeId}`).set({
+                    Status: 'Terkunci',
+                    Admin: admin,
+                    Waktu: tgl,
+                    Total_Debet: dataBulanIni.spp + dataBulanIni.kasIn,
+                    Total_Kredit: dataBulanIni.kasOut,
+                    Saldo_Bersih: dataBulanIni.bersih
+                });
+                
+                await catatAuditTrail('Lock Month', `Melakukan Tutup Buku untuk periode ${namaBulanFilter}`);
+                
+                showToast(`Periode ${namaBulanFilter} berhasil disegel!`);
+                vibrateSuccess();
+            } catch(e) {
+                showToast("Gagal mengunci periode. Periksa koneksi.");
+                vibrateHeavy();
+            }
+        }
+
+        async function eksekusiBukaKunci() {
+            vibrateHeavy();
+            let periodeId = getPeriodeId();
+            let ta = document.getElementById('filterTA').value;
+            let bln = document.getElementById('filterBulan').value;
+            
+            if(!confirm("⚠️ OTORISASI TINGKAT TINGGI ⚠️\n\nAnda yakin ingin MEMBUKA KUNCI periode ini?\nLanjutkan?")) return;
+
+            try {
+                await database.ref(`tutup_buku/${periodeId}`).remove();
+                await catatAuditTrail('Unlock Month', `Membuka Kunci Segel Tutup Buku untuk periode ${bln} ${ta}`);
+                showToast("Kunci berhasil dibuka!");
+                vibrateSuccess();
+            } catch(e) {
+                showToast("Gagal membuka kunci."); vibrateHeavy();
+            }
+        }
+
+        function cetakLaporanPDF() {
+            vibrateClick();
+            let ta = document.getElementById('filterTA').value;
+            let bln = document.getElementById('filterBulan').value;
+            if(!ta || !bln) { showToast("Pilih periode terlebih dahulu!"); return; }
+
+            let namaBulanFilter = `${bln} ${ta}`;
+
+            document.getElementById('pdfBulan').innerText = `Periode: ${namaBulanFilter}`;
+            document.getElementById('pdfSPP').innerText = formatRp(dataBulanIni.spp);
+            document.getElementById('pdfKasIn').innerText = formatRp(dataBulanIni.kasIn);
+            document.getElementById('pdfTotalIn').innerText = formatRp(dataBulanIni.spp + dataBulanIni.kasIn);
+            document.getElementById('pdfKasOut').innerText = formatRp(dataBulanIni.kasOut);
+            document.getElementById('pdfSaldo').innerText = formatRp(dataBulanIni.bersih);
+            
+            document.getElementById('pdfStatusLaporan').innerText = dataBulanIni.isLocked ? "TERKUNCI (TUTUP BUKU RESMI)" : "DRAF (BELUM TUTUP BUKU)";
+            document.getElementById('pdfStatusLaporan').style.color = dataBulanIni.isLocked ? "green" : "red";
+            
+            document.getElementById('pdfWaktuCetak').innerText = new Date().toLocaleString('id-ID');
+            document.getElementById('pdfNamaPembuat').innerText = localStorage.getItem('namaPengguna') || 'Administrator';
+
+            catatAuditTrail('Export PDF', `Mengunduh Laporan Neraca Bulanan (Periode: ${namaBulanFilter})`);
+            showToast("Mempersiapkan Laporan Neraca Eksekutif...");
+
+            const area = document.getElementById('print-area');
+            area.style.display = 'block'; 
+
+            const opt = { 
+                margin: 0.5, 
+                filename: `Neraca_Keuangan_MMU_B77_${bln}_${ta.replace(/\//g,'-')}.pdf`, 
+                image: { type: 'jpeg', quality: 0.98 }, 
+                html2canvas: { scale: 2, useCORS: true }, 
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } 
+            };
+            
+            html2pdf().set(opt).from(area).save().then(() => { 
+                area.style.display = 'none'; 
+                showToast("Laporan Berhasil Diunduh!");
+            });
+        }
+    </script>
+</body>
+</html>

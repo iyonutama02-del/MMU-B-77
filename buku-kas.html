@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#e0e5ec" id="meta-theme-color">
+    <title>Buku Kas Utama - MMU B-77</title>
+    
+    <link rel="icon" type="image/png" href="Logo-Favicon.png">
+    <link rel="apple-touch-icon" href="Logo-Favicon.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        // --- TEMUAN #1: PENGAMANAN MUTLAK Cek Sesi Login di Atas ---
+        if (!localStorage.getItem('usernameAsli')) {
+            window.location.replace('index.html');
+        }
+
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        
+        // PENGAMANAN AKSES DEMO
+        if(localStorage.getItem('hakAkses') === 'Demo') {
+            alert("🔒 AKSES DIBATASI: Akun Demo tidak memiliki izin mengakses Buku Kas Utama.");
+            window.location.replace('beranda.html');
+        }
+    </script>
+
+    <style>
+        /* --- TEMA NEUMORPHISM PREMIUM --- */
+        :root {
+            --bg-main: #e0e5ec; --text-dark: #31344b; --text-muted: #8C96A3;
+            --shadow-dark: rgba(163, 177, 198, 0.6); --shadow-light: rgba(255, 255, 255, 0.6);
+            --c-green: #00d26a; --c-red: #ef4444; --c-blue: #4facfe; --c-orange: #f59e0b;
+            --grad-green: linear-gradient(135deg, #2df077 0%, #00d26a 100%);
+            --grad-red: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+        }
+        [data-theme="dark"] { 
+            --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0; 
+            --shadow-light: #3a4556; --shadow-dark: #202835; 
+        }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { margin: 0; padding: 0; background-color: var(--bg-main); font-family: 'Poppins', sans-serif; color: var(--text-dark); transition: 0.3s; padding-bottom: 50px; }
+        .app-container { max-width: 800px; margin: 0 auto; padding: 25px 20px; animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* TEMUAN #4: CSS Toast disempurnakan */
+        #toast { visibility: hidden; min-width: 250px; background-color: #31344b; color: #fff; text-align: center; border-radius: 15px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; width: 85%; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
+        @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+
+        /* HEADER */
+        .nav-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
+        .btn-icon { width: 45px; height: 45px; border-radius: 15px; background: var(--bg-main); display: flex; justify-content: center; align-items: center; color: var(--text-dark); box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); cursor: pointer; border: none; transition: 0.2s; font-size: 16px;}
+        .btn-icon:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
+        .header-title { font-family: 'Montserrat'; font-weight: 900; font-size: 18px; margin: 0; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dark);}
+
+        /* SUMMARY CARDS (3D FLOATING) */
+        .summary-wrapper { display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
+        .sum-card { flex: 1; min-width: 100px; background: var(--bg-main); border-radius: 20px; padding: 20px 15px; text-align: center; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); display: flex; flex-direction: column; justify-content: center; align-items: center;}
+        .sum-card p { margin: 0 0 8px 0; font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .sum-card h3 { margin: 0; font-family: 'Montserrat'; font-weight: 900; font-size: 18px; }
+        #totMasuk { color: var(--c-green); } 
+        #totKeluar { color: var(--c-red); } 
+        #totSaldo { color: var(--c-blue); }
+
+        /* FILTER PANEL */
+        .filter-card { background: var(--bg-main); padding: 25px; border-radius: 25px; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); margin-bottom: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 20px; }
+        .input-group { position: relative; }
+        .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; margin-left: 5px;}
+        .input-edit { width: 100%; padding: 14px 20px; border: none; border-radius: 15px; background: var(--bg-main); font-family: 'Poppins'; font-size: 12px; font-weight: 600; color: var(--text-dark); box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); outline: none; transition: 0.3s; appearance: none;}
+        .input-edit:focus { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light), 0 0 0 2px rgba(79, 172, 254, 0.3); }
+        .input-edit:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        .btn-action { padding: 14px; border: none; border-radius: 15px; font-family: 'Montserrat'; font-weight: 800; font-size: 13px; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; box-shadow: 4px 4px 10px rgba(0,0,0,0.15);}
+        .btn-action:active { transform: translateY(2px); box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2); }
+        .btn-pdf { background: var(--grad-red); box-shadow: 4px 4px 12px rgba(239, 68, 68, 0.3); }
+        .btn-excel { background: var(--grad-green); box-shadow: 4px 4px 12px rgba(34, 197, 94, 0.3); }
+
+        /* ADVANCED MUTATION CARD DESIGN */
+        .mutasi-list { display: flex; flex-direction: column; gap: 18px; }
+        .mutasi-card { background: var(--bg-main); border-radius: 20px; padding: 20px; box-shadow: 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light); display: flex; flex-direction: column; gap: 15px; position: relative; overflow: hidden; transition: 0.3s;}
+        .mutasi-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; border-radius: 20px 0 0 20px; }
+        .mutasi-card.in::before { background: var(--c-green); }
+        .mutasi-card.out::before { background: var(--c-red); }
+        
+        .m-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px dashed rgba(0,0,0,0.1); padding-bottom: 15px; }
+        .m-head-left { display: flex; flex-direction: column; gap: 4px;}
+        .m-title { font-family: 'Montserrat'; font-weight: 800; font-size: 15px; color: var(--text-dark); margin: 0;}
+        .m-subtitle { font-size: 11px; font-weight: 600; color: var(--text-muted); margin: 0; display: flex; align-items: center; gap: 6px;}
+        
+        .m-head-right { text-align: right; }
+        .m-amt { font-family: 'Montserrat'; font-weight: 900; font-size: 16px; margin: 0 0 4px 0;}
+        .m-amt-in { color: var(--c-green); } 
+        .m-amt-out { color: var(--c-red); }
+        .m-saldo-badge { font-size: 10px; font-weight: 700; color: var(--text-muted); background: rgba(0,0,0,0.03); padding: 4px 8px; border-radius: 8px;}
+        
+        .m-body { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-dark); }
+        .m-desc { line-height: 1.5; font-weight: 500; }
+        .badge { padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; font-family: 'Montserrat'; letter-spacing: 0.5px;}
+        .badge-in { background: rgba(34, 197, 94, 0.1); color: var(--c-green); }
+        .badge-out { background: rgba(239, 68, 68, 0.1); color: var(--c-red); }
+
+        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center;}
+
+        /* PRINT TEMPLATE (NO SIGNATURE) - TIDAK DISENTUH */
+        #print-area { display: none; width: 1123px; background: white; padding: 40px; color: black; position: absolute; left: 0; top: 0; z-index: -2000; font-family: Arial, sans-serif; }
+        .pdf-kop { text-align: center; border-bottom: 4px double black; padding-bottom: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 25px; }
+        .pdf-kop img { width: 90px; }
+        .pdf-table { width: 100%; border: 1px solid black; border-collapse: collapse; font-size: 11px; }
+        .pdf-table th, .pdf-table td { border: 1px solid black; padding: 8px; vertical-align: top; }
+        .pdf-table th { background: #f2f2f2; text-align: center; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="toast"><i class="fa-solid fa-circle-info"></i> <span id="toastMsg">Pesan Notifikasi</span></div>
+
+    <div class="app-container">
+        <div class="nav-top">
+            <button class="btn-icon" onclick="vibrateClick(); window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
+            <h1 class="header-title">Jurnal Kas Terpadu</h1>
+            <button class="btn-icon" onclick="vibrateClick(); window.location.reload()"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+
+        <div class="summary-wrapper">
+            <div class="sum-card"><p>Total Debet</p><h3 id="totMasuk">Rp 0</h3></div>
+            <div class="sum-card"><p>Total Kredit</p><h3 id="totKeluar">Rp 0</h3></div>
+            <div class="sum-card"><p>Saldo Akhir</p><h3 id="totSaldo">Rp 0</h3></div>
+        </div>
+
+        <div class="filter-card">
+            <div class="input-group" style="grid-column: span 2;">
+                <label>Pencarian Riwayat</label>
+                <input type="text" class="input-edit" id="cariData" placeholder="Cari ID, Pos, Nominal, atau Keterangan..." onkeyup="prosesData()">
+            </div>
+            <div class="input-group">
+                <label>Dari Tanggal</label>
+                <input type="date" class="input-edit" id="fMulai" onchange="prosesData()">
+            </div>
+            <div class="input-group">
+                <label>Sampai Tanggal</label>
+                <input type="date" class="input-edit" id="fAkhir" onchange="prosesData()">
+            </div>
+            <div class="input-group" style="display: flex; align-items: flex-end; gap: 15px; grid-column: 1 / -1;">
+                <button class="btn-action btn-pdf" style="flex: 1;" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> Unduh PDF</button>
+                <button class="btn-action btn-excel" style="flex: 1;" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> Unduh Excel</button>
+            </div>
+        </div>
+
+        <div class="mutasi-list" id="bodyKas">
+            <div class="empty-state">
+                <i class="fa-solid fa-circle-notch fa-spin" style="font-size:35px; margin-bottom:15px; color:var(--c-orange);"></i>
+                <span>Menyinkronkan Jurnal Kas...</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="print-area">
+        <div class="pdf-kop">
+            <img src="Logo-Favicon.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3353/3353138.png'">
+            <div style="text-align: left;">
+                <h1 style="margin:0; font-family:Arial; font-weight:bold; font-size: 24px;">MADRASAH MIFTAHUL ULUM B-77</h1>
+                <p style="margin:5px 0 0; font-size:14px;">Jurnal Buku Kas Umum (Rincian Mutasi Keuangan)</p>
+                <p style="margin:5px 0 0; font-size:12px; font-weight:bold;" id="pdfTgl">Periode: Semua Waktu</p>
+            </div>
+        </div>
+        <table class="pdf-table">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Waktu</th>
+                    <th style="width: 18%;">Ref & Kasir</th>
+                    <th style="width: 27%;">Uraian Transaksi</th>
+                    <th style="width: 12%;">Debet (Rp)</th>
+                    <th style="width: 12%;">Kredit (Rp)</th>
+                    <th style="width: 16%;">Saldo Kas (Rp)</th>
+                </tr>
+            </thead>
+            <tbody id="pdfTableBody"></tbody>
+        </table>
+        <p style="margin-top:20px; font-size:10px; font-style:italic; color:#555;">Dokumen ini dicetak otomatis dari Sistem Informasi Keuangan Terpadu MMU B-77 pada <span id="wktCetak"></span></p>
+    </div>
+
+    <script>
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        };
+
+        function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
+        
+        function showToast(msg) { 
+            let toast = document.getElementById("toast"); 
+            document.getElementById("toastMsg").innerText = msg;
+            toast.className = "show"; 
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000); 
+        }
+
+        // --- TEMUAN #3: KEAMANAN AUTO-LOGOUT 15 MENIT ---
+        let waktuLogout;
+        function resetTimerLogout() {
+            clearTimeout(waktuLogout);
+            waktuLogout = setTimeout(() => {
+                vibrateHeavy();
+                showToast("Sesi habis (15 Menit tidak aktif). Anda dikeluarkan demi keamanan.");
+                setTimeout(() => {
+                    localStorage.removeItem('usernameAsli');
+                    window.location.replace('index.html');
+                }, 2500);
+            }, 15 * 60 * 1000); 
+        }
+        document.onmousemove = resetTimerLogout; document.onkeypress = resetTimerLogout; document.ontouchstart = resetTimerLogout;
+
+        // --- SISTEM AUDIT TRAIL (CCTV DIGITAL) ---
+        async function catatAuditTrail(aksi, detail) {
+            try {
+                await database.ref('audit_trail').push({
+                    Waktu: new Date().toLocaleString('id-ID'),
+                    Eksekutor: localStorage.getItem('namaPengguna') || 'Unknown',
+                    Role: localStorage.getItem('hakAkses') || 'Unknown',
+                    Menu: 'Buku Kas Harian',
+                    Aksi: aksi,
+                    Detail: detail
+                });
+            } catch(e) { console.error("Gagal catat audit", e); }
+        }
+
+        let rawData = [];
+        const formatRp = (n) => parseInt(n || 0).toLocaleString('id-ID');
+
+        function getHijriDate(dateObj) {
+            try { return new Intl.DateTimeFormat('id-ID-u-ca-islamic', {day: 'numeric', month: 'long', year: 'numeric'}).format(dateObj); } 
+            catch (e) { return "-"; }
+        }
+
+        function getNamaHari(dateObj) {
+            const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            return hari[dateObj.getDay()];
+        }
+
+        window.onload = function() {
+            resetTimerLogout(); // Inisialisasi Auto-Logout
+            
+            // --- FILTER ADAPTIF BERDASARKAN ROLE ---
+            const roleLokal = localStorage.getItem('hakAkses');
+            const tglMulai = document.getElementById('fMulai');
+            const tglAkhir = document.getElementById('fAkhir');
+
+            if (roleLokal === 'Operator') {
+                // Kunci Operator hanya pada hari ini
+                let todayStr = new Date().toISOString().split('T')[0];
+                tglMulai.value = todayStr;
+                tglAkhir.value = todayStr;
+                tglMulai.disabled = true;
+                tglAkhir.disabled = true;
+                
+                setTimeout(() => {
+                    showToast("Mode Kasir Aktif: Menampilkan mutasi hari ini saja.");
+                }, 1000);
+            }
+
+            database.ref('buku_kas').on('value', snap => {
+                rawData = [];
+                snap.forEach(c => { rawData.push(c.val()); });
+                
+                // Urutkan Tanggal Terbaru ke Terlama
+                rawData.sort((a,b) => {
+                    let d1 = a.Waktu.split(',')[0].split('/').reverse().join('-');
+                    let d2 = b.Waktu.split(',')[0].split('/').reverse().join('-');
+                    return new Date(d2) - new Date(d1) || b.ID_Transaksi.localeCompare(a.ID_Transaksi);
+                });
+                prosesData();
+            });
+        };
+
+        function prosesData() {
+            const cari = document.getElementById('cariData').value.toLowerCase();
+            const start = document.getElementById('fMulai').value;
+            const end = document.getElementById('fAkhir').value;
+            
+            let filtered = rawData.filter(d => {
+                let adminInfo = d.Kasir || d.Admin_Penerima || d.Admin_Input || d.Penerima || '';
+                let matchCari = (d.ID_Transaksi.toLowerCase().includes(cari) || d.Kategori_Nama.toLowerCase().includes(cari) || (d.Sumber || d.Penerima || '').toLowerCase().includes(cari) || adminInfo.toLowerCase().includes(cari) || (d.Keterangan || '').toLowerCase().includes(cari) || String(d.Nominal).includes(cari));
+                
+                let tglParts = d.Waktu.split(',')[0].split('/');
+                let tglRow = `${tglParts[2]}-${tglParts[1]}-${tglParts[0]}`; 
+                
+                let matchTgl = true;
+                if(start) matchTgl = matchTgl && (tglRow >= start);
+                if(end) matchTgl = matchTgl && (tglRow <= end);
+                
+                return matchCari && matchTgl;
+            });
+
+            let saldoAkumulatif = 0; let totIn = 0; let totOut = 0;
+            
+            // Dibalik agar perhitungan saldo akumulatif berawal dari transaksi paling lama (bawah) ke terbaru (atas)
+            let displayRows = [...filtered].reverse(); 
+            
+            let htmlUI = ''; let pdfHTML = '';
+
+            displayRows.forEach(d => {
+                let nom = parseInt(d.Nominal || 0);
+                let isMasuk = d.Jenis === 'MASUK';
+                if(isMasuk) { saldoAkumulatif += nom; totIn += nom; }
+                else { saldoAkumulatif -= nom; totOut += nom; }
+
+                // PENGOLAHAN WAKTU
+                let splitWaktu = d.Waktu.split(', ');
+                let tglMasehiStr = splitWaktu[0];
+                let jamStr = splitWaktu[1] || '-';
+                
+                let parts = tglMasehiStr.split('/');
+                let dateObj = new Date(parts[2], parts[1]-1, parts[0]);
+                
+                let namaHari = getNamaHari(dateObj);
+                let tglHijriyah = getHijriDate(dateObj);
+
+                let adminAktor = d.Kasir || d.Admin_Penerima || d.Admin_Input || 'System Auto';
+                let entitasTerkait = d.Sumber || d.Penerima || d.Nama_Santri || 'Lain-lain';
+
+                // BENTUK UI KARTU MUTASI MODERN
+                htmlUI = `
+                <div class="mutasi-card ${isMasuk ? 'in' : 'out'}">
+                    <div class="m-header">
+                        <div class="m-head-left">
+                            <h4 class="m-title">${entitasTerkait}</h4>
+                            <p class="m-subtitle"><i class="fa-regular fa-clock"></i> ${tglMasehiStr} • ${jamStr}</p>
+                        </div>
+                        <div class="m-head-right">
+                            <h3 class="m-amt ${isMasuk ? 'm-amt-in' : 'm-amt-out'}">${isMasuk ? '+' : '-'} ${formatRp(nom)}</h3>
+                            <span class="m-saldo-badge">Saldo: ${formatRp(saldoAkumulatif)}</span>
+                        </div>
+                    </div>
+                    <div class="m-body">
+                        <div class="m-desc">
+                            <span style="font-weight:700;">Ref:</span> <span style="font-family:monospace;">${d.ID_Transaksi}</span><br>
+                            <span style="color:var(--text-muted);">${d.Keterangan || 'Tidak ada catatan khusus'}</span><br>
+                            <span style="font-size:10px; color:var(--text-muted); margin-top:5px; display:inline-block;"><i class="fa-solid fa-user-check"></i> Petugas: ${adminAktor}</span>
+                        </div>
+                        <div>
+                            <span class="badge ${isMasuk ? 'badge-in' : 'badge-out'}">${d.Kategori_Nama || 'Transaksi'}</span>
+                        </div>
+                    </div>
+                </div>` + htmlUI;
+
+                // BENTUK PDF ROW
+                pdfHTML = `<tr>
+                    <td><b>${tglMasehiStr}</b><br><span style="font-size:10px;">${tglHijriyah}</span><br><span style="font-size:9px;">${jamStr} WIB</span></td>
+                    <td><b style="font-family:monospace;">${d.ID_Transaksi}</b><br><span style="font-size:10px;">Petugas: ${adminAktor}</span></td>
+                    <td><b>[${d.Kategori_Nama || 'Transaksi'}]</b><br>${entitasTerkait}<br><span style="font-size:10px;">${d.Keterangan || '-'}</span></td>
+                    <td style="text-align:right;">${isMasuk?formatRp(nom):''}</td>
+                    <td style="text-align:right;">${!isMasuk?formatRp(nom):''}</td>
+                    <td style="text-align:right; font-weight:bold;">${formatRp(saldoAkumulatif)}</td>
+                </tr>` + pdfHTML;
+            });
+
+            document.getElementById('bodyKas').innerHTML = htmlUI || `
+                <div class="empty-state">
+                    <i class="fa-regular fa-folder-open" style="font-size:45px; margin-bottom:15px; opacity:0.5;"></i>
+                    <span>Tidak ada riwayat transaksi pada rentang waktu ini.</span>
+                </div>`;
+            
+            document.getElementById('pdfTableBody').innerHTML = pdfHTML;
+            
+            document.getElementById('totMasuk').innerText = 'Rp ' + formatRp(totIn);
+            document.getElementById('totKeluar').innerText = 'Rp ' + formatRp(totOut);
+            document.getElementById('totSaldo').innerText = 'Rp ' + formatRp(saldoAkumulatif);
+        }
+
+        // FUNGSI EXPORT (DENGAN CCTV DIGITAL)
+        function exportPDF() {
+            vibrateClick();
+            const area = document.getElementById('print-area');
+            const start = document.getElementById('fMulai').value || 'Awal';
+            const end = document.getElementById('fAkhir').value || 'Sekarang';
+            
+            document.getElementById('pdfTgl').innerText = `Periode: ${start} s/d ${end}`;
+            document.getElementById('wktCetak').innerText = new Date().toLocaleString('id-ID');
+            
+            catatAuditTrail('Export', `Mengunduh Laporan PDF Buku Kas (Periode: ${start} s/d ${end})`);
+            showToast("Mempersiapkan Laporan PDF...");
+
+            area.style.display = 'block'; 
+            const opt = { margin: 0.3, filename: `Buku_Kas_MMU_B77_${new Date().getTime()}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } };
+            html2pdf().set(opt).from(area).save().then(() => { area.style.display = 'none'; showToast("Berhasil diunduh!"); });
+        }
+
+        function exportExcel() {
+            vibrateClick();
+            let excelData = [["Tanggal (M)", "Tanggal (H)", "Waktu", "No Transaksi", "Admin/Petugas", "Kategori", "Pihak Terkait", "Keterangan", "Debet (Masuk)", "Kredit (Keluar)", "Saldo Akhir"]];
+            let rowElements = document.getElementById('pdfTableBody').querySelectorAll('tr');
+            
+            rowElements.forEach(tr => {
+                let cols = tr.querySelectorAll('td');
+                if(cols.length === 6) {
+                    let wktText = cols[0].innerText.split('\n');
+                    let refText = cols[1].innerText.split('\n');
+                    let uraianText = cols[2].innerText.split('\n');
+                    
+                    excelData.push([
+                        wktText[0] || '', wktText[1] || '', (wktText[2] || '').replace(' WIB',''),
+                        refText[0] || '', (refText[1] || '').replace('Petugas: ',''),
+                        (uraianText[0] || '').replace('[','').replace(']',''), uraianText[1] || '', uraianText[2] || '',
+                        cols[3].innerText.replace(/\./g, ''), cols[4].innerText.replace(/\./g, ''), cols[5].innerText.replace(/\./g, '')
+                    ]);
+                }
+            });
+
+            const start = document.getElementById('fMulai').value || 'Awal';
+            const end = document.getElementById('fAkhir').value || 'Sekarang';
+            catatAuditTrail('Export', `Mengunduh Laporan Excel Buku Kas (Periode: ${start} s/d ${end})`);
+            showToast("Mempersiapkan Laporan Excel...");
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+            XLSX.utils.book_append_sheet(wb, ws, "Mutasi_Kas");
+            XLSX.writeFile(wb, `Buku_Kas_MMU_B77_${new Date().getTime()}.xlsx`);
+        }
+    </script>
+</body>
+</html>

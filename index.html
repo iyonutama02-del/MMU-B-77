@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#e0e5ec" id="meta-theme-color">
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="MMU B-77">
+    
+    <title>Login - Keuangan MMU B-77</title>
+    
+    <link rel="icon" type="image/png" href="Logo-Favicon.png">
+    <link rel="apple-touch-icon" href="Logo-Favicon.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <script>
+        (function() {
+            let pref = localStorage.getItem('themePref') || 'light';
+            let isDark = false;
+            if (pref === 'dark') { isDark = true; }
+            else if (pref === 'auto_sys') { isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
+            else if (pref === 'auto_time') { let jam = new Date().getHours(); isDark = (jam >= 18 || jam < 6); }
+            
+            if (isDark) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <style>
+        :root {
+            --bg-main: #e0e5ec; --text-dark: #31344b; --text-muted: #8C96A3;
+            --shadow-dark: rgba(163, 177, 198, 0.6); --shadow-light: rgba(255, 255, 255, 0.6);
+            --input-focus: rgba(46, 216, 123, 0.2); --divider-line: #d1d9e6;
+        }
+        [data-theme="dark"] {
+            --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0;
+            --shadow-dark: #202835; --shadow-light: #3a4556;
+            --input-focus: rgba(46, 216, 123, 0.4); --divider-line: #4a5568;
+        }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body {
+            margin: 0; padding: 0; background-color: var(--bg-main); 
+            min-height: 100dvh; display: flex; justify-content: center; align-items: center;
+            font-family: 'Poppins', sans-serif; overflow: hidden; position: relative;
+            user-select: none; transition: background-color 0.3s ease;
+        }
+        #toast { visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 13px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; width: 85%; max-width: 350px; }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
+        @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+        #splash-screen {
+            position: absolute; width: 100%; height: 100%;
+            background-color: var(--bg-main); display: flex; justify-content: center; align-items: center;
+            z-index: 999; transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        .splash-content { text-align: center; animation: fadeIn 1.2s ease-out forwards; }
+        .splash-content .logo { width: 65vw; max-width: 200px; height: auto; }
+        @keyframes fadeIn { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+        #login-screen {
+            opacity: 0; visibility: hidden; transition: opacity 0.5s ease;
+            width: 100%; display: flex; justify-content: center; z-index: 10;
+        }
+        .login-container {
+            background-color: var(--bg-main); width: 88%; max-width: 380px;
+            padding: 6vh 25px; border-radius: 28px; 
+            box-shadow: 8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light);
+            text-align: center; z-index: 10; transition: 0.3s;
+        }
+        .logo-small { width: 35%; max-width: 130px; margin-bottom: 2vh; height: auto; }
+        h2 { font-family: 'Montserrat', sans-serif; color: var(--text-dark); font-size: clamp(20px, 6vw, 24px); font-weight: 800; margin: 0 0 5px 0; }
+        p.subtitle { color: var(--text-muted); font-size: clamp(11px, 3.5vw, 13px); margin-bottom: 4vh; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; padding-left: 5px; }
+        .input-wrapper { position: relative; width: 100%; }
+        .input-wrapper input {
+            width: 100%; padding: 16px 45px 16px 20px; border: none; background-color: var(--bg-main); border-radius: 16px; 
+            font-family: 'Poppins', sans-serif; font-size: 14px; color: var(--text-dark);
+            box-shadow: inset 5px 5px 10px 0 var(--shadow-dark), inset -5px -5px 10px 0 var(--shadow-light);
+            transition: all 0.3s ease; user-select: auto; 
+        }
+        .input-wrapper input:focus { outline: none; box-shadow: inset 3px 3px 6px 0 var(--shadow-dark), inset -3px -3px 6px 0 var(--shadow-light), 0 0 0 2px var(--input-focus); }
+        .eye-icon { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 5px; user-select: none; }
+        .btn-login {
+            width: 100%; padding: 16px; background: linear-gradient(135deg, #37f08c 0%, #06d16f 100%); 
+            color: white; border: none; border-radius: 30px; 
+            font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.5px;
+            cursor: pointer; transition: all 0.3s ease; margin-bottom: 3vh; margin-top: 2vh;
+            box-shadow: 0 10px 20px rgba(6, 209, 111, 0.3); display: flex; justify-content: center; align-items: center; gap: 10px;
+        }
+        .btn-login:active { transform: translateY(2px); box-shadow: 0 5px 10px rgba(6, 209, 111, 0.4); }
+        .btn-login:disabled { background: #CBD5E1; box-shadow: none; cursor: not-allowed; transform: none; opacity: 0.7; }
+        .divider { display: flex; align-items: center; text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 3vh; font-weight: 500; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--divider-line); }
+        .divider:not(:empty)::before { margin-right: 1em; }
+        .divider:not(:empty)::after { margin-left: 1em; }
+        .biometric-login { display: flex; justify-content: center; gap: 20px; }
+        .btn-bio {
+            width: 60px; height: 60px; background-color: var(--bg-main); color: #06d16f; 
+            border: none; border-radius: 16px; font-size: 24px; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; transition: all 0.3s; box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+        }
+        .btn-bio:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); color: #04b35e; }
+        .footer-text { position: absolute; bottom: 20px; left: 0; width: 100%; text-align: center; font-size: 10px; color: var(--text-muted); font-weight: 500; z-index: 1000; padding: 0 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="toast"><i class="fa-solid fa-circle-info"></i> <span id="toastMsg">Pesan</span></div>
+
+    <div class="footer-text">
+        Copyright &copy; 2026 Madrasah Financial System | <br>Developed by Achmad Khoiron
+    </div>
+
+    <div id="splash-screen">
+        <div class="splash-content">
+            <img src="Lambang-Keuangan.png" alt="Logo Keuangan Madrasah" class="logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3353/3353138.png'">
+        </div>
+    </div>
+
+    <div id="login-screen">
+        <div class="login-container">
+            <img src="Lambang-Keuangan.png" alt="Logo" class="logo-small" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3353/3353138.png'">
+            
+            <h2>Ahlan wa sahlan</h2>
+            <p class="subtitle">Silakan masuk untuk login</p>
+
+            <form action="#" method="POST" id="formLogin">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="username" placeholder="Username" required autocomplete="off" oninput="vibrateLight()">
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="password">Kata Sandi</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="password" placeholder="••••••••" required oninput="vibrateLight()">
+                        <i class="fa-solid fa-eye eye-icon" id="togglePassword" title="Tahan untuk melihat sandi"></i>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login" id="btnLogin">Masuk</button>
+            </form>
+
+            <div class="divider">atau masuk dengan</div>
+
+            <div class="biometric-login">
+                <button class="btn-bio" type="button" title="Masuk dengan Wajah" onclick="loginBiometrikAsli()">
+                    <i class="fa-solid fa-face-smile"></i>
+                </button>
+                <button class="btn-bio" type="button" title="Masuk dengan Sidik Jari" onclick="loginBiometrikAsli()">
+                    <i class="fa-solid fa-fingerprint"></i>
+                </button>
+            </div>
+            
+            <p style="font-size: 11px; color: var(--text-muted); margin-top: 3vh; font-weight: 500;">
+                (Login dengan Kata Sandi 1x untuk menautkan perangkat & biometrik)
+            </p>
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script>
+        // PWA REGISTRATION
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => {
+                    console.log('PWA Registration failed', err);
+                });
+            });
+        }
+
+        // --- PENGAMANAN DASAR ---
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123 || 
+              (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 67 || e.keyCode == 74)) || 
+              (e.ctrlKey && e.keyCode == 85)) return false; 
+        }
+
+        function vibrateLight() { if (navigator.vibrate) navigator.vibrate(10); } 
+        function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); } 
+        function vibrateSuccess() { if (navigator.vibrate) navigator.vibrate([30, 50, 30]); } 
+        function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); } 
+
+        function updateOnlineStatus() {
+            const btn = document.getElementById('btnLogin');
+            if (navigator.onLine) {
+                btn.disabled = false;
+                btn.innerHTML = "Masuk";
+            } else {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-wifi-slash"></i> Offline';
+                showToast("Koneksi terputus. Menunggu sinyal...");
+                vibrateHeavy();
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        // --- ANTI-SNOOPING (Tahan untuk melihat sandi) ---
+        const pwdInput = document.getElementById("password");
+        const eyeIcon = document.getElementById("togglePassword");
+
+        function showSandi() { 
+            pwdInput.type = "text"; 
+            eyeIcon.classList.replace("fa-eye", "fa-eye-slash"); 
+            vibrateClick(); 
+        }
+        function hideSandi() { 
+            pwdInput.type = "password"; 
+            eyeIcon.classList.replace("fa-eye-slash", "fa-eye"); 
+        }
+
+        eyeIcon.addEventListener("mousedown", showSandi);
+        eyeIcon.addEventListener("mouseup", hideSandi);
+        eyeIcon.addEventListener("mouseleave", hideSandi);
+        eyeIcon.addEventListener("touchstart", (e) => { e.preventDefault(); showSandi(); }, {passive: false});
+        eyeIcon.addEventListener("touchend", (e) => { e.preventDefault(); hideSandi(); }, {passive: false});
+
+        // --- AUTO-LOCKOUT SYSTEM (Pengganti CAPTCHA) ---
+        function checkRateLimit() {
+            let lockoutTime = localStorage.getItem('lockoutTime');
+            if (lockoutTime && Date.now() < parseInt(lockoutTime)) {
+                let timeLeft = Math.ceil((parseInt(lockoutTime) - Date.now()) / 60000);
+                throw new Error(`Terlalu banyak percobaan. Akun terkunci sementara! Tunggu ${timeLeft} menit.`);
+            } else if (lockoutTime && Date.now() >= parseInt(lockoutTime)) {
+                resetLoginAttempts();
+            }
+        }
+
+        function incrementLoginAttempts() {
+            let attempts = parseInt(localStorage.getItem('loginAttempts') || '0') + 1;
+            localStorage.setItem('loginAttempts', attempts);
+            if (attempts >= 3) {
+                localStorage.setItem('lockoutTime', Date.now() + 15 * 60000); // Kunci 15 menit
+                showToast("3x Gagal! Sistem terkunci selama 15 Menit.");
+                vibrateHeavy();
+            }
+        }
+
+        function resetLoginAttempts() {
+            localStorage.removeItem('loginAttempts');
+            localStorage.removeItem('lockoutTime');
+        }
+
+        // --- SESSION SANITIZATION ---
+        function hardSessionCleanse() {
+            const webAuthnId = localStorage.getItem('webAuthnId');
+            const webAuthnUid = localStorage.getItem('webAuthnUid');
+            const localDeviceId = localStorage.getItem('localDeviceId'); 
+            const themePref = localStorage.getItem('themePref');
+            
+            localStorage.clear();
+            
+            if (webAuthnId) localStorage.setItem('webAuthnId', webAuthnId);
+            if (webAuthnUid) localStorage.setItem('webAuthnUid', webAuthnUid);
+            if (localDeviceId) localStorage.setItem('localDeviceId', localDeviceId);
+            if (themePref) localStorage.setItem('themePref', themePref);
+        }
+
+        function showToast(msg) {
+            let toast = document.getElementById("toast");
+            document.getElementById("toastMsg").innerText = msg; // Murni menggunakan innerText (Aman dari XSS)
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        // --- WEBAUTHN (BIOMETRIK) ---
+        function bufferToBase64url(buffer) {
+            const bytes = new Uint8Array(buffer); let str = '';
+            for (let i = 0; i < bytes.byteLength; i++) { str += String.fromCharCode(bytes[i]); }
+            return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        }
+
+        function base64urlToBuffer(base64url) {
+            const padding = '='.repeat((4 - base64url.length % 4) % 4);
+            const base64 = (base64url + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = atob(base64); const buffer = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) { buffer[i] = rawData.charCodeAt(i); }
+            return buffer.buffer;
+        }
+
+        async function daftarBiometrik(uid, namaLengkap) {
+            if (!window.PublicKeyCredential || window.location.protocol === 'file:') return true;
+            try {
+                showToast("Tautkan Biometrik HP... Silakan sentuh sensor Sidik Jari/Wajah Anda.");
+                const challenge = new Uint8Array(32); window.crypto.getRandomValues(challenge);
+                const userId = new Uint8Array(16); window.crypto.getRandomValues(userId);
+
+                const pubKey = {
+                    challenge: challenge,
+                    rp: { name: "Aplikasi Keuangan", id: window.location.hostname },
+                    user: { id: userId, name: uid, displayName: namaLengkap },
+                    pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+                    authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+                    timeout: 60000
+                };
+
+                const cred = await navigator.credentials.create({ publicKey: pubKey });
+                if (cred) {
+                    localStorage.setItem('webAuthnId', bufferToBase64url(cred.rawId));
+                    localStorage.setItem('webAuthnUid', uid);
+                    showToast("Sensor HP Anda berhasil ditautkan ke akun ini!");
+                    vibrateSuccess();
+                }
+                return true;
+            } catch (e) {
+                console.log("Pendaftaran Biometrik Dibatalkan.", e);
+                return true;
+            }
+        }
+
+        async function loginBiometrikAsli() {
+            vibrateClick();
+            if (window.location.protocol === 'file:') {
+                showToast("Gagal: Fitur Biometrik Asli wajib dibuka lewat link Internet (https), bukan file lokal.");
+                vibrateHeavy();
+                return;
+            }
+            if (!window.PublicKeyCredential) {
+                showToast("Gagal: Browser/HP Anda tidak mendukung sistem keamanan ini.");
+                vibrateHeavy();
+                return;
+            }
+
+            const storedId = localStorage.getItem('webAuthnId');
+            const storedUid = localStorage.getItem('webAuthnUid');
+
+            if (!storedId || !storedUid) {
+                showToast("Silakan Login menggunakan Kata Sandi 1x untuk menautkan perangkat & sensor.");
+                vibrateHeavy();
+                return;
+            }
+
+            try {
+                checkRateLimit(); 
+                
+                const challenge = new Uint8Array(32); window.crypto.getRandomValues(challenge);
+                const assertion = await navigator.credentials.get({
+                    publicKey: {
+                        challenge: challenge,
+                        rpId: window.location.hostname,
+                        allowCredentials: [{
+                            type: 'public-key',
+                            id: base64urlToBuffer(storedId),
+                            transports: ['internal']
+                        }],
+                        userVerification: "required",
+                        timeout: 60000
+                    }
+                });
+
+                if (assertion) {
+                    showToast("Verifikasi Berhasil! Memuat data...");
+                    vibrateSuccess();
+                    
+                    const snapshot = await database.ref('users/' + storedUid).once('value');
+                    if (snapshot.exists()) {
+                        let dataAkun = snapshot.val();
+                        if (String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif') {
+                            showToast("Akun Anda telah diblokir."); 
+                            vibrateHeavy();
+                            return;
+                        }
+
+                        let localDeviceId = localStorage.getItem('localDeviceId');
+                        const boundDevice = dataAkun.BoundDevice;
+                        if (boundDevice && boundDevice !== localDeviceId && dataAkun.Role !== 'Developer') {
+                             showToast("Akses Ditolak: Perangkat tidak dikenali. Silakan gunakan HP Kasir resmi.");
+                             vibrateHeavy();
+                             return;
+                        }
+                        
+                        resetLoginAttempts();
+                        hardSessionCleanse();
+                        
+                        localStorage.setItem('uid', storedUid);
+                        localStorage.setItem('namaPengguna', dataAkun.NamaLengkap);
+                        localStorage.setItem('hakAkses', dataAkun.Role);
+                        localStorage.setItem('usernameAsli', storedUid);
+                        localStorage.setItem('lastLoginTime', new Date().toLocaleString('id-ID'));
+                        if (dataAkun.NomorWA) localStorage.setItem('nomorWA', dataAkun.NomorWA);
+                        
+                        let ucapan = new SpeechSynthesisUtterance("Ahlan wa sahlan, " + dataAkun.NamaLengkap);
+                        ucapan.lang = 'id-ID'; 
+                        let gender = String(dataAkun.Gender || dataAkun.gender || '').toUpperCase();
+                        ucapan.pitch = (gender === 'P' || gender === 'PEREMPUAN') ? 1.5 : 0.8; 
+                        window.speechSynthesis.speak(ucapan);
+                        
+                        window.location.replace('beranda.html');
+                    }
+                }
+            } catch (e) {
+                console.error("Biometrik gagal:", e);
+                incrementLoginAttempts();
+                showToast(e.message.includes('terkunci') ? e.message : "Verifikasi sensor dibatalkan atau tidak cocok.");
+                vibrateHeavy();
+            }
+        }
+
+        window.onload = function() {
+            window.history.pushState(null, "", window.location.href);
+            window.onpopstate = function () { window.history.pushState(null, "", window.location.href); };
+
+            updateOnlineStatus();
+
+            const savedUser = localStorage.getItem('usernameAsli');
+            if (savedUser && window.location.hash !== '#logout') {
+                database.ref('users/' + savedUser).once('value', snapshot => {
+                    if (snapshot.exists() && snapshot.val().Status !== 'Nonaktif') {
+                        window.location.replace('beranda.html');
+                    } else {
+                        hardSessionCleanse();
+                    }
+                });
+            } else if (!savedUser || window.location.hash === '#logout') {
+                 hardSessionCleanse();
+                 if(window.location.hash === '#logout') window.history.replaceState(null, null, window.location.pathname);
+            }
+
+            setTimeout(function() {
+                document.getElementById('splash-screen').style.opacity = '0';
+                document.getElementById('splash-screen').style.visibility = 'hidden';
+                document.getElementById('login-screen').style.opacity = '1';
+                document.getElementById('login-screen').style.visibility = 'visible';
+            }, 2500);
+        };
+
+        const loginForm = document.getElementById('formLogin');
+        const btnLogin = document.getElementById('btnLogin');
+
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            vibrateClick();
+            
+            if (!navigator.onLine) {
+                 showToast("Koneksi terputus. Mohon periksa internet Anda.");
+                 vibrateHeavy(); return;
+            }
+
+            try { checkRateLimit(); } catch (err) {
+                showToast(err.message); vibrateHeavy(); return;
+            }
+            
+            btnLogin.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Memeriksa...';
+            btnLogin.disabled = true;
+
+            let usrInput = document.getElementById('username').value.trim();
+            let pwdInput = document.getElementById('password').value.trim();
+            const hashedPassword = CryptoJS.SHA256(pwdInput + usrInput).toString();
+
+            try {
+                const snapshot = await database.ref('users/' + usrInput).once('value');
+                
+                if (!snapshot.exists()) {
+                    incrementLoginAttempts();
+                    showToast("Username atau password salah!");
+                    vibrateHeavy(); btnLogin.innerHTML = "Masuk"; btnLogin.disabled = false; return;
+                }
+                
+                const dataAkun = snapshot.val();
+                const dbPassword = String(dataAkun.Password); 
+                
+                // PELONGGARAN SEMENTARA UNTUK PEMULIHAN SANDI LAMA
+                if (dbPassword !== hashedPassword && dbPassword !== pwdInput) {
+                    incrementLoginAttempts();
+                    showToast("Username atau password salah!");
+                    vibrateHeavy(); btnLogin.innerHTML = "Masuk"; btnLogin.disabled = false; return;
+                }
+                
+                if (String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif') {
+                    showToast("Akses Ditolak: Akun Anda diblokir Admin.");
+                    vibrateHeavy(); btnLogin.innerHTML = "Masuk"; btnLogin.disabled = false; return;
+                }
+
+                // EKSEKUSI DEVICE BINDING
+                let localDeviceId = localStorage.getItem('localDeviceId');
+                if (!localDeviceId) {
+                    localDeviceId = 'DEV-' + new Date().getTime() + Math.floor(Math.random() * 1000);
+                    localStorage.setItem('localDeviceId', localDeviceId);
+                }
+
+                const boundDevice = dataAkun.BoundDevice;
+                if (boundDevice && boundDevice !== localDeviceId && dataAkun.Role !== 'Developer') {
+                     showToast("Akses Ditolak: Perangkat tidak dikenali. Silakan gunakan HP Kasir resmi.");
+                     vibrateHeavy(); btnLogin.innerHTML = "Masuk"; btnLogin.disabled = false; return;
+                } else if (!boundDevice) {
+                     await database.ref('users/' + usrInput).update({ BoundDevice: localDeviceId });
+                }
+
+                resetLoginAttempts();
+                
+                await database.ref('users/' + usrInput).update({
+                    LastLogin: new Date().toLocaleString('id-ID'),
+                    LastLoginIP: 'Mobile-Client' 
+                });
+                
+                await daftarBiometrik(usrInput, dataAkun.NamaLengkap);
+                
+                hardSessionCleanse();
+                
+                localStorage.setItem('usernameAsli', usrInput);
+                localStorage.setItem('namaPengguna', dataAkun.NamaLengkap);
+                localStorage.setItem('hakAkses', dataAkun.Role);
+                localStorage.setItem('lastLoginTime', new Date().toLocaleString('id-ID'));
+                if (dataAkun.NomorWA) localStorage.setItem('nomorWA', dataAkun.NomorWA);
+                
+                let ucapan = new SpeechSynthesisUtterance("Ahlan wa sahlan, " + dataAkun.NamaLengkap);
+                ucapan.lang = 'id-ID'; 
+                let gender = String(dataAkun.Gender || dataAkun.gender || '').toUpperCase();
+                ucapan.pitch = (gender === 'P' || gender === 'PEREMPUAN') ? 1.5 : 0.8; 
+                window.speechSynthesis.speak(ucapan);
+                
+                showToast("Berhasil Login! Memuat sistem...");
+                vibrateSuccess();
+                window.history.replaceState(null, null, window.location.href);
+                setTimeout(() => { window.location.replace('beranda.html'); }, 1500);
+                
+            } catch (err) {
+                console.error(err);
+                showToast("Terjadi kesalahan jaringan/Server Database.");
+                vibrateHeavy();
+                btnLogin.innerHTML = "Masuk";
+                btnLogin.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

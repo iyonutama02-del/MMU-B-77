@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#e0e5ec" id="meta-theme-color">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <title>Profil & Pengaturan - Keuangan MMU B-77</title>
+    
+    <link rel="icon" type="image/png" href="Logo-Favicon.png">
+    <link rel="apple-touch-icon" href="Logo-Favicon.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        // --- TEMUAN #1: PENGAMANAN MUTLAK CEK SESI LOGIN ---
+        if (!localStorage.getItem('usernameAsli')) {
+            window.location.replace('index.html');
+        }
+
+        (function() {
+            let pref = localStorage.getItem('themePref') || 'light';
+            let isDark = false;
+            if (pref === 'dark') { isDark = true; }
+            else if (pref === 'auto_sys') { isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
+            else if (pref === 'auto_time') { let jam = new Date().getHours(); isDark = (jam >= 18 || jam < 6); }
+            if (isDark) document.documentElement.setAttribute('data-theme', 'dark');
+        })();
+    </script>
+
+    <style>
+        /* --- TEMA NEUMORPHISM PREMIUM --- */
+        :root {
+            --bg-main: #e0e5ec; --text-dark: #31344b; --text-muted: #8C96A3;
+            --shadow-dark: rgba(163, 177, 198, 0.6); --shadow-light: rgba(255, 255, 255, 0.6);
+            --green-grad: linear-gradient(135deg, #2df077 0%, #00d26a 100%);
+            --orange-grad: linear-gradient(135deg, #fbbd23 0%, #f59e0b 100%);
+            --red-grad: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+            --blue-grad: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            
+            /* Warna Hak Akses (Role) */
+            --role-dev: #8b5cf6; --role-admin: #ef4444; --role-supervisor: #14b8a6;
+            --role-operator: #3b82f6; --role-demo: #8C96A3;
+        }
+        
+        [data-theme="dark"] {
+            --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0;
+            --shadow-light: #3a4556; --shadow-dark: #202835;
+            --red-grad: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+        }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { margin: 0; padding: 0; background-color: var(--bg-main); font-family: 'Poppins', sans-serif; color: var(--text-dark); user-select: none; padding-bottom: 120px; transition: background-color 0.3s, color 0.3s; opacity: 0; animation: fadeInPage 0.4s ease-out forwards; }
+        @keyframes fadeInPage { 0% { opacity: 0; } 100% { opacity: 1; } }
+        body.fade-out { opacity: 0; transition: 0.3s ease-out; }
+        
+        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; padding: 25px 20px; }
+
+        /* TOAST NOTIFIKASI */
+        #toast { visibility: hidden; min-width: 250px; background-color: #31344b; color: #fff; text-align: center; border-radius: 15px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600;}
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
+        @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+
+        /* HEADER NAVIGASI */
+        .nav-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; position: relative; }
+        .btn-icon { width: 45px; height: 45px; border-radius: 15px; background: var(--bg-main); display: flex; justify-content: center; align-items: center; color: var(--text-dark); text-decoration: none; box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); transition: 0.3s; cursor: pointer; border: none; font-size: 16px; }
+        .btn-icon:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
+        .header-title { font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 900; margin: 0; position: absolute; left: 50%; transform: translateX(-50%); color: var(--text-dark); text-transform: uppercase; letter-spacing: 1px;}
+
+        /* BLOK 1: IDENTITAS UTAMA (PROFILE CARD) */
+        .profile-card { background: var(--bg-main); border-radius: 25px; padding: 30px 20px; margin-bottom: 25px; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); text-align: center; position: relative; transition: 0.3s; }
+        .avatar-container { width: 100px; height: 100px; margin: 0 auto 15px; border-radius: 50%; background: var(--bg-main); position: relative; box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); display: flex; justify-content: center; align-items: center; border: 4px solid var(--bg-main); transition: 0.3s; }
+        .avatar-container img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: none; }
+        .avatar-container i { font-size: 45px; color: var(--text-muted); }
+        .initial-avatar { display: none; width: 100%; height: 100%; border-radius: 50%; align-items: center; justify-content: center; font-size: 45px; font-family: 'Montserrat'; font-weight: 900; color: white; background: var(--blue-grad); text-transform: uppercase;}
+        
+        .btn-cam { position: absolute; bottom: -5px; right: -5px; width: 35px; height: 35px; border-radius: 50%; background: var(--green-grad); color: white; display: flex; justify-content: center; align-items: center; box-shadow: 2px 2px 8px rgba(0, 210, 106, 0.4); border: 3px solid var(--bg-main); font-size: 14px; cursor: pointer; }
+        
+        .profile-name { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 900; margin: 0 0 5px; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.5px;}
+        .profile-role { font-size: 12px; color: var(--text-muted); font-weight: 600; margin: 0 0 10px; }
+        
+        .badge-status { display: inline-block; padding: 6px 15px; border-radius: 20px; font-size: 11px; font-weight: 800; background: var(--bg-main); color: var(--text-dark); box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); margin-bottom: 20px; letter-spacing: 1px; transition: 0.3s; }
+
+        /* MINI DASHBOARD STATS */
+        .mini-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-box { background: rgba(0,0,0,0.02); border-radius: 15px; padding: 15px 10px; border: 1px dashed rgba(140, 150, 163, 0.3); }
+        .stat-box h4 { margin: 0 0 5px; font-family: 'Montserrat'; font-size: 15px; font-weight: 900; color: #4facfe; }
+        .stat-box p { margin: 0; font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .security-info-box { background: rgba(140, 150, 163, 0.1); border-radius: 15px; padding: 12px 15px; text-align: left; margin-bottom: 20px; font-size: 10px; font-weight: 600; color: var(--text-muted); line-height: 1.6; }
+        .security-info-box i { width: 15px; text-align: center; margin-right: 5px; color: var(--text-dark); }
+
+        .btn-edit-profil { background: var(--bg-main); color: var(--text-dark); border: none; padding: 12px 25px; border-radius: 12px; font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 800; cursor: pointer; box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light); transition: 0.3s; }
+        .btn-edit-profil:active { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); color: #00d26a;}
+
+        /* BLOK MENU */
+        .menu-section { background: var(--bg-main); border-radius: 25px; padding: 20px; margin-bottom: 25px; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); transition: 0.3s; }
+        .section-title { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin: 0 0 15px 10px; letter-spacing: 1px; }
+
+        .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 10px; border-bottom: 1px dashed rgba(140, 150, 163, 0.2); cursor: pointer; transition: 0.3s; }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-info { display: flex; align-items: center; gap: 15px; }
+        .menu-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--bg-main); box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); display: flex; justify-content: center; align-items: center; color: #00d26a; font-size: 16px; transition: 0.3s; }
+        .menu-text h4 { margin: 0; font-family: 'Montserrat'; font-size: 13px; font-weight: 800; color: var(--text-dark); }
+        .menu-text p { margin: 3px 0 0; font-size: 10px; color: var(--text-muted); font-weight: 600;}
+        .menu-action { color: var(--text-muted); font-size: 16px; font-weight: 600; transition: 0.2s;}
+        .menu-item:active .menu-action { transform: translateX(5px); color: var(--text-dark);}
+
+        /* DROPDOWN TEMA NEUMORPHISM */
+        .select-theme { background: var(--bg-main); color: var(--text-dark); border: none; padding: 10px 15px; border-radius: 12px; font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 700; box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); outline: none; cursor: pointer; transition: 0.3s; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238C96A3'%3E%3Cpath d='M7 10l5 5 5-5H7z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 18px; padding-right: 35px; }
+
+        /* SOFT TOGGLE SWITCH (BIOMETRIK) */
+        .switch { position: relative; display: inline-block; width: 48px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-main); transition: .4s; border-radius: 34px; box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: var(--text-muted); transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background: var(--green-grad); box-shadow: none; }
+        input:checked + .slider:before { transform: translateX(22px); background-color: white; }
+
+        /* BLOK TOMBOL AKSI & FOOTER */
+        .btn-logout { width: 100%; padding: 18px; border: none; border-radius: 20px; background: var(--red-grad); color: white; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 800; box-shadow: 5px 5px 15px rgba(255, 117, 140, 0.4); cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; transition: 0.3s;}
+        .btn-logout:active { transform: translateY(2px); box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
+        
+        .footer-text { text-align: center; margin-top: 30px; font-size: 10px; color: var(--text-muted); line-height: 1.6; font-weight: 600; }
+
+        /* NAVIGASI BAWAH (SLIDER) */
+        .nav-wrapper { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 400px; z-index: 1000; }
+        .bottom-nav { background-color: var(--bg-main); display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; border-radius: 30px; box-shadow: 10px 10px 25px var(--shadow-dark), -10px -10px 25px var(--shadow-light); position: relative; transition: 0.3s; }
+        .nav-indicator { position: absolute; top: 10px; left: 0; width: 60px; height: 60px; border-radius: 20px; background-color: var(--bg-main); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 1; pointer-events: none; }
+        .nav-item { text-decoration: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; width: 60px; height: 60px; border-radius: 20px; transition: color 0.3s ease; z-index: 2; background: transparent; cursor: pointer; }
+        .nav-item i { font-size: 22px; margin-bottom: 5px; }
+        .nav-item span { font-size: 10px; font-weight: 700; }
+        .nav-item.active { color: #00d26a; }
+
+        /* MODAL GLOBAL */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(224, 229, 236, 0.85); z-index: 2000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
+        [data-theme="dark"] .modal-overlay { background: rgba(45, 55, 72, 0.85); }
+        .modal-content { background: var(--bg-main); width: 100%; max-width: 380px; border-radius: 25px; padding: 30px 25px; box-shadow: 10px 10px 30px rgba(0,0,0,0.3); position: relative; animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .modal-label { display: block; text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; margin-left: 5px; }
+        .input-edit { width: 100%; padding: 16px 20px; border: none; border-radius: 15px; background: var(--bg-main); font-family: 'Poppins', sans-serif; font-size: 13px; font-weight:600; color: var(--text-dark); box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); outline: none; margin-bottom: 20px; box-sizing: border-box; transition: 0.3s; }
+        .input-edit:focus { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light), 0 0 0 2px rgba(0, 210, 106, 0.4); }
+        
+        .btn-modal { background: var(--bg-main); border: none; padding: 15px 0; width: 100%; border-radius: 15px; font-family: 'Montserrat'; font-size: 13px; font-weight: 800; color: var(--text-dark); box-shadow: 5px 5px 12px var(--shadow-dark), -5px -5px 12px var(--shadow-light); cursor: pointer; transition: 0.3s; }
+        .btn-modal:active { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); }
+        .btn-modal.primary { background: var(--green-grad); color: white; box-shadow: 5px 5px 15px rgba(0, 210, 106, 0.4); }
+        .modal-actions { display: flex; gap: 15px; margin-top: 15px; }
+
+        /* MODAL INFO / TENTANG KAMI */
+        .modal-info-content { display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .modal-logo { width: 85px; margin-bottom: 20px; object-fit: contain; }
+        .modal-title-center { font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 900; color: #00d26a; margin: 0 0 15px; text-transform: uppercase;}
+        .modal-text-center { font-size: 12px; color: var(--text-muted); line-height: 1.8; margin-bottom: 30px; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <div id="toast"><i class="fa-solid fa-circle-info"></i> <span id="toastMsg">Pesan Notifikasi</span></div>
+
+    <div class="app-container">
+        <div class="nav-top">
+            <button class="btn-icon" onclick="pindahHalaman('beranda.html')"><i class="fa-solid fa-angle-left"></i></button>
+            <h1 class="header-title">Profil Pengguna</h1>
+            <div style="width: 45px;"></div>
+        </div>
+
+        <div class="profile-card">
+            <div class="avatar-container">
+                <img src="" alt="Foto Profil" id="imgProfil">
+                <div class="initial-avatar" id="initialAvatar">A</div>
+                <i class="fa-solid fa-user-astronaut" id="ikonDefault"></i>
+                
+                <input type="file" id="inputFoto" accept="image/*" style="display: none;">
+                <div class="btn-cam" onclick="vibrateClick(); document.getElementById('inputFoto').click();"><i class="fa-solid fa-camera"></i></div>
+            </div>
+            
+            <h2 class="profile-name" id="namaTampil">MEMUAT...</h2>
+            <p class="profile-role" id="jabatanTampil">-</p>
+            
+            <div class="badge-status" id="txtStatusRole">MEMUAT...</div>
+
+            <div class="mini-stats-grid">
+                <div class="stat-box">
+                    <h4 id="statTxHariIni">0</h4>
+                    <p>Transaksi Hari Ini</p>
+                </div>
+                <div class="stat-box">
+                    <h4 id="statTotalBulanIni" style="color: #00d26a;">Rp 0</h4>
+                    <p>Penerimaan Bulan Ini</p>
+                </div>
+            </div>
+
+            <div class="security-info-box">
+                <div><i class="fa-regular fa-clock"></i> <b>Login Terakhir:</b> <span id="txtLastLogin">Baru saja</span></div>
+                <div style="margin-top: 6px;"><i class="fa-solid fa-mobile-screen-button"></i> <b>Perangkat:</b> <span id="txtDevice">Mendeteksi...</span></div>
+            </div>
+            
+            <button class="btn-edit-profil" onclick="bukaModalEdit()"><i class="fa-solid fa-user-pen"></i> EDIT IDENTITAS</button>
+        </div>
+
+        <div class="menu-section">
+            <div class="section-title">Pengaturan Tampilan</div>
+            <div class="menu-item" style="cursor: default;">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: #f59e0b;"><i class="fa-solid fa-palette"></i></div>
+                    <div class="menu-text">
+                        <h4>Tema Aplikasi</h4>
+                        <p>Pilih mode warna kenyamanan Anda</p>
+                    </div>
+                </div>
+                <select class="select-theme" id="pilihanTema" onchange="ubahTemaPreferensi()">
+                    <option value="light">Terang</option>
+                    <option value="dark">Gelap</option>
+                    <option value="auto_sys">Auto (Sistem HP)</option>
+                    <option value="auto_time">Auto (Waktu)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="section-title">Keamanan Akun</div>
+            
+            <div class="menu-item" style="cursor: default;">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: var(--text-muted);"><i class="fa-solid fa-fingerprint"></i></div>
+                    <div class="menu-text">
+                        <h4>Username ID</h4>
+                        <p id="txtUsername">@username</p>
+                    </div>
+                </div>
+                <div class="menu-action" style="font-size: 10px;"><i class="fa-solid fa-lock"></i></div>
+            </div>
+
+            <div class="menu-item" style="cursor: default;">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: #00d26a;"><i class="fa-brands fa-whatsapp"></i></div>
+                    <div class="menu-text">
+                        <h4>WhatsApp Tersambung</h4>
+                        <p id="txtWA">Memuat...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-item" onclick="bukaModalSandi()">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: #ff758c;"><i class="fa-solid fa-key"></i></div>
+                    <div class="menu-text">
+                        <h4>Ganti Kata Sandi</h4>
+                        <p>Perbarui keamanan password Anda</p>
+                    </div>
+                </div>
+                <div class="menu-action"><i class="fa-solid fa-angle-right"></i></div>
+            </div>
+
+            <div class="menu-item" onclick="bukaModalBiometrik()">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: #4facfe;"><i class="fa-solid fa-face-viewfinder"></i></div>
+                    <div class="menu-text">
+                        <h4>Akses Cepat Biometrik</h4>
+                        <p>Login Instan via Face ID / Sidik Jari</p>
+                    </div>
+                </div>
+                <div class="menu-action"><i class="fa-solid fa-angle-right"></i></div>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="section-title">Pusat Informasi</div>
+            
+            <div class="menu-item" id="menuInstalApp" onclick="instalAplikasiAndroid()" style="display: none;">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: #00d26a;"><i class="fa-brands fa-android"></i></div>
+                    <div class="menu-text">
+                        <h4>Instal Aplikasi Android</h4>
+                        <p>Pasang di layar utama (HomeScreen)</p>
+                    </div>
+                </div>
+                <div class="menu-action" style="color: #00d26a;"><i class="fa-solid fa-download"></i></div>
+            </div>
+
+            <div class="menu-item" onclick="bukaModalInfo()">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: var(--text-dark);"><i class="fa-solid fa-building-columns"></i></div>
+                    <div class="menu-text">
+                        <h4>Tentang Madrasah</h4>
+                        <p>Madrasah Miftahul Ulum B-77 Jrebeng Kulon</p>
+                    </div>
+                </div>
+                <div class="menu-action"><i class="fa-solid fa-angle-right"></i></div>
+            </div>
+        </div>
+
+        <button class="btn-logout" onclick="keluarSistemManual()">
+            <i class="fa-solid fa-power-off"></i> KELUAR APLIKASI
+        </button>
+
+        <div class="footer-text">
+            Copyright &copy; 2026 Madrasah Financial System |<br>Developed by Achmad Khoiron
+        </div>
+    </div>
+
+    <div class="nav-wrapper" id="bottomNav">
+        <div class="bottom-nav">
+            <div class="nav-indicator" id="navIndicator"></div>
+            
+            <a onclick="navSlide(event, this, 'profil.html')" class="nav-item active">
+                <i class="fa-solid fa-user"></i><span>Profil</span>
+            </a>
+            <a onclick="navSlide(event, this, 'beranda.html')" class="nav-item">
+                <i class="fa-solid fa-house"></i><span>Beranda</span>
+            </a>
+            <a onclick="navSlide(event, this, 'dashboard.html')" class="nav-item">
+                <i class="fa-solid fa-chart-pie"></i><span>Dashboard</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalEditProfil">
+        <div class="modal-content" style="text-align: left;">
+            <h2 class="modal-title" style="color: var(--text-dark); margin: 0 0 25px; text-align: center; font-family:'Montserrat'; font-weight:900;">EDIT PROFIL</h2>
+            
+            <label class="modal-label">Nama Lengkap (Sesuai KTP)</label>
+            <input type="text" class="input-edit" id="inputEditNama" placeholder="Ketik nama Anda...">
+            
+            <label class="modal-label">Jabatan Internal (Opsional)</label>
+            <input type="text" class="input-edit" id="inputEditJabatan" placeholder="Cth: Bendahara Madrasah">
+            
+            <label class="modal-label">Nomor WhatsApp Aktif</label>
+            <input type="tel" class="input-edit" id="inputEditWA" placeholder="Cth: 081234567890">
+            
+            <div class="modal-actions">
+                <button class="btn-modal" onclick="tutupModal('modalEditProfil')">Batal</button>
+                <button class="btn-modal primary" id="btnSimpanProfil" onclick="simpanEditProfilFirebase()">Simpan Profil</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalUbahSandi">
+        <div class="modal-content" style="text-align: left;">
+            <h2 class="modal-title" style="color: var(--c-red); margin: 0 0 25px; text-align: center; font-family:'Montserrat'; font-weight:900;"><i class="fa-solid fa-shield-halved"></i> GANTI SANDI</h2>
+            
+            <label class="modal-label">Kata Sandi Lama Anda</label>
+            <input type="password" class="input-edit" id="inputSandiLama" placeholder="••••••••">
+            
+            <label class="modal-label">Kata Sandi Baru</label>
+            <input type="password" class="input-edit" id="inputSandiBaru" placeholder="••••••••">
+            
+            <label class="modal-label">Ulangi Sandi Baru</label>
+            <input type="password" class="input-edit" id="inputSandiKonfirm" placeholder="••••••••">
+            
+            <div class="modal-actions">
+                <button class="btn-modal" onclick="tutupModal('modalUbahSandi')">Batal</button>
+                <button class="btn-modal" style="background:var(--red-grad); color:white;" id="btnSimpanSandi" onclick="simpanSandiFirebase()">Update Keamanan</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalInfo">
+        <div class="modal-content modal-info-content">
+            <img src="Lambang-Keuangan.png" alt="Logo" class="modal-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3353/3353138.png'">
+            <h2 class="modal-title-center">TENTANG LEMBAGA</h2>
+            <div class="modal-text-center">
+                Madrasah Diniyah Miftahul Ulum merupakan unit pendidikan yang berada di bawah naungan Yayasan Miftahul Ulum Al-Cholil, berlokasi di Jl. Musi, Kel. Jrebeng Kulon, Kec. Kedopok, Kota Probolinggo.<br><br>
+                Sejak tahun 2023, lembaga ini telah berafiliasi dengan Madrasah Miftahul Ulum Ibtidaiyah Pondok Pesantren Sidogiri dan menggunakan nama resmi <b>Madrasah Miftahul Ulum Ibtidaiyah Ranting B-77 Jrebeng Kulon</b>.
+            </div>
+            <button class="btn-modal primary" onclick="tutupModal('modalInfo')">Tutup Profil Madrasah</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalBiometrik">
+        <div class="modal-content" style="text-align: left;">
+            <h2 class="modal-title" style="color: var(--text-dark); margin: 0 0 25px; text-align: center; font-family:'Montserrat'; font-weight:900;">LOGIN BIOMETRIK</h2>
+            
+            <div class="menu-item" style="padding: 15px 0; cursor: default;">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: #4facfe;"><i class="fa-solid fa-face-smile"></i></div>
+                    <div class="menu-text">
+                        <h4 style="font-size: 13px;">Sensor Wajah (Face ID)</h4>
+                        <p style="font-size: 10px;">Izinkan login dengan pindai wajah</p>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggleFaceID" onchange="toggleBiometrik('FaceID')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="menu-item" style="padding: 15px 0; border-bottom: none; cursor: default;">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: #f59e0b;"><i class="fa-solid fa-fingerprint"></i></div>
+                    <div class="menu-text">
+                        <h4 style="font-size: 13px;">Sidik Jari (Fingerprint)</h4>
+                        <p style="font-size: 10px;">Izinkan login dengan sentuhan</p>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggleFingerprint" onchange="toggleBiometrik('Fingerprint')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="modal-actions" style="margin-top: 25px;">
+                <button class="btn-modal primary" onclick="tutupModal('modalBiometrik')">Simpan Preferensi</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 0. PENGAMANAN DASAR ANTARMUKA (Anti-Snooping) ---
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        };
+
+        function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
+        function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); }
+        function vibrateSuccess() { if (navigator.vibrate) navigator.vibrate([30, 50, 30]); }
+
+        window.addEventListener('online', () => { showToast("Sinyal Internet Kembali Normal."); vibrateSuccess(); });
+        window.addEventListener('offline', () => { showToast("Sinyal Terputus. Sebagian fitur diblokir."); vibrateHeavy(); });
+
+        window.addEventListener('popstate', function(event) {
+            let modals = ['modalEditProfil', 'modalUbahSandi', 'modalInfo', 'modalBiometrik'];
+            modals.forEach(id => {
+                let m = document.getElementById(id);
+                if (m && m.style.display === 'flex') { m.style.display = 'none'; }
+            });
+        });
+
+        // DETEKSI PERANGKAT CANGGIH
+        function deteksiPerangkat() {
+            let userAgent = navigator.userAgent;
+            let device = "PC / Desktop";
+            if (/android/i.test(userAgent)) device = "Android";
+            else if (/iPad|iPhone|iPod/.test(userAgent)) device = "iOS / iPhone";
+            
+            let browser = "Web Browser";
+            if (userAgent.indexOf("Chrome") > -1) browser = "Chrome";
+            else if (userAgent.indexOf("Safari") > -1 && userAgent.indexOf("Chrome") == -1) browser = "Safari";
+            else if (userAgent.indexOf("Firefox") > -1) browser = "Firefox";
+            
+            return `${device} (${browser})`;
+        }
+        document.getElementById('txtDevice').innerText = deteksiPerangkat();
+
+        let userAsliFirebase = localStorage.getItem('usernameAsli'); 
+        let namaPribadi = ""; // Untuk Mini Dashboard
+        
+        function setIndicatorPosition() {
+            const activeItem = document.querySelector('.nav-item.active');
+            const indicator = document.getElementById('navIndicator');
+            if(activeItem && indicator) { indicator.style.transform = `translateX(${activeItem.offsetLeft}px)`; }
+        }
+        window.addEventListener('resize', setIndicatorPosition);
+
+        function navSlide(e, element, url) {
+            e.preventDefault(); vibrateClick();
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active'); setIndicatorPosition();
+            document.body.classList.add('fade-out');
+            setTimeout(() => { window.location.href = url; }, 300);
+        }
+
+        function pindahHalaman(url) {
+            vibrateClick();
+            document.body.classList.add('fade-out');
+            setTimeout(() => { window.location.href = url; }, 300);
+        }
+
+        // --- TEMUAN #4: BUG FIX TOAST AMAN ---
+        function showToast(msg) {
+            let toast = document.getElementById("toast"); 
+            document.getElementById("toastMsg").innerText = msg;
+            toast.className = "show"; 
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+        
+        function tutupModal(idModal) { vibrateClick(); document.getElementById(idModal).style.display = 'none'; }
+        function bukaModalDenganHistory(idModal) {
+            vibrateClick(); document.getElementById(idModal).style.display = 'flex';
+            window.history.pushState({ modalOpen: true }, "", window.location.href);
+        }
+
+        // --- TEMUAN #3: KEAMANAN AUTO-LOGOUT 15 MENIT ---
+        let waktuLogout;
+        function resetTimerLogout() {
+            clearTimeout(waktuLogout);
+            waktuLogout = setTimeout(() => {
+                vibrateHeavy();
+                showToast("Sesi habis (15 Menit tidak aktif). Anda dikeluarkan demi keamanan.");
+                setTimeout(() => {
+                    localStorage.removeItem('usernameAsli');
+                    window.location.replace('index.html');
+                }, 2500);
+            }, 15 * 60 * 1000); 
+        }
+        document.onmousemove = resetTimerLogout; document.onkeypress = resetTimerLogout; document.ontouchstart = resetTimerLogout;
+
+        // --- LOGIKA TEMA NEUMORPHISM ---
+        function ubahTemaPreferensi() {
+            vibrateClick();
+            let val = document.getElementById('pilihanTema').value;
+            localStorage.setItem('themePref', val);
+            terapkanTemaUI();
+            showToast("Tema aplikasi berhasil diubah.");
+        }
+
+        function terapkanTemaUI() {
+            let pref = localStorage.getItem('themePref') || 'light';
+            let isDark = false;
+            
+            if (pref === 'dark') { isDark = true; }
+            else if (pref === 'auto_sys') { isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
+            else if (pref === 'auto_time') { let jam = new Date().getHours(); isDark = (jam >= 18 || jam < 6); }
+
+            if(isDark) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.getElementById('meta-theme-color').setAttribute('content', '#2d3748');
+                localStorage.setItem('theme', 'dark'); 
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                document.getElementById('meta-theme-color').setAttribute('content', '#e0e5ec');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if(localStorage.getItem('themePref') === 'auto_sys') terapkanTemaUI();
+        });
+
+        // --- BIOMETRIK FAKE/LOCAL SAVE ---
+        function bukaModalBiometrik() { bukaModalDenganHistory('modalBiometrik'); }
+        function toggleBiometrik(tipe) {
+            vibrateClick();
+            let isActive = tipe === 'FaceID' ? document.getElementById('toggleFaceID').checked : document.getElementById('toggleFingerprint').checked;
+            if(isActive) {
+                localStorage.setItem(tipe === 'FaceID' ? 'useFaceID' : 'useFingerprint', 'true');
+                showToast(`Sistem Otentikasi ${tipe === 'FaceID' ? 'Wajah' : 'Sidik Jari'} diaktifkan.`);
+            } else {
+                localStorage.setItem(tipe === 'FaceID' ? 'useFaceID' : 'useFingerprint', 'false');
+                showToast(`Fitur Keamanan dinonaktifkan.`);
+            }
+        }
+
+        // --- 1. FIREBASE REAL-TIME SYNC UTAMA ---
+        window.onload = function() {
+            resetTimerLogout();
+            setIndicatorPosition();
+            if(!userAsliFirebase) { window.location.href = 'index.html'; return; }
+
+            document.getElementById('pilihanTema').value = localStorage.getItem('themePref') || 'light';
+            terapkanTemaUI(); 
+            if(localStorage.getItem('useFaceID') === 'true') document.getElementById('toggleFaceID').checked = true;
+            if(localStorage.getItem('useFingerprint') === 'true') document.getElementById('toggleFingerprint').checked = true;
+
+            let lastLogin = localStorage.getItem('lastLoginTime');
+            if(lastLogin) { document.getElementById('txtLastLogin').innerText = lastLogin; } 
+
+            document.getElementById('txtUsername').innerText = '@' + userAsliFirebase;
+
+            database.ref('users/' + userAsliFirebase).on('value', snapshot => {
+                if (!snapshot.exists()) { keluarSistemPaksa("AKUN TERHAPUS: Data Anda tidak ditemukan di server."); return; }
+
+                let data = snapshot.val();
+                if(String(data.Status || data.status).toLowerCase() === 'nonaktif') {
+                    keluarSistemPaksa("AKUN DIBEKUKAN: Hubungi Administrator Madrasah."); return;
+                }
+
+                let roleSaatIni = data.Role || data.role || 'Operator';
+                if(localStorage.getItem('hakAkses') !== roleSaatIni) {
+                    localStorage.setItem('hakAkses', roleSaatIni);
+                    showToast("Hak Akses Anda baru saja diperbarui oleh Administrator Server!"); vibrateHeavy();
+                }
+
+                let namaAsliDb = data.NamaLengkap || data.Nama_Lengkap || data.nama_lengkap || 'Pengguna Tanpa Nama';
+                namaPribadi = namaAsliDb; // Set Global untuk Mini Dashboard
+                document.getElementById('namaTampil').innerText = namaAsliDb.toUpperCase();
+                document.getElementById('txtWA').innerText = data.NomorWA || data.nomor_wa || 'Belum diatur';
+                
+                let jabatan = localStorage.getItem('jabatanPengguna_' + userAsliFirebase) || '-';
+                document.getElementById('jabatanTampil').innerText = jabatan;
+
+                // LOGIKA AVATAR DINAMIS
+                let cloudFoto = data.FotoProfil;
+                let imgEl = document.getElementById('imgProfil');
+                let initialEl = document.getElementById('initialAvatar');
+                let ikonEl = document.getElementById('ikonDefault');
+
+                if(cloudFoto) {
+                    imgEl.src = cloudFoto;
+                    imgEl.style.display = 'block'; initialEl.style.display = 'none'; ikonEl.style.display = 'none';
+                } else {
+                    imgEl.style.display = 'none'; ikonEl.style.display = 'none';
+                    initialEl.innerText = namaAsliDb.charAt(0).toUpperCase();
+                    initialEl.style.display = 'flex';
+                }
+
+                let roleLower = roleSaatIni.toLowerCase();
+                let badgeEl = document.getElementById('txtStatusRole');
+                badgeEl.innerText = roleSaatIni.toUpperCase();
+                if(roleLower === 'developer') badgeEl.style.color = 'var(--role-dev)';
+                else if(roleLower === 'administrator') badgeEl.style.color = 'var(--role-admin)';
+                else if(roleLower === 'supervisor') badgeEl.style.color = 'var(--role-supervisor)';
+                else if(roleLower === 'demo') badgeEl.style.color = 'var(--role-demo)';
+                else badgeEl.style.color = 'var(--role-operator)';
+
+                // Panggil Kalkulasi Mini Dashboard
+                muatStatistikPribadi();
+            });
+        };
+
+        function keluarSistemPaksa(pesan) {
+            vibrateHeavy(); alert(pesan);
+            localStorage.removeItem('namaPengguna'); localStorage.removeItem('hakAkses'); localStorage.removeItem('usernameAsli'); 
+            window.location.href = 'index.html'; 
+        }
+
+        // --- MINI DASHBOARD LOGIC (STATISTIK KASIR) ---
+        function muatStatistikPribadi() {
+            if(!namaPribadi) return;
+            
+            let globalBulan = localStorage.getItem('globalBulanAktif') || "Belum Disetel";
+            let tglHariIni = new Date().toLocaleDateString('id-ID'); // Format DD/MM/YYYY
+
+            database.ref('buku_kas').once('value').then(snap => {
+                let txHariIni = 0;
+                let totalUangBulanIni = 0;
+
+                snap.forEach(c => {
+                    let d = c.val();
+                    let petugas = d.Admin_Penerima || d.Kasir || d.Admin_Input || '';
+                    
+                    // Filter: Hanya transaksi yang dilakukan oleh User ini
+                    if(petugas === namaPribadi) {
+                        let tglTx = d.Waktu.split(', ')[0];
+                        if(tglTx === tglHariIni) { txHariIni++; }
+
+                        // Hitung Pemasukan (SPP/KSM) di Bulan Aktif
+                        if(d.Bulan_Hijriyah === globalBulan && d.Jenis === 'MASUK') {
+                            totalUangBulanIni += parseInt(d.Nominal || 0);
+                        }
+                    }
+                });
+
+                document.getElementById('statTxHariIni').innerText = txHariIni;
+                document.getElementById('statTotalBulanIni').innerText = 'Rp ' + totalUangBulanIni.toLocaleString('id-ID');
+            });
+        }
+
+        // --- 2. UPLOAD FOTO (PROFILE PICTURE) ---
+        const inputFoto = document.getElementById('inputFoto');
+        inputFoto.addEventListener('change', function(e) {
+            if (!navigator.onLine) { showToast("Sinyal Terputus. Gagal mengunggah foto."); vibrateHeavy(); return; }
+
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const base64String = event.target.result;
+                    database.ref('users/' + userAsliFirebase).update({
+                        FotoProfil: base64String
+                    }).then(() => {
+                        showToast("Foto Profil telah diamankan di Server!"); vibrateSuccess();
+                    }).catch(err => {
+                        showToast("Gagal mengunggah foto."); vibrateHeavy();
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // --- 3. EDIT IDENTITAS FIREBASE ---
+        function bukaModalEdit() {
+            document.getElementById('inputEditNama').value = document.getElementById('namaTampil').innerText;
+            let currentJab = document.getElementById('jabatanTampil').innerText;
+            document.getElementById('inputEditJabatan').value = currentJab === '-' ? '' : currentJab;
+            
+            let currentWA = document.getElementById('txtWA').innerText;
+            document.getElementById('inputEditWA').value = currentWA === 'Belum diatur' ? '' : currentWA;
+            bukaModalDenganHistory('modalEditProfil');
+        }
+
+        async function simpanEditProfilFirebase() {
+            vibrateClick();
+            if (!navigator.onLine) { showToast("Sinyal Terputus!"); vibrateHeavy(); return; }
+
+            let namaBaru = document.getElementById('inputEditNama').value.trim();
+            let jabatanBaru = document.getElementById('inputEditJabatan').value.trim() || '-';
+            let waBaru = document.getElementById('inputEditWA').value.trim();
+            
+            if(!namaBaru || !waBaru) { showToast("Sistem menolak: Nama dan No. WA tidak boleh kosong!"); vibrateHeavy(); return; }
+
+            let btn = document.getElementById('btnSimpanProfil');
+            btn.innerHTML = "Menyuntik Database..."; btn.disabled = true;
+
+            try {
+                await database.ref('users/' + userAsliFirebase).update({ NamaLengkap: namaBaru, NomorWA: waBaru });
+                
+                localStorage.setItem('jabatanPengguna_' + userAsliFirebase, jabatanBaru);
+                localStorage.setItem('namaPengguna', namaBaru); 
+                
+                showToast("Identitas berhasil disinkronisasi!"); vibrateSuccess(); tutupModal('modalEditProfil');
+            } catch(e) { showToast("Gagal memperbarui ke server."); vibrateHeavy(); }
+            btn.innerHTML = "Simpan Profil"; btn.disabled = false;
+        }
+
+        // --- 4. UBAH PASSWORD DENGAN ENKRIPSI (LEVEL DEWA) ---
+        function bukaModalSandi() { 
+            document.getElementById('inputSandiLama').value = ''; document.getElementById('inputSandiBaru').value = ''; document.getElementById('inputSandiKonfirm').value = '';
+            bukaModalDenganHistory('modalUbahSandi'); 
+        }
+
+        async function simpanSandiFirebase() {
+            vibrateClick();
+            if (!navigator.onLine) { showToast("Sinyal terputus!"); vibrateHeavy(); return; }
+
+            let sandiLama = document.getElementById('inputSandiLama').value;
+            let sandiBaru = document.getElementById('inputSandiBaru').value;
+            let konfirm = document.getElementById('inputSandiKonfirm').value;
+
+            if(!sandiLama || !sandiBaru || !konfirm) { showToast("Sistem menolak: Isi semua kolom keamanan!"); vibrateHeavy(); return; }
+            if(sandiBaru !== konfirm) { showToast("Sistem menolak: Konfirmasi sandi berbeda!"); vibrateHeavy(); return; }
+            if(sandiBaru.length < 6) { showToast("Sistem menolak: Kata sandi terlalu pendek (Min. 6)!"); vibrateHeavy(); return; }
+
+            let btn = document.getElementById('btnSimpanSandi');
+            btn.innerHTML = "Verifikasi Server..."; btn.disabled = true;
+
+            try {
+                let snapshot = await database.ref('users/' + userAsliFirebase).once('value');
+                let data = snapshot.val();
+                let dbPass = String(data.Password || data.password);
+
+                let hashedSandiLama = CryptoJS.SHA256(sandiLama + userAsliFirebase).toString();
+
+                if(dbPass !== hashedSandiLama && dbPass !== sandiLama) {
+                    showToast("AKSES DITOLAK: Kata Sandi Lama Anda Salah!"); vibrateHeavy();
+                } else {
+                    btn.innerHTML = "Mereset Ulang...";
+                    let hashedSandiBaru = CryptoJS.SHA256(sandiBaru + userAsliFirebase).toString();
+                    await database.ref('users/' + userAsliFirebase).update({ Password: hashedSandiBaru });
+                    
+                    showToast("Keamanan Diperbarui! Sandi telah diganti."); vibrateSuccess(); tutupModal('modalUbahSandi');
+                }
+            } catch(e) { showToast("Gagal verifikasi server Firebase."); vibrateHeavy(); }
+            
+            btn.innerHTML = "Update Keamanan"; btn.disabled = false;
+        }
+
+        // --- 5. TENTANG KAMI & PWA INSTALLER ---
+        function bukaModalInfo() { bukaModalDenganHistory('modalInfo'); }
+
+        let deferredPrompt;
+        const installMenu = document.getElementById('menuInstalApp');
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); deferredPrompt = e;
+            if(installMenu) installMenu.style.display = 'flex';
+        });
+
+        async function instalAplikasiAndroid() {
+            vibrateClick();
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') showToast('Mengunduh APK PWA ke HP Anda...');
+                deferredPrompt = null;
+                if(installMenu) installMenu.style.display = 'none';
+            }
+        }
+        window.addEventListener('appinstalled', () => {
+            if(installMenu) installMenu.style.display = 'none';
+            deferredPrompt = null; showToast('Instalasi Selesai. Cek Layar Utama HP Anda!'); vibrateSuccess();
+        });
+
+        function keluarSistemManual() {
+            vibrateClick();
+            if(confirm("Semua sesi akan diakhiri. Yakin ingin Keluar Sistem?")) {
+                localStorage.removeItem('namaPengguna'); localStorage.removeItem('hakAkses'); localStorage.removeItem('usernameAsli'); 
+                window.location.href = 'index.html'; 
+            }
+        }
+    </script>
+</body>
+</html>

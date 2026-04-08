@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#e0e5ec" id="meta-theme-color">
+    <title>Transaksi Kas - MMU B-77</title>
+    
+    <link rel="icon" type="image/png" href="Logo-Favicon.png">
+    <link rel="apple-touch-icon" href="Logo-Favicon.png">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        // --- TEMUAN #1: PENGAMANAN MUTLAK Cek Sesi Login di Atas ---
+        if (!localStorage.getItem('usernameAsli')) {
+            window.location.replace('index.html');
+        }
+
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        const role = localStorage.getItem('hakAkses');
+        if(role === 'Demo') {
+            alert("🔒 AKSES DIBATASI: Akun Demo tidak memiliki izin mengakses Transaksi Kas.");
+            window.location.replace('beranda.html');
+        }
+    </script>
+
+    <style>
+        /* --- TEMA NEUMORPHISM PREMIUM --- */
+        :root {
+            --bg-main: #e0e5ec; --text-dark: #31344b; --text-muted: #8C96A3;
+            --shadow-dark: rgba(163, 177, 198, 0.6); --shadow-light: rgba(255, 255, 255, 0.6);
+            --red-grad: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+            --green-grad: linear-gradient(135deg, #2df077 0%, #00d26a 100%);
+            --blue-grad: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --c-red: #ef4444; --c-blue: #4facfe; --c-green: #00d26a; --c-orange: #f59e0b;
+        }
+        [data-theme="dark"] { 
+            --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0; 
+            --shadow-light: #3a4556; --shadow-dark: #202835; 
+        }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { margin: 0; padding: 0; background-color: var(--bg-main); font-family: 'Poppins', sans-serif; color: var(--text-dark); user-select: none; padding-bottom: 50px; transition: 0.3s; }
+        .app-container { max-width: 600px; margin: 0 auto; min-height: 100vh; padding: 25px 20px; animation: fadeIn 0.4s ease-out forwards;}
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* TEMUAN #4: STRUKTUR TOAST YANG AMAN DAN RAPI */
+        #toast { visibility: hidden; min-width: 280px; background-color: #31344b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;}
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
+        @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+
+        /* HEADER */
+        .nav-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
+        .btn-icon { width: 45px; height: 45px; border-radius: 15px; background: var(--bg-main); display: flex; justify-content: center; align-items: center; color: var(--text-dark); box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); cursor: pointer; border: none; font-size: 16px; transition: 0.2s;}
+        .btn-icon:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
+        .header-title { font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 900; margin: 0; color: var(--text-dark); text-transform: uppercase; letter-spacing: 1px;}
+
+        /* WIDGET SALDO (MASTER) */
+        .balance-widget { background: var(--blue-grad); border-radius: 25px; padding: 25px; color: white; margin-bottom: 25px; box-shadow: 8px 8px 16px rgba(79, 172, 254, 0.3); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;}
+        .balance-widget::before { content:''; position:absolute; right:-20px; top:-20px; width:120px; height:120px; background:rgba(255,255,255,0.1); border-radius:50%; }
+        .balance-widget::after { content:''; position:absolute; left:-30px; bottom:-30px; width:80px; height:80px; background:rgba(255,255,255,0.1); border-radius:50%; }
+        .bw-label { font-size:10px; font-weight:700; opacity:0.9; text-transform:uppercase; letter-spacing: 1.5px; margin: 0 0 5px 0;}
+        .bw-value { font-family:'Montserrat'; font-weight:900; font-size:32px; margin:0; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); z-index: 1;}
+
+        /* TABS */
+        .tab-container { display: flex; background: var(--bg-main); border-radius: 15px; padding: 8px; margin-bottom: 20px; box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); }
+        .tab-btn { flex: 1; text-align: center; padding: 14px 0; border-radius: 12px; font-size: 12px; font-weight: 800; color: var(--text-muted); cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px;}
+        .tab-btn.active.masuk { background: var(--bg-main); color: var(--c-green); box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); }
+        .tab-btn.active.keluar { background: var(--bg-main); color: var(--c-red); box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); }
+
+        .form-section { display: none; animation: fadeIn 0.4s ease; }
+        .form-section.active { display: block; }
+
+        /* FORM INPUTS */
+        .form-card { background: var(--bg-main); border-radius: 25px; padding: 25px; margin-bottom: 25px; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); }
+        .input-group { margin-bottom: 20px; position: relative;}
+        .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; margin-left: 5px; }
+        .input-edit { width: 100%; padding: 15px 20px; border: none; border-radius: 15px; background: var(--bg-main); font-family: 'Poppins', sans-serif; font-size: 13px; color: var(--text-dark); font-weight: 600; box-shadow: inset 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light); outline: none; transition: 0.3s; appearance: none; }
+        .input-edit:focus { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light), 0 0 0 2px rgba(79, 172, 254, 0.3); }
+        .input-readonly { background: transparent; color: var(--text-muted); pointer-events: none; box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);}
+        .select-icon { position: absolute; right: 18px; top: 40px; color: var(--text-muted); font-size: 12px; pointer-events: none; }
+
+        .btn-submit { width: 100%; padding: 16px; color: white; border: none; border-radius: 15px; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 14px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; transition: 0.3s;}
+        .btn-submit.masuk { background: var(--green-grad); box-shadow: 5px 5px 15px rgba(0, 210, 106, 0.4); }
+        .btn-submit.keluar { background: var(--red-grad); box-shadow: 5px 5px 15px rgba(255, 117, 140, 0.4); }
+        .btn-submit:active { transform: translateY(2px); box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2); }
+        .btn-submit:disabled { background: var(--shadow-dark); color: var(--text-muted); box-shadow: none; cursor: not-allowed; transform: none;}
+
+        /* HISTORY LIST */
+        .history-section { margin-top: 10px; }
+        .history-item { background: var(--bg-main); padding: 18px 20px; border-radius: 18px; margin-bottom: 15px; box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light); display: flex; justify-content: space-between; align-items: center; }
+        .history-item.border-in { border-left: 4px solid var(--c-green); }
+        .history-item.border-out { border-left: 4px solid var(--c-red); }
+        .history-item h4 { margin: 0 0 3px 0; font-family: 'Montserrat'; font-size: 13px; color: var(--text-dark); }
+        .history-item p { margin: 0; font-size: 10px; font-weight: 600; color: var(--text-muted); }
+        .h-price { font-family: 'Montserrat'; font-weight: 900; font-size: 14px; }
+        .h-price.in { color: var(--c-green); }
+        .h-price.out { color: var(--c-red); }
+
+        /* MODAL SUKSES */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(224, 229, 236, 0.85); z-index: 2000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
+        [data-theme="dark"] .modal-overlay { background: rgba(45, 55, 72, 0.85); }
+        .modal-content { background: var(--bg-main); width: 100%; max-width: 350px; border-radius: 25px; padding: 30px; text-align: center; box-shadow: 10px 10px 30px rgba(0,0,0,0.2); animation: fadeIn 0.3s ease-out; }
+    </style>
+</head>
+<body>
+
+    <div id="toast"><i class="fa-solid fa-circle-info"></i> <span id="toastMsg">Pesan Notifikasi</span></div>
+
+    <div class="app-container">
+        <div class="nav-top">
+            <button class="btn-icon" onclick="window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
+            <h1 class="header-title">Transaksi Kas</h1>
+            <div style="width: 45px;"></div>
+        </div>
+
+        <div class="balance-widget">
+            <p class="bw-label"><i class="fa-solid fa-vault"></i> Saldo Kas Madrasah</p>
+            <h2 class="bw-value" id="txtSaldoMutlak">Rp 0</h2>
+        </div>
+
+        <div class="tab-container">
+            <div class="tab-btn masuk active" onclick="switchTab('masuk', this)"><i class="fa-solid fa-arrow-down"></i> Kas Masuk</div>
+            <div class="tab-btn keluar" onclick="switchTab('keluar', this)"><i class="fa-solid fa-arrow-up"></i> Kas Keluar</div>
+        </div>
+
+        <div class="form-section active" id="sec-masuk">
+            <div class="form-card">
+                <form id="formKasMasuk">
+                    <div class="input-group">
+                        <label>Admin/Penerima (Otomatis)</label>
+                        <input type="text" class="input-edit input-readonly" id="inKasir" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label>Pos Pemasukan (Sinkron Master)</label>
+                        <select class="input-edit" id="inKode" required style="cursor: pointer;">
+                            <option value="">-- Memuat Kategori Pemasukan --</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down select-icon"></i>
+                    </div>
+                    <div class="input-group">
+                        <label>Nominal Pemasukan (Rp)</label>
+                        <input type="number" class="input-edit" id="inNominal" placeholder="0" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Diterima Dari / Sumber Dana</label>
+                        <input type="text" class="input-edit" id="inSumber" placeholder="Cth: Hamba Allah / Koperasi" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Keterangan Tambahan</label>
+                        <textarea class="input-edit" id="inKet" style="height: 80px; padding:15px; resize:none;" placeholder="Cth: Infaq Jumat minggu pertama"></textarea>
+                    </div>
+                    <button type="submit" class="btn-submit masuk" id="btnSimpanMasuk">
+                        <i class="fa-solid fa-download"></i> SIMPAN PEMASUKAN
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="form-section" id="sec-keluar">
+            <div class="form-card">
+                <form id="formKasKeluar">
+                    <div class="input-group">
+                        <label>Admin/Penanggung Jawab (Otomatis)</label>
+                        <input type="text" class="input-edit input-readonly" id="outKasir" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label>Pos Pengeluaran (Sinkron Master)</label>
+                        <select class="input-edit" id="outKode" required style="cursor: pointer;">
+                            <option value="">-- Memuat Kategori Pengeluaran --</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down select-icon"></i>
+                    </div>
+                    <div class="input-group">
+                        <label>Nominal Pengeluaran (Rp)</label>
+                        <input type="number" class="input-edit" id="outNominal" placeholder="0" required oninput="validasiSaldo()">
+                        <p id="msgError" style="font-size:10px; color:var(--c-red); margin:8px 0 0 5px; display:none; font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Saldo Kas Tidak Mencukupi!</p>
+                    </div>
+                    <div class="input-group">
+                        <label>Diberikan Kepada / Keperluan (Nota)</label>
+                        <input type="text" class="input-edit" id="outPenerima" placeholder="Cth: Toko Alat Tulis / Nama Guru" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Keterangan Tambahan</label>
+                        <textarea class="input-edit" id="outKet" style="height: 80px; padding:15px; resize:none;" placeholder="Cth: Pembelian sapu dan alat kebersihan"></textarea>
+                    </div>
+                    <button type="submit" class="btn-submit keluar" id="btnSimpanKeluar">
+                        <i class="fa-solid fa-upload"></i> SIMPAN PENGELUARAN
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="history-section">
+            <p style="font-size:11px; font-weight:800; color:var(--text-muted); margin-bottom:15px; text-transform:uppercase; padding-left:5px; letter-spacing: 0.5px;"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Transaksi Terakhir</p>
+            <div id="wadahHistory"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalSukses">
+        <div class="modal-content">
+            <div style="width:70px; height:70px; background:rgba(0, 210, 106, 0.1); color:var(--c-green); border-radius:50%; display:flex; justify-content:center; align-items:center; margin:0 auto 20px;">
+                <i class="fa-solid fa-circle-check" style="font-size:35px;"></i>
+            </div>
+            <h2 style="font-family:'Montserrat'; margin:0 0 10px; color:var(--text-dark); font-weight:900;">Berhasil Dicatat!</h2>
+            <p style="font-size:12px; margin-bottom:25px; color:var(--text-muted); font-weight:600;">Jurnal Buku Kas telah diperbarui secara otomatis.</p>
+            <button class="btn-submit" style="border-radius:15px; background: var(--blue-grad); box-shadow: 4px 4px 10px rgba(79, 172, 254, 0.3);" onclick="location.reload()"><i class="fa-solid fa-thumbs-up"></i> Selesai & Tutup</button>
+        </div>
+    </div>
+
+    <script>
+        // --- LEVEL DEWA: ANTI-SNOOPING & HAPTIC FEEDBACK ---
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        };
+
+        function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
+        function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); }
+        function vibrateSuccess() { if (navigator.vibrate) navigator.vibrate([30, 50, 30]); }
+        
+        function showToast(msg) { 
+            let toast = document.getElementById("toast"); 
+            document.getElementById("toastMsg").innerText = msg;
+            toast.className = "show"; 
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000); 
+        }
+
+        window.addEventListener('online', () => { showToast("Sinyal Internet Kembali Normal."); vibrateSuccess(); });
+        window.addEventListener('offline', () => { showToast("Sinyal Terputus. Sebagian fitur diblokir."); vibrateHeavy(); });
+
+        // --- TEMUAN #3: KEAMANAN AUTO-LOGOUT 15 MENIT ---
+        let waktuLogout;
+        function resetTimerLogout() {
+            clearTimeout(waktuLogout);
+            waktuLogout = setTimeout(() => {
+                vibrateHeavy();
+                showToast("Sesi habis (15 Menit tidak aktif). Anda dikeluarkan demi keamanan.");
+                setTimeout(() => {
+                    localStorage.removeItem('usernameAsli');
+                    window.location.replace('index.html');
+                }, 2500);
+            }, 15 * 60 * 1000); 
+        }
+        document.onmousemove = resetTimerLogout; document.onkeypress = resetTimerLogout; document.ontouchstart = resetTimerLogout;
+
+        let saldoTersedia = 0; 
+        function formatRupiah(n) { return 'Rp ' + parseInt(n || 0).toLocaleString('id-ID'); }
+
+        function switchTab(jenis, el) {
+            vibrateClick();
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'masuk', 'keluar'));
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+            
+            el.classList.add('active', jenis);
+            document.getElementById('sec-' + jenis).classList.add('active');
+        }
+
+        // --- SISTEM AUDIT TRAIL (CCTV DIGITAL) ---
+        async function catatAuditTrail(aksi, detail) {
+            try {
+                await database.ref('audit_trail').push({
+                    Waktu: new Date().toLocaleString('id-ID'),
+                    Eksekutor: localStorage.getItem('namaPengguna') || 'Unknown',
+                    Role: localStorage.getItem('hakAkses') || 'Unknown',
+                    Menu: 'Transaksi Kas',
+                    Aksi: aksi,
+                    Detail: detail
+                });
+            } catch(e) { console.error("Gagal catat audit", e); }
+        }
+
+        window.onload = function() {
+            resetTimerLogout(); // Inisiasi Auto-Logout
+            
+            let namaAdmin = localStorage.getItem('namaPengguna') || 'Admin Keuangan';
+            document.getElementById('inKasir').value = namaAdmin;
+            document.getElementById('outKasir').value = namaAdmin;
+
+            // GEMBOK SUPERVISOR (Mata-mata)
+            let hakAkses = localStorage.getItem('hakAkses');
+            if(hakAkses === 'Supervisor') {
+                document.getElementById('btnSimpanMasuk').style.display = 'none';
+                document.getElementById('btnSimpanKeluar').style.display = 'none';
+                showToast("Mode Pengawas: Anda hanya dapat melihat data & riwayat.");
+            }
+
+            // SINKRONISASI KODE KEUANGAN & FILTER OTOMATIS
+            database.ref('kode_keuangan').on('value', snap => {
+                let optMasuk = '<option value="">-- Pilih Pos Pemasukan --</option>';
+                let optKeluar = '<option value="">-- Pilih Pos Pengeluaran --</option>';
+                
+                snap.forEach(c => {
+                    let k = c.val();
+                    let key = String(c.key);
+                    if(k.Status !== 'Nonaktif') {
+                        if(k.Jenis && k.Jenis.toLowerCase().includes('masuk')) {
+                            optMasuk += `<option value="${key}">${key} - ${k.Nama_Pos}</option>`;
+                        } else if(k.Jenis && (k.Jenis.toLowerCase().includes('keluar') || k.Jenis.toLowerCase().includes('pengeluaran'))) {
+                            optKeluar += `<option value="${key}">${key} - ${k.Nama_Pos}</option>`;
+                        }
+                    }
+                });
+                document.getElementById('inKode').innerHTML = optMasuk;
+                document.getElementById('outKode').innerHTML = optKeluar;
+            });
+
+            // SINKRONISASI SALDO & RIWAYAT TERPADU
+            database.ref('buku_kas').on('value', snap => {
+                let totalMasuk = 0; let totalKeluar = 0; let html = '';
+                let tempHist = [];
+
+                snap.forEach(c => {
+                    let d = c.val();
+                    let nom = parseInt(d.Nominal || 0);
+                    if(d.Jenis === 'MASUK') { totalMasuk += nom; } 
+                    else if(d.Jenis === 'KELUAR') { totalKeluar += nom; }
+                    tempHist.push(d);
+                });
+
+                saldoTersedia = totalMasuk - totalKeluar;
+                document.getElementById('txtSaldoMutlak').innerText = formatRupiah(saldoTersedia);
+
+                // Tampilkan 15 transaksi terbaru
+                tempHist.sort((a,b) => new Date(b.Waktu.split(',')[0].split('/').reverse().join('-')) - new Date(a.Waktu.split(',')[0].split('/').reverse().join('-')) || b.ID_Transaksi.localeCompare(a.ID_Transaksi));
+                
+                tempHist.slice(0, 15).forEach(d => {
+                    let isMasuk = d.Jenis === 'MASUK';
+                    let borderCls = isMasuk ? 'border-in' : 'border-out';
+                    let priceCls = isMasuk ? 'in' : 'out';
+                    let sign = isMasuk ? '+' : '-';
+                    let subName = isMasuk ? (d.Sumber || 'Pemasukan') : (d.Penerima || 'Pengeluaran');
+
+                    html += `
+                    <div class="history-item ${borderCls}">
+                        <div><h4>${subName}</h4><p>${d.Kategori_Nama} • ${d.Waktu.split(' ')[0]}</p></div>
+                        <div class="h-price ${priceCls}">${sign} ${formatRupiah(d.Nominal)}</div>
+                    </div>`;
+                });
+
+                document.getElementById('wadahHistory').innerHTML = html || '<p style="text-align:center; font-size:12px; color:var(--text-muted); font-weight:600; padding:20px;">Belum ada riwayat transaksi.</p>';
+            });
+        };
+
+        // VALIDASI SALDO UNTUK PENGELUARAN
+        function validasiSaldo() {
+            let nomInput = parseInt(document.getElementById('outNominal').value) || 0;
+            let btn = document.getElementById('btnSimpanKeluar');
+            let msg = document.getElementById('msgError');
+            
+            if(nomInput > saldoTersedia) {
+                btn.disabled = true; msg.style.display = 'block'; msg.innerText = "🚨 Saldo Kas Tidak Mencukupi!";
+            } else if (nomInput <= 0) {
+                btn.disabled = true; msg.style.display = 'none';
+            } else {
+                btn.disabled = false; msg.style.display = 'none';
+            }
+        }
+
+        // EKSEKUSI PENYIMPANAN KAS MASUK
+        document.getElementById('formKasMasuk').onsubmit = async (e) => {
+            e.preventDefault();
+            if (!navigator.onLine) { showToast("Sinyal Terputus! Aksi diblokir."); vibrateHeavy(); return; }
+            if(!confirm("Anda akan mencatat Pemasukan Kas. Lanjutkan?")) return;
+
+            const btn = document.getElementById('btnSimpanMasuk');
+            btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MEMPOSTING...';
+
+            try {
+                let ts = new Date().getTime();
+                let waktu = new Date().toLocaleString('id-ID');
+                let idTX = "KSM-" + ts;
+                let nominal = parseInt(document.getElementById('inNominal').value);
+                let sumber = document.getElementById('inSumber').value;
+                let ket = document.getElementById('inKet').value || "-";
+                let admin = document.getElementById('inKasir').value;
+                let sel = document.getElementById('inKode');
+                let katNama = sel.options[sel.selectedIndex].text.split(' - ')[1];
+
+                let ta_global = localStorage.getItem('globalTahunAjaran') || "Umum";
+                let bln_global = localStorage.getItem('globalBulanAktif') || "Umum";
+
+                let dataObj = {
+                    ID_Transaksi: idTX, Waktu: waktu, Kategori_Nama: katNama,
+                    Nominal: nominal, Sumber: sumber, Keterangan: ket,
+                    Admin_Penerima: admin, Jenis: 'MASUK',
+                    Tahun_Ajaran: ta_global, Bulan_Hijriyah: bln_global
+                };
+
+                let updates = {};
+                updates[`kas_masuk/${idTX}`] = dataObj;
+                updates[`buku_kas/${idTX}`] = dataObj; 
+
+                await database.ref().update(updates);
+                await catatAuditTrail('Insert', `Mencatat Kas Masuk [${katNama}] sebesar ${formatRupiah(nominal)} dari ${sumber}`);
+                
+                vibrateSuccess();
+                document.getElementById('modalSukses').style.display = 'flex';
+                
+            } catch(err) {
+                showToast("Kesalahan Server: " + err.message); vibrateHeavy();
+                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-download"></i> SIMPAN PEMASUKAN';
+            }
+        };
+
+        // EKSEKUSI PENYIMPANAN KAS KELUAR
+        document.getElementById('formKasKeluar').onsubmit = async (e) => {
+            e.preventDefault();
+            if (!navigator.onLine) { showToast("Sinyal Terputus! Aksi diblokir."); vibrateHeavy(); return; }
+            
+            let nomInput = parseInt(document.getElementById('outNominal').value) || 0;
+            if(nomInput > saldoTersedia) { showToast("Aksi Ditolak: Saldo tidak cukup!"); vibrateHeavy(); return; }
+            if(!confirm("PERINGATAN: Dana akan dipotong permanen dari kas utama madrasah. Lanjutkan?")) return;
+
+            const btn = document.getElementById('btnSimpanKeluar');
+            btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MEMPOSTING...';
+
+            try {
+                let ts = new Date().getTime();
+                let waktu = new Date().toLocaleString('id-ID');
+                let idTX = "KSK-" + ts;
+                let nominal = parseInt(document.getElementById('outNominal').value);
+                let penerima = document.getElementById('outPenerima').value;
+                let ket = document.getElementById('outKet').value || "-";
+                let admin = document.getElementById('outKasir').value;
+                let sel = document.getElementById('outKode');
+                let katNama = sel.options[sel.selectedIndex].text.split(' - ')[1];
+
+                let ta_global = localStorage.getItem('globalTahunAjaran') || "Umum";
+                let bln_global = localStorage.getItem('globalBulanAktif') || "Umum";
+
+                let dataObj = {
+                    ID_Transaksi: idTX, Waktu: waktu, Kategori_Nama: katNama,
+                    Nominal: nominal, Penerima: penerima, Keterangan: ket,
+                    Admin_Penerima: admin, Jenis: 'KELUAR',
+                    Tahun_Ajaran: ta_global, Bulan_Hijriyah: bln_global
+                };
+
+                let updates = {};
+                updates[`kas_keluar/${idTX}`] = dataObj;
+                updates[`buku_kas/${idTX}`] = dataObj; 
+
+                await database.ref().update(updates);
+                await catatAuditTrail('Insert', `Mencatat Kas Keluar [${katNama}] sebesar ${formatRupiah(nominal)} untuk ${penerima}`);
+                
+                vibrateSuccess();
+                document.getElementById('modalSukses').style.display = 'flex';
+                
+            } catch(err) {
+                showToast("Kesalahan Server: " + err.message); vibrateHeavy();
+                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-upload"></i> SIMPAN PENGELUARAN';
+            }
+        };
+    </script>
+</body>
+</html>

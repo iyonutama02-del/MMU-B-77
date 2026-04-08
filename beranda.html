@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#e0e5ec">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <title>Beranda - Keuangan MMU B-77</title>
+    
+    <link rel="icon" type="image/png" href="Logo-Favicon.png">
+    <link rel="apple-touch-icon" href="Logo-Favicon.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@400;500;600;700&family=Amiri:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        // PENGAMANAN MUTLAK: Cek Sesi Login di awal sebelum elemen dimuat
+        if (!localStorage.getItem('usernameAsli')) {
+            window.location.replace('index.html');
+        }
+
+        // PWA Update Notifier
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    reg.onupdatefound = () => {
+                        const installingWorker = reg.installing;
+                        installingWorker.onstatechange = () => {
+                            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                document.getElementById('pwa-update-btn').style.display = 'block';
+                            }
+                        };
+                    };
+                });
+            });
+        }
+    </script>
+
+    <style>
+        /* --- TEMA NEUMORPHISM KUNCI CERAH (LIGHT MODE) --- */
+        :root {
+            --bg-main: #e0e5ec; 
+            --text-dark: #31344b; 
+            --text-muted: #8C96A3;
+            --shadow-dark: rgba(163, 177, 198, 0.6); 
+            --shadow-light: rgba(255, 255, 255, 0.6);
+            --green-grad: linear-gradient(135deg, #37f08c 0%, #06d16f 100%);
+        }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+
+        body {
+            margin: 0; padding: 0; background-color: var(--bg-main); 
+            font-family: 'Poppins', sans-serif; 
+            overflow-x: hidden; user-select: none; 
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        #main-content {
+            padding-bottom: 120px; 
+            opacity: 0; 
+            animation: fadeInPage 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeInPage { 0% { opacity: 0; transform: translateX(15px); } 100% { opacity: 1; transform: none; } }
+        #main-content.fade-out { opacity: 0; transform: translateX(-15px); transition: 0.3s ease-out; }
+
+        #pwa-update-btn { display: none; background: #f59e0b; color: white; text-align: center; padding: 10px; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+        /* --- HEADER --- */
+        .header-top { padding: 25px 20px 10px; display: flex; flex-direction: column; gap: 15px; }
+        .greeting { display: flex; align-items: center; gap: 15px; }
+        .header-logo { height: 42px; width: auto; object-fit: contain; }
+        .greeting-salam { font-size: 11px; color: var(--text-muted); margin: 0 0 2px 0; font-weight: 500; }
+        .greeting-name { font-family: 'Montserrat', sans-serif; font-size: 18px; color: var(--text-dark); margin: 0; font-weight: 800; text-transform: uppercase; }
+
+        /* --- WIDGET JAM & KALENDER --- */
+        .islamic-widget-color {
+            background: var(--green-grad); margin: 10px 20px 25px; border-radius: 25px;
+            padding: 20px; text-align: center; 
+            box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+            position: relative; transition: 0.3s;
+        }
+        .widget-date-badge { display: inline-block; font-size: 11px; color: #0b4a2b; font-weight: 700; padding: 8px 16px; border-radius: 20px; margin-bottom: 15px; box-shadow: inset 4px 4px 8px rgba(30, 166, 99, 0.8), inset -4px -4px 8px rgba(46, 250, 149, 0.8); }
+        .widget-date-badge i { color: #ffffff; margin-right: 5px; font-size: 12px; }
+
+        .time-screen { display: flex; justify-content: space-evenly; align-items: center; padding: 15px 10px; margin-bottom: 15px; border-radius: 18px; background-color: #26d07c; box-shadow: inset 6px 6px 10px rgba(30, 166, 99, 0.8), inset -6px -6px 10px rgba(46, 250, 149, 0.9); }
+        .time-box { text-align: center; width: 45%; }
+        .time-value { font-family: 'Montserrat', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: 1px; color: #ffffff; text-shadow: 2px 2px 4px rgba(30, 166, 99, 0.8); }
+        .time-label { font-size: 10px; color: #0b4a2b; letter-spacing: 1.5px; margin-top: 5px; font-weight: 700; text-transform: uppercase; }
+        .time-divider { width: 2px; height: 35px; border-radius: 2px; background-color: #26d07c; box-shadow: inset 1px 1px 2px rgba(30, 166, 99, 0.8), inset -1px -1px 2px rgba(46, 250, 149, 0.8); }
+
+        .widget-location { font-size: 10px; color: #ffffff; display: flex; justify-content: center; align-items: center; gap: 8px; font-weight: 500; }
+
+        /* --- KATEGORI MENU (GRID 3x3) --- */
+        .menu-section { margin-bottom: 25px; }
+        .section-title { font-size: 11px; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; padding: 0; margin: 0 auto 15px auto; text-transform: uppercase; max-width: 500px; width: 100%; text-align: left; }
+        .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px 15px; padding: 0 20px; max-width: 500px; margin: 0 auto; }
+        
+        .menu-item { display: flex; flex-direction: column; align-items: center; text-align: center; text-decoration: none; cursor: pointer; transition: 0.3s; }
+        .menu-icon-neo { 
+            width: 55px; height: 55px; background-color: var(--bg-main); border-radius: 16px; 
+            display: flex; justify-content: center; align-items: center; font-size: 24px; margin-bottom: 12px; color: var(--text-dark);
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); transition: all 0.2s ease; 
+            position: relative; 
+        }
+        .menu-item:active:not(.locked-menu) .menu-icon-neo { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); color: #06d16f; }
+        .menu-text { font-size: 11px; font-weight: 600; line-height: 1.3; color: var(--text-muted); transition: 0.3s; }
+
+        .icon-santri-path { fill: var(--text-dark); transition: 0.3s; }
+        .icon-santri-stroke { stroke: var(--text-dark); transition: 0.3s; }
+
+        /* --- VISUAL LOCK (SATPAM GAIB) --- */
+        .locked-menu { opacity: 0.45; filter: grayscale(80%); }
+        .lock-badge { position: absolute; top: -6px; right: -6px; background: var(--bg-main); color: #ff4757; border-radius: 50%; padding: 5px; font-size: 10px; box-shadow: 2px 2px 5px var(--shadow-dark), -2px -2px 5px var(--shadow-light); }
+
+        .footer-text { text-align: center; margin: 30px 0 20px; font-size: 10px; color: var(--text-muted); font-weight: 500; padding: 0 20px; line-height: 1.5; }
+
+        /* --- NAVIGATION BAWAH --- */
+        .nav-wrapper { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 360px; z-index: 1000; }
+        .bottom-nav { background-color: var(--bg-main); display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; border-radius: 30px; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); position: relative; }
+        .nav-indicator { position: absolute; top: 10px; left: 0; width: 60px; height: 60px; border-radius: 20px; background-color: var(--bg-main); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 1; pointer-events: none; }
+        .nav-item { text-decoration: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; width: 60px; height: 60px; border-radius: 20px; transition: color 0.3s ease; z-index: 2; background: transparent; cursor: pointer; }
+        .nav-item i { font-size: 20px; margin-bottom: 5px; }
+        .nav-item span { font-size: 10px; font-weight: 600; }
+        .nav-item.active { color: #06d16f; }
+
+        /* --- TOAST --- */
+        #toast { visibility: hidden; min-width: 250px; background-color: #31344b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; top: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; width: 85%; }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
+        @keyframes fadein { from { top: 0; opacity: 0; } to { top: 30px; opacity: 1; } }
+        @keyframes fadeout { from { top: 30px; opacity: 1; } to { top: 0; opacity: 0; } }
+        
+        /* --- POPUP BISMILLAH --- */
+        .popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(224, 229, 236, 0.95); z-index: 9999; justify-content: center; align-items: center; opacity: 1; transition: 0.5s; flex-direction: column; backdrop-filter: blur(5px); }
+        .popup-content { background: var(--bg-main); padding: 40px 30px; border-radius: 25px; box-shadow: 10px 10px 20px var(--shadow-dark), -10px -10px 20px var(--shadow-light); text-align: center; max-width: 320px; width: 90%; }
+        .bismillah-arab { font-family: 'Amiri', serif; font-size: 30px; white-space: nowrap; color: #06d16f; margin: 15px 0 30px; line-height: 1.5; text-shadow: 2px 2px 4px var(--shadow-dark); }
+        .btn-tutup-popup { background: var(--bg-main); border: none; padding: 14px 0; width: 100%; border-radius: 15px; font-family: 'Poppins'; font-weight: 700; color: var(--text-dark); box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); cursor: pointer; transition: 0.2s; font-size: 13px; }
+        .btn-tutup-popup:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); color: #06d16f; }
+    </style>
+</head>
+<body>
+
+    <div id="pwa-update-btn" onclick="window.location.reload(true);">✨ Pembaruan Tersedia! Klik untuk segarkan aplikasi.</div>
+
+    <div id="toast"><i class="fa-solid fa-circle-info"></i> <span id="toastMsg">Pesan Notifikasi</span></div>
+
+    <div class="popup-overlay" id="popupBismillah">
+        <div class="popup-content">
+            <p style="font-size: 10px; color: var(--text-muted); font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Jangan Lupa Membaca</p>
+            <div class="bismillah-arab">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
+            <button class="btn-tutup-popup" onclick="tutupPopupBismillah()">Masuk Sistem</button>
+        </div>
+    </div>
+
+    <div id="main-content">
+        
+        <div class="header-top">
+            <div class="greeting">
+                <img src="Logo-Favicon.png" alt="Logo" class="header-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3353/3353138.png'">
+                <div>
+                    <p class="greeting-salam" id="greeting-salam">Assalamu'alaikum,</p>
+                    <h1 class="greeting-name" id="user-name">Memuat...</h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="islamic-widget-color">
+            <div class="widget-date-badge">
+                <i class="fa-regular fa-calendar-days"></i> <span id="dynamic-date">...</span> / <span id="hijri-date">...</span>
+            </div>
+
+            <div class="time-screen">
+                <div class="time-box">
+                    <div class="time-value" id="jam-wib">--:--</div>
+                    <div class="time-label">WIB</div>
+                </div>
+                <div class="time-divider"></div>
+                <div class="time-box">
+                    <div class="time-value" id="jam-istiwa">--:--</div>
+                    <div class="time-label">ISTIWA'</div>
+                </div>
+            </div>
+            <div class="widget-location" id="lokasi-teks"><i class="fa-solid fa-location-crosshairs"></i> Sinkronisasi Astronomi...</div>
+        </div>
+
+        <div class="menu-section">
+            <div style="padding: 0 20px; max-width: 500px; margin: 0 auto;">
+                <div class="section-title">Area Persiapan</div>
+            </div>
+            <div class="menu-grid">
+                <a onclick="cekAksesDanPindah('data-santri.html', 'menuDataSantri')" class="menu-item" id="menuDataSantri">
+                    <div class="menu-icon-neo">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path class="icon-santri-path" d="M2.5 10C2.5 7.5 12 5 12 5C12 5 21.5 7.5 21.5 10V15C21.5 17.5 12 19 12 19C12 19 2.5 17.5 2.5 15V10Z"/>
+                            <ellipse cx="12" cy="9.5" rx="9.5" ry="3.5" fill="#000000" style="opacity: 0.5;"/>
+                            <path class="icon-santri-stroke" d="M2.5 15C2.5 17.5 12 19 12 19C12 19 21.5 17.5 21.5 15" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <span class="menu-text">Data & Mutasi<br>Santri</span>
+                </a>
+                <a onclick="cekAksesDanPindah('pos-keuangan.html', 'menuPosKeuangan')" class="menu-item" id="menuPosKeuangan">
+                    <div class="menu-icon-neo"><i class="fa-solid fa-wallet" style="color: #4834d4;"></i></div>
+                    <span class="menu-text">Pos<br>Keuangan</span>
+                </a>
+                <a onclick="cekAksesDanPindah('manajemen-tagihan.html', 'menuManTagihan')" class="menu-item" id="menuManTagihan">
+                    <div class="menu-icon-neo"><i class="fa-solid fa-file-invoice-dollar" style="color: #eb4d4b;"></i></div>
+                    <span class="menu-text">Manajemen<br>Tagihan</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div style="padding: 0 20px; max-width: 500px; margin: 0 auto;">
+                <div class="section-title">Area Transaksi</div>
+            </div>
+            <div class="menu-grid">
+                <a onclick="cekAksesDanPindah('pembayaran-santri.html', 'menuPembayaran')" class="menu-item" id="menuPembayaran">
+                    <div class="menu-icon-neo"><i class="fa-solid fa-cash-register" style="color: #f0932b;"></i></div>
+                    <span class="menu-text">Kasir<br>Pembayaran</span>
+                </a>
+                <a onclick="cekAksesDanPindah('transaksi-kas.html', 'menuTransKas')" class="menu-item" id="menuTransKas">
+                    <div class="menu-icon-neo"><i class="fa-solid fa-money-bill-transfer" style="color: #6ab04c;"></i></div>
+                    <span class="menu-text">Transaksi<br>Kas</span>
+                </a>
+                <a onclick="cekAksesDanPindah('buku-kas.html', 'menuBukuKas')" class="menu-item" id="menuBukuKas">
+                    <div class="menu-icon-neo"><i class="fa-solid fa-book-open" style="color: #22a6b3;"></i></div>
+                    <span class="menu-text">Buku Kas<br>Harian</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div style="padding: 0 20px; max-width: 500px; margin: 0 auto;">
+                <div class="section-title">Area Pimpinan</div>
+            </div>
+            <div class="menu-grid">
+                <a onclick="cekAksesDanPindah('rekap-piutang.html', 'menuRekapPiutang')" class="menu-item" id="menuRekapPiutang">
+                    <div class="menu-icon-neo"><i class="fa-brands fa-whatsapp" style="color: #25D366; font-size: 28px;"></i></div>
+                    <span class="menu-text">Rekap Piutang<br>& WA</span>
+                </a>
+                <a onclick="cekAksesDanPindah('tutup-buku.html', 'menuTutupBuku')" class="menu-item" id="menuTutupBuku">
+                    <div class="menu-icon-neo"><i class="fa-solid fa-file-pdf" style="color: #be2edd;"></i></div>
+                    <span class="menu-text">Laporan<br>Tutup Buku</span>
+                </a>
+                <a onclick="cekAksesDanPindah('pengaturan.html', 'menuPengaturan')" class="menu-item" id="menuPengaturan">
+                    <div class="menu-icon-neo"><i class="fa-solid fa-user-shield" style="color: #535c68;"></i></div>
+                    <span class="menu-text">Pengaturan<br>Sistem</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="footer-text">Copyright &copy; 2026 Madrasah Financial System | <br>Developed by Achmad Khoiron</div>
+
+    </div> 
+
+    <div class="nav-wrapper">
+        <div class="bottom-nav" id="bottomNavContainer">
+            <div class="nav-indicator" id="navIndicator"></div>
+            <a href="#" class="nav-item" onclick="navSlide(event, this, 'profil.html')">
+                <i class="fa-solid fa-user"></i><span>Profil</span>
+            </a>
+            <a href="#" class="nav-item active" onclick="navSlide(event, this, 'beranda.html')">
+                <i class="fa-solid fa-house"></i><span>Beranda</span>
+            </a>
+            <a href="#" class="nav-item" onclick="navSlide(event, this, 'dashboard.html')">
+                <i class="fa-solid fa-chart-pie"></i><span>Dashboard</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. PENGAMANAN DASAR ANTARMUKA (Anti-Snooping) ---
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        };
+
+        // --- 2. HAPTIC FEEDBACK ---
+        function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
+        function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); }
+
+        // --- PERBAIKAN BUG #4: TOAST AMAN ---
+        function showToast(msg) {
+            let toast = document.getElementById("toast"); 
+            document.getElementById("toastMsg").innerText = msg; // Hanya update teks, ikon aman
+            toast.className = "show"; 
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        // --- 3. SISTEM DETEKSI SINYAL ---
+        function updateOnlineStatus() {
+            if (!navigator.onLine) {
+                showToast("Sinyal Terputus. Sebagian menu akan diblokir.");
+                vibrateHeavy();
+            } else {
+                showToast("Sinyal Internet Kembali Normal.");
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        // --- 4. KEAMANAN AUTO-LOGOUT 15 MENIT ---
+        let waktuLogout;
+        function resetTimerLogout() {
+            clearTimeout(waktuLogout);
+            waktuLogout = setTimeout(() => {
+                vibrateHeavy();
+                showToast("Sesi habis (15 Menit tidak aktif). Anda dikeluarkan demi keamanan.");
+                setTimeout(() => {
+                    localStorage.removeItem('usernameAsli');
+                    window.location.replace('index.html');
+                }, 2500);
+            }, 15 * 60 * 1000); 
+        }
+        window.onload = resetTimerLogout; document.onmousemove = resetTimerLogout; 
+        document.onkeypress = resetTimerLogout; document.ontouchstart = resetTimerLogout;
+
+        // --- TRANSISI HALAMAN SLIDE-IN/OUT ---
+        function pindahHalaman(url) {
+            document.getElementById('main-content').classList.add('fade-out');
+            setTimeout(() => { window.location.href = url; }, 300);
+        }
+
+        function navSlide(e, element, url) {
+            e.preventDefault();
+            vibrateClick();
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active'); setIndicatorPosition();
+            pindahHalaman(url);
+        }
+        
+        function setIndicatorPosition() {
+            const activeItem = document.querySelector('.nav-item.active');
+            const indicator = document.getElementById('navIndicator');
+            if(activeItem && indicator) indicator.style.transform = `translateX(${activeItem.offsetLeft}px)`;
+        }
+
+        // --- 5. NAVIGASI BACK BUTTON ANDROID (History API) ---
+        function tutupPopupBismillah() {
+            vibrateClick();
+            document.getElementById('popupBismillah').style.opacity = '0';
+            setTimeout(() => { document.getElementById('popupBismillah').style.display = 'none'; }, 500);
+            sessionStorage.setItem('hasSeenPopup', 'true');
+        }
+
+        window.onpopstate = function (e) {
+            if (document.getElementById('popupBismillah').style.display === 'flex') {
+                tutupPopupBismillah();
+                window.history.pushState(null, "", window.location.href);
+            }
+        };
+
+        // --- SATPAM GAIB (PENGECEKAN AKSES & VISUAL LOCK LOGIC) ---
+        function cekAksesDanPindah(url, menuId) {
+            vibrateClick();
+            
+            if (!navigator.onLine) {
+                showToast("TIDAK ADA SINYAL: Anda harus Online untuk membuka menu ini.");
+                vibrateHeavy();
+                return;
+            }
+
+            let role = localStorage.getItem('hakAkses') || 'Operator';
+            
+            const lockedMenus = ['menuPosKeuangan', 'menuManTagihan', 'menuTutupBuku', 'menuPengaturan'];
+            if(lockedMenus.includes(menuId)) {
+                if(role === 'Operator' || role === 'Supervisor') {
+                    showToast("AKSES DITOLAK: Area ini khusus untuk Administrator."); 
+                    vibrateHeavy();
+                    return;
+                }
+            }
+            
+            pindahHalaman(url);
+        }
+
+        window.addEventListener('DOMContentLoaded', (event) => {
+            // (Login Check dipindahkan ke head agar lebih aman)
+            
+            if(!sessionStorage.getItem('hasSeenPopup')) { 
+                document.getElementById('popupBismillah').style.display = 'flex'; 
+                window.history.pushState(null, "", window.location.href);
+            }
+            
+            setIndicatorPosition(); window.addEventListener('resize', setIndicatorPosition);
+
+            const savedName = localStorage.getItem('namaPengguna');
+            if (savedName) document.getElementById('user-name').innerText = savedName;
+
+            const hour = new Date().getHours(); let ucapan = "Selamat Pagi";
+            if (hour >= 11 && hour < 15) ucapan = "Selamat Siang";
+            else if (hour >= 15 && hour < 18) ucapan = "Selamat Sore";
+            else if (hour >= 18 || hour < 4) ucapan = "Selamat Malam";
+            document.getElementById('greeting-salam').innerText = `Assalamu'alaikum, ${ucapan}`;
+
+            // --- EKSEKUSI VISUAL LOCK UNTUK OPERATOR & SUPERVISOR ---
+            const userRole = localStorage.getItem('hakAkses') || 'Operator';
+            if(userRole === 'Operator' || userRole === 'Supervisor') {
+                const lockedIds = ['menuPosKeuangan', 'menuManTagihan', 'menuTutupBuku', 'menuPengaturan'];
+                
+                lockedIds.forEach(id => {
+                    let el = document.getElementById(id);
+                    if(el) {
+                        el.classList.add('locked-menu');
+                        let iconBox = el.querySelector('.menu-icon-neo');
+                        if(iconBox) {
+                            iconBox.innerHTML += '<i class="fa-solid fa-lock lock-badge"></i>';
+                        }
+                    }
+                });
+            }
+
+            const now = new Date();
+            const namaBulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            document.getElementById('dynamic-date').innerText = `${now.getDate()} ${namaBulan[now.getMonth()]} ${now.getFullYear()}`;
+            
+            fetchHijriDate(now);
+            initAstronomiClock();
+        });
+
+        async function fetchHijriDate(dateObj) {
+            try {
+                let dd = String(dateObj.getDate()).padStart(2, '0'); let mm = String(dateObj.getMonth() + 1).padStart(2, '0'); let yyyy = dateObj.getFullYear();
+                let response = await fetch(`https://api.aladhan.com/v1/gToH?date=${dd}-${mm}-${yyyy}&adjustment=0`);
+                let data = await response.json();
+                const blnHijri = ["Muharram", "Safar", "Rabiul Awal", "Rabiul Akhir", "Jumadil Awal", "Jumadil Akhir", "Rajab", "Sya'ban", "Ramadhan", "Syawal", "Dzulqa'dah", "Dzulhijjah"];
+                document.getElementById('hijri-date').innerText = `${data.data.hijri.day} ${blnHijri[parseInt(data.data.hijri.month.number) - 1]} ${data.data.hijri.year} H`;
+            } catch(e) { document.getElementById('hijri-date').innerText = `Kalender Offline`; }
+        }
+
+        // --- RUMUS ASTRONOMI JAM ISTIWA' DAN PELACAK ALAMAT GPS ---
+        let lonUser = 113.21; 
+        
+        function hitungEquationOfTime(now) {
+            let start = new Date(now.getFullYear(), 0, 0);
+            let diff = now - start;
+            let dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+            let B = (dayOfYear - 81) * 360 / 365;
+            let radB = B * Math.PI / 180;
+            let EoT = 9.87 * Math.sin(2 * radB) - 7.53 * Math.cos(radB) - 1.5 * Math.sin(radB);
+            return EoT;
+        }
+
+        function jalankanJamFalak() {
+            const now = new Date();
+            const formatNum = (num) => num.toString().padStart(2, '0');
+            
+            document.getElementById('jam-wib').innerText = `${formatNum(now.getHours())}:${formatNum(now.getMinutes())}`;
+            
+            let offsetMenit = (lonUser - 105) * 4; 
+            let eoTMenit = hitungEquationOfTime(now);
+            let totalOffsetMs = (offsetMenit + eoTMenit) * 60000;
+            
+            let nowIstiwa = new Date(now.getTime() + totalOffsetMs);
+            document.getElementById('jam-istiwa').innerText = `${formatNum(nowIstiwa.getHours())}:${formatNum(nowIstiwa.getMinutes())}`;
+        }
+
+        // --- PERBAIKAN BUG #15: SET TIMEOUT REKURSIF UNTUK PRESISI ---
+        function mulaiLoopJamFalak() {
+            jalankanJamFalak();
+            let sisaMs = 1000 - new Date().getMilliseconds();
+            setTimeout(mulaiLoopJamFalak, sisaMs);
+        }
+
+        function initAstronomiClock() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    async function(pos) {
+                        lonUser = pos.coords.longitude; 
+                        
+                        try {
+                            // --- PERBAIKAN BUG #14: NOMINATIM ERROR 429 HANDLING ---
+                            let response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`, {
+                                headers: { 'Accept-Language': 'id' }
+                            });
+                            
+                            if (!response.ok) throw new Error("API Terkena Limit (HTTP " + response.status + ")");
+
+                            let data = await response.json(); 
+                            let address = data.address;
+                            
+                            let desa = address.village || address.suburb || address.neighbourhood || address.hamlet || "Area Sekitar";
+                            let kecamatan = address.county || address.town || ""; 
+                            
+                            let detailAddress = `${desa}, Kec. ${kecamatan}`;
+                            detailAddress = detailAddress.replace(/^,\s*|,\s*$/g, '').replace(/, Kec. ,/, ',');
+
+                            document.getElementById('lokasi-teks').innerHTML = `<i class="fa-solid fa-location-dot"></i> ${detailAddress}`;
+                        } catch(e) { 
+                            document.getElementById('lokasi-teks').innerHTML = `<i class="fa-solid fa-satellite-dish"></i> Astronomi GPS Aktif`; 
+                        }
+                        
+                        mulaiLoopJamFalak(); // Panggil fungsi presisi tinggi
+                    },
+                    function(err) {
+                        document.getElementById('lokasi-teks').innerHTML = `<i class="fa-solid fa-location-dot"></i> Koordinat Probolinggo (Default)`;
+                        mulaiLoopJamFalak();
+                    },
+                    { timeout: 10000, maximumAge: 60000 }
+                );
+            } else {
+                mulaiLoopJamFalak();
+            }
+        }
+    </script>
+</body>
+</html>

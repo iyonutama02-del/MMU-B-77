@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#e0e5ec" id="meta-theme-color">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <title>Pusat Kendali - Keuangan MMU B-77</title>
+    
+    <link rel="icon" type="image/png" href="Logo-Favicon.png">
+    <link rel="apple-touch-icon" href="Logo-Favicon.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        
+        // PENGAMANAN MUTLAK VVIP
+        let hakAksesLokal = localStorage.getItem('hakAkses');
+        if(hakAksesLokal !== 'Administrator' && hakAksesLokal !== 'Developer') {
+            alert("🔒 AKSES DITOLAK: Fitur Pengaturan dikunci secara Hardware. Hanya tingkat Pimpinan/Developer yang berhak.");
+            window.location.replace('beranda.html');
+        }
+    </script>
+
+    <style>
+        /* --- TEMA NEUMORPHISM --- */
+        :root {
+            --bg-main: #e0e5ec; --text-dark: #31344b; --text-muted: #8C96A3;
+            --shadow-dark: rgba(163, 177, 198, 0.6); --shadow-light: rgba(255, 255, 255, 0.6);
+            --green-grad: linear-gradient(135deg, #37f08c 0%, #06d16f 100%);
+            --orange-grad: linear-gradient(135deg, #fbbd23 0%, #f59e0b 100%);
+            --red-grad: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+            --blue-grad: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --border-line: #d1d9e6;
+        }
+        [data-theme="dark"] {
+            --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0;
+            --shadow-dark: #202835; --shadow-light: #3a4556;
+            --green-grad: linear-gradient(135deg, #009245 0%, #007A39 100%);
+            --border-line: #4a5568;
+        }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { margin: 0; padding: 0; background-color: var(--bg-main); font-family: 'Poppins', sans-serif; color: var(--text-dark); padding-bottom: 50px; transition: 0.3s; }
+        .app-container { max-width: 1000px; margin: 0 auto; min-height: 100vh; padding: 25px 20px; animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* TOAST NOTIFIKASI */
+        #toast { visibility: hidden; min-width: 250px; background-color: #31344b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; top: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; }
+        #toast.show { visibility: visible; animation: fadeinToast 0.5s, fadeoutToast 0.5s 2.5s forwards; }
+        @keyframes fadeinToast { from { top: 0; opacity: 0; } to { top: 30px; opacity: 1; } }
+        @keyframes fadeoutToast { from { top: 30px; opacity: 1; } to { top: 0; opacity: 0; } }
+
+        /* HEADER NAVIGASI */
+        .nav-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; position: relative; }
+        .btn-icon { width: 45px; height: 45px; border-radius: 15px; background: var(--bg-main); display: flex; justify-content: center; align-items: center; color: var(--text-dark); box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light); transition: 0.3s; cursor: pointer; border: none; font-size: 16px; }
+        .btn-icon:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
+        .header-title { font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 800; margin: 0; position: absolute; left: 50%; transform: translateX(-50%); color: var(--text-dark); text-transform: uppercase;}
+
+        /* TAB NAVIGATION */
+        .tab-container { display: flex; background: var(--bg-main); border-radius: 15px; padding: 8px; margin-bottom: 25px; box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); }
+        .tab-btn { flex: 1; text-align: center; padding: 12px 0; border-radius: 12px; font-size: 11px; font-weight: 700; color: var(--text-muted); cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 4px;}
+        .tab-btn i { font-size: 14px; }
+        .tab-btn.active.umum { background: var(--bg-main); color: #4facfe; box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); }
+        .tab-btn.active.user { background: var(--bg-main); color: #06d16f; box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); }
+        .tab-btn.active.cctv { background: var(--bg-main); color: #ef4444; box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); }
+
+        .form-section { display: none; animation: fadeIn 0.4s ease; }
+        .form-section.active { display: block; }
+
+        /* WIDGET MASTER SWITCH TAHUN AJARAN & BULAN */
+        .master-switch-card { background: var(--blue-grad); border-radius: 25px; padding: 25px; margin-bottom: 25px; box-shadow: 8px 8px 16px rgba(79, 172, 254, 0.3); position: relative; overflow: hidden; color: white; }
+        .master-switch-card::before { content:''; position:absolute; right:-20px; top:-20px; width:120px; height:120px; background:rgba(255,255,255,0.1); border-radius:50%; }
+        .ms-title { font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .ms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; position: relative; z-index: 1; }
+        .ms-info-box { background: rgba(0,0,0,0.15); padding: 15px; border-radius: 15px; backdrop-filter: blur(5px); }
+        .ms-label { font-size: 10px; font-weight: 600; opacity: 0.8; margin-bottom: 5px; text-transform: uppercase; }
+        .ms-value { font-family: 'Montserrat', sans-serif; font-size: 15px; font-weight: 800; margin: 0; }
+        .btn-edit-ms { background: rgba(255,255,255,0.2); border: none; color: white; padding: 10px 15px; border-radius: 12px; font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; margin-top: 15px; width: 100%; justify-content: center; box-shadow: 4px 4px 10px rgba(0,0,0,0.1);}
+        .btn-edit-ms:active { background: rgba(255,255,255,0.3); transform: scale(0.98); }
+
+        /* FORM KARTU (PROFIL) */
+        .panel-card { background: var(--bg-main); border-radius: 25px; padding: 25px; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); margin-bottom: 25px; }
+
+        /* AREA PENCARIAN USER */
+        .search-box { display: flex; align-items: center; border-radius: 15px; padding: 14px 20px; background: var(--bg-main); box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); transition: 0.3s; margin-bottom: 20px; }
+        .search-box i { color: var(--text-muted); font-size: 16px; }
+        .search-box input { border: none; background: transparent; outline: none; width: 100%; font-family: 'Poppins', sans-serif; color: var(--text-dark); margin-left: 12px; font-size: 13px; }
+        .search-box input::placeholder { color: var(--text-muted); font-weight: 500; }
+
+        .btn-add-main { width: 100%; padding: 16px; background: var(--green-grad); color: white; border: none; border-radius: 16px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 5px 5px 15px rgba(6, 209, 111, 0.3); transition: 0.3s; margin-bottom: 25px; }
+        .btn-add-main:active { box-shadow: inset 3px 3px 8px rgba(0,0,0,0.2); transform: translateY(2px); }
+
+        /* TABEL CONTAINER */
+        .table-container { background: var(--bg-main); border-radius: 20px; padding: 10px 15px 15px; box-shadow: 9px 9px 16px var(--shadow-dark), -9px -9px 16px var(--shadow-light); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 12px; text-align: left; }
+        th { color: var(--text-muted); font-weight: 700; padding: 15px 12px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; border-bottom: 2px solid var(--border-line); }
+        td { padding: 15px 12px; border-bottom: 1px solid var(--border-line); color: var(--text-dark); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+
+        /* BADGE ROLE & STATUS */
+        .badge-role { padding: 5px 12px; border-radius: 8px; font-weight: 700; font-size: 10px; display: inline-block; text-align: center; }
+        .badge-dev { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+        .badge-admin { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+        .badge-supervisor { background: rgba(20, 184, 166, 0.15); color: #14b8a6; }
+        .badge-operator { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+        .badge-demo { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
+
+        .status-aktif { color: #22c55e; font-weight: 700; }
+        .status-nonaktif { color: #ef4444; font-weight: 700; text-decoration: line-through; opacity: 0.6; }
+
+        .action-btns { display: flex; gap: 8px; }
+        .btn-aksi-tabel { width: 34px; height: 34px; border-radius: 10px; background: var(--bg-main); border: none; box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; font-size: 13px; color: var(--text-dark); }
+        .btn-aksi-tabel:active { box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light); }
+        .btn-edit { color: #f59e0b; }
+        .btn-reset { color: #ef4444; }
+
+        /* CCTV AUDIT LIST */
+        .cctv-list { display: flex; flex-direction: column; gap: 15px; }
+        .cctv-item { background: var(--bg-main); border-radius: 15px; padding: 15px 20px; box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light); border-left: 4px solid #ef4444; display: flex; flex-direction: column; gap: 5px;}
+        .cctv-head { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-line); padding-bottom: 8px; margin-bottom: 5px;}
+        .cctv-time { font-size: 10px; font-weight: 700; color: var(--text-muted); }
+        .cctv-menu { font-size: 10px; background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 3px 8px; border-radius: 6px; font-family: 'Montserrat'; font-weight: 800; text-transform: uppercase;}
+        .cctv-body { font-size: 12px; color: var(--text-dark); font-weight: 500; line-height: 1.5; }
+        .cctv-user { font-family: 'Montserrat'; font-weight: 800; font-size: 13px; color: var(--text-dark); }
+
+        .empty-state { text-align: center; padding: 30px 20px; color: var(--text-muted); font-weight: 500; font-size: 13px; }
+
+        /* MODALS */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(224, 229, 236, 0.8); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
+        [data-theme="dark"] .modal-overlay { background: rgba(45, 55, 72, 0.8); }
+        .modal-content { background: var(--bg-main); width: 100%; max-width: 500px; border-radius: 25px; padding: 30px 25px; box-shadow: 10px 10px 30px rgba(0,0,0,0.3); position: relative; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s ease-out forwards; border: 1px solid var(--border-line); }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { margin: 0; font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 800; color: #f59e0b; display: flex; align-items: center; gap: 10px; }
+        .close-btn { font-size: 20px; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+        .close-btn:active { color: #ef4444; }
+        
+        .input-group { margin-bottom: 18px; position: relative; }
+        .modal-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; margin-left: 5px; }
+        .input-edit { width: 100%; padding: 15px 20px; border: none; border-radius: 15px; background: var(--bg-main); font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600; color: var(--text-dark); box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); outline: none; transition: 0.3s; }
+        .input-edit:focus { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light), 0 0 0 2px #f59e0b; }
+        .toggle-password { position: absolute; right: 15px; bottom: 15px; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 5px; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
+        .btn-submit { width: 100%; padding: 16px; background: var(--orange-grad); color: white; border: none; border-radius: 15px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; margin-top: 15px; box-shadow: 4px 4px 10px rgba(245, 158, 11, 0.3); transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .btn-submit:active { transform: translateY(2px); box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2); }
+        .btn-submit.btn-red { background: var(--red-grad); box-shadow: 4px 4px 10px rgba(239, 68, 68, 0.3); }
+        .btn-submit.btn-blue { background: var(--blue-grad); box-shadow: 4px 4px 10px rgba(79, 172, 254, 0.3); }
+
+        .info-terakhir-login { font-size: 9.5px; color: var(--text-muted); font-weight: 500; margin-top: 3px; display: flex; align-items: center; gap: 4px; }
+        
+        /* Loading Overlay */
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(224, 229, 236, 0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; backdrop-filter: blur(5px);}
+        .neumorphic-spinner { width: 50px; height: 50px; border-radius: 50%; background: var(--bg-main); box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); border: 4px solid transparent; border-top-color: #4facfe; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="toast"><i class="fa-solid fa-circle-info"></i> <span id="toastMsg">Pesan Notifikasi</span></div>
+    
+    <div class="loading-overlay" id="loadingLayar">
+        <div class="neumorphic-spinner"></div>
+        <h3 style="font-family:'Montserrat'; margin:0; color:var(--text-dark);" id="loadingText">Memproses...</h3>
+    </div>
+
+    <div class="app-container">
+        
+        <div class="nav-top">
+            <button class="btn-icon" onclick="window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
+            <h1 class="header-title">Pusat Kendali Sistem</h1>
+            <button class="btn-icon" onclick="vibrateClick(); initData();" title="Refresh Sinkronisasi"><i class="fa-solid fa-rotate" style="color: #06d16f;"></i></button>
+        </div>
+
+        <div class="tab-container">
+            <div class="tab-btn active umum" onclick="switchTab('umum', this)"><i class="fa-solid fa-building-columns"></i> Sistem & Profil</div>
+            <div class="tab-btn user" onclick="switchTab('user', this)"><i class="fa-solid fa-users-gear"></i> Manajemen Akun</div>
+            <div class="tab-btn cctv" onclick="switchTab('cctv', this)"><i class="fa-solid fa-video"></i> CCTV Audit</div>
+        </div>
+
+        <div class="form-section active" id="sec-umum">
+            <div class="master-switch-card">
+                <h3 class="ms-title"><i class="fa-solid fa-calendar-check"></i> Master Switch Waktu Global</h3>
+                <div class="ms-grid">
+                    <div class="ms-info-box">
+                        <div class="ms-label">Tahun Ajaran</div>
+                        <h4 class="ms-value" id="displayTahunAjaran">Memuat...</h4>
+                    </div>
+                    <div class="ms-info-box">
+                        <div class="ms-label">Bulan Hijriyah</div>
+                        <h4 class="ms-value" id="displayBulanHijriyah">Memuat...</h4>
+                    </div>
+                </div>
+                <button class="btn-edit-ms" onclick="bukaModalMasterSwitch()"><i class="fa-solid fa-sliders"></i> Sesuaikan Waktu Global</button>
+            </div>
+
+            <div class="panel-card">
+                <h3 style="font-family: 'Montserrat'; font-size: 15px; margin:0 0 20px; color: var(--text-dark);"><i class="fa-solid fa-school"></i> Profil Identitas Madrasah</h3>
+                <form id="formProfil">
+                    <div class="input-group">
+                        <label class="modal-label">Nama Madrasah / Lembaga</label>
+                        <input type="text" class="input-edit" id="p_nama" required placeholder="Cth: Madrasah Miftahul Ulum B-77">
+                    </div>
+                    <div class="input-group">
+                        <label class="modal-label">Alamat Lengkap</label>
+                        <textarea class="input-edit" id="p_alamat" required placeholder="Cth: Jl. Musi, Kel. Jrebeng Kulon..." style="height: 80px; resize:none;"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label class="modal-label">Nama Kepala Madrasah</label>
+                        <input type="text" class="input-edit" id="p_kepala" required placeholder="Nama Lengkap & Gelar">
+                    </div>
+                    <button type="submit" class="btn-submit btn-blue" id="btnSimpanProfil"><i class="fa-solid fa-floppy-disk"></i> Simpan Profil Madrasah</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="form-section" id="sec-user">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Cari nama atau username..." onkeyup="cariUser()">
+            </div>
+
+            <button class="btn-add-main" onclick="bukaModalUser()"><i class="fa-solid fa-user-plus"></i> Tambah Pengguna Baru</button>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Nama Pengguna</th>
+                            <th>Hak Akses</th>
+                            <th>Status</th>
+                            <th>No. WhatsApp</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabel-users">
+                        <tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin" style="color:#06d16f; font-size: 24px; margin-bottom:10px;"></i><br>Sinkronisasi Pengguna...</div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="form-section" id="sec-cctv">
+            <div class="panel-card" style="margin-bottom: 20px; padding: 15px 20px;">
+                <p style="margin:0; font-size:11px; font-weight:600; color:var(--text-muted);"><i class="fa-solid fa-circle-info"></i> Menampilkan 100 aktivitas terakhir di seluruh sistem.</p>
+            </div>
+            <div class="cctv-list" id="wadahCCTV">
+                <div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin" style="color:#ef4444; font-size: 24px; margin-bottom:10px;"></i><br>Menarik Data Log Server...</div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="modalMasterSwitch">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="color: #4facfe;"><i class="fa-solid fa-calendar-check"></i> Set Waktu Global</h2>
+                <i class="fa-solid fa-xmark close-btn" onclick="tutupModal('modalMasterSwitch')"></i>
+            </div>
+            
+            <form id="formMasterSwitch">
+                <div style="background: rgba(79, 172, 254, 0.1); border-left: 4px solid #4facfe; padding: 15px; border-radius: 10px; margin-bottom: 20px; font-size: 11px; color: var(--text-dark); line-height:1.5;">
+                    <i class="fa-solid fa-circle-info" style="color: #4facfe;"></i> <strong>Perhatian:</strong> Setelan ini akan menjadi stempel baku (watermark) untuk <b>seluruh</b> pembuatan tagihan dan transaksi kasir.
+                </div>
+
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label class="modal-label">Tahun Ajaran Hijriyah</label>
+                        <select class="input-edit" id="ms_tahun_ajaran" required style="cursor: pointer;"></select>
+                    </div>
+                    <div class="input-group">
+                        <label class="modal-label">Bulan Berjalan</label>
+                        <select class="input-edit" id="ms_bulan_hijriyah" required style="cursor: pointer;">
+                            <option value="Muharram">Muharram</option>
+                            <option value="Safar">Safar</option>
+                            <option value="Rabiul Awal">Rabiul Awal</option>
+                            <option value="Rabiul Akhir">Rabiul Akhir</option>
+                            <option value="Jumadil Awal">Jumadil Awal</option>
+                            <option value="Jumadil Akhir">Jumadil Akhir</option>
+                            <option value="Rajab">Rajab</option>
+                            <option value="Sya'ban">Sya'ban</option>
+                            <option value="Ramadhan">Ramadhan</option>
+                            <option value="Syawal">Syawal</option>
+                            <option value="Dzulqa'dah">Dzulqa'dah</option>
+                            <option value="Dzulhijjah">Dzulhijjah</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-submit btn-blue" id="btnSimpanMasterSwitch"><i class="fa-solid fa-satellite-dish"></i> Terapkan Secara Global</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalUser">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle"><i class="fa-solid fa-user-shield"></i> Form Pengguna</h2>
+                <i class="fa-solid fa-xmark close-btn" onclick="tutupModal('modalUser')"></i>
+            </div>
+            
+            <form id="formUser">
+                <input type="hidden" id="formMode" value="tambah"> 
+                
+                <div class="input-group">
+                    <label class="modal-label">Username (Wajib huruf kecil, tanpa spasi)</label>
+                    <input type="text" class="input-edit" id="u_username" required placeholder="Cth: fulan26" oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9]/g, '')">
+                </div>
+
+                <div class="input-group" id="grupPassword">
+                    <label class="modal-label">Kata Sandi Akses</label>
+                    <input type="password" class="input-edit" id="u_password" required placeholder="Buat kata sandi">
+                    <i class="fa-solid fa-eye toggle-password" onclick="toggleSandi('u_password', 'iconSandi')" id="iconSandi"></i>
+                </div>
+
+                <div class="input-group">
+                    <label class="modal-label">Nama Lengkap Pengguna</label>
+                    <input type="text" class="input-edit" id="u_nama" required placeholder="Nama asli pendaftar">
+                </div>
+                
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label class="modal-label">Hak Akses (Role)</label>
+                        <select class="input-edit" id="u_role">
+                            <option value="Operator">Operator</option>
+                            <option value="Supervisor">Supervisor</option>
+                            <option value="Administrator">Administrator</option>
+                            <option value="Demo">Demo</option>
+                            <option value="Developer" id="opt_developer" style="display: none;">Developer</option>
+                        </select>
+                    </div>
+                    <div class="input-group" id="grupStatus" style="display:none;">
+                        <label class="modal-label">Status Akun</label>
+                        <select class="input-edit" id="u_status">
+                            <option value="Aktif">Aktif</option>
+                            <option value="Nonaktif">Nonaktif (Blokir)</option>
+                        </select>
+                    </div>
+                    <div class="input-group" id="grupGender">
+                        <label class="modal-label">Jenis Kelamin</label>
+                        <select class="input-edit" id="u_gender">
+                            <option value="L">Laki-laki (L)</option>
+                            <option value="P">Perempuan (P)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="modal-label">Nomor WhatsApp Aktif</label>
+                    <input type="tel" class="input-edit" id="u_wa" required placeholder="Cth: 081234567890">
+                </div>
+                
+                <button type="submit" class="btn-submit" id="btnSimpanUser"><i class="fa-solid fa-floppy-disk"></i> Simpan Pengguna</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalResetSandi">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="color: #ef4444;"><i class="fa-solid fa-key"></i> Reset Sandi Admin</h2>
+                <i class="fa-solid fa-xmark close-btn" onclick="tutupModal('modalResetSandi')"></i>
+            </div>
+            <form id="formResetSandi">
+                <input type="hidden" id="reset_username">
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">Anda akan mereset sandi untuk akun: <b id="reset_label_user" style="color: var(--text-dark);"></b></p>
+                
+                <div class="input-group">
+                    <label class="modal-label">Ketik Kata Sandi Baru</label>
+                    <input type="password" class="input-edit" id="new_reset_password" required placeholder="Minimal 6 karakter">
+                    <i class="fa-solid fa-eye toggle-password" onclick="toggleSandi('new_reset_password', 'iconResetSandi')" id="iconResetSandi"></i>
+                </div>
+                
+                <button type="submit" class="btn-submit btn-red" id="btnSimpanReset"><i class="fa-solid fa-triangle-exclamation"></i> Paksa Reset Sandi</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- 0. PENGAMANAN DASAR ANTARMUKA (Anti-Snooping) ---
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        };
+
+        function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
+        function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); }
+        function vibrateSuccess() { if (navigator.vibrate) navigator.vibrate([30, 50, 30]); }
+
+        window.addEventListener('popstate', function(event) {
+            ['modalUser', 'modalResetSandi', 'modalMasterSwitch'].forEach(id => {
+                let m = document.getElementById(id);
+                if (m && m.style.display === 'flex') m.style.display = 'none';
+            });
+        });
+
+        // --- SISTEM TAB ---
+        function switchTab(id, el) {
+            vibrateClick();
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'umum', 'user', 'cctv'));
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+            el.classList.add('active', id);
+            document.getElementById('sec-' + id).classList.add('active');
+        }
+
+        // --- INISIALISASI KEAMANAN & FIREBASE ---
+        let usernameAsliLokal = localStorage.getItem('usernameAsli');
+
+        function showToast(msg) {
+            let toast = document.getElementById("toast"); document.getElementById("toastMsg").innerText = msg;
+            toast.className = "show"; setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        function toggleSandi(inputId, iconId) {
+            vibrateClick();
+            let inputSandi = document.getElementById(inputId); let iconSandi = document.getElementById(iconId);
+            if (inputSandi.type === "password") { inputSandi.type = "text"; iconSandi.classList.replace("fa-eye", "fa-eye-slash"); } 
+            else { inputSandi.type = "password"; iconSandi.classList.replace("fa-eye-slash", "fa-eye"); }
+        }
+
+        function tutupModal(id) { vibrateClick(); document.getElementById(id).style.display = 'none'; }
+
+        window.onload = function() {
+            if(!usernameAsliLokal) { window.location.href = 'index.html'; return; }
+            initData();
+        }
+        
+        function initData() {
+            // Generate opsi Tahun Ajaran
+            let selectTA = document.getElementById('ms_tahun_ajaran');
+            selectTA.innerHTML = '';
+            let currentYear = new Date().getFullYear();
+            let startHijriYear = currentYear - 579; 
+            
+            for(let i = -2; i <= 5; i++) {
+                let y1 = startHijriYear + i;
+                let y2 = y1 + 1;
+                let option = document.createElement("option");
+                option.text = `${y1}/${y2} H`;
+                option.value = `${y1}/${y2} H`;
+                selectTA.add(option);
+            }
+
+            muatDataMasterSwitch();
+            muatProfilMadrasah();
+            muatDataUsersRealtime();
+            muatCCTVRealtime();
+        }
+
+        // --- 1. FIREBASE: MASTER SWITCH WAKTU GLOBAL ---
+        function muatDataMasterSwitch() {
+            database.ref('pengaturan_global').on('value', snapshot => {
+                if(snapshot.exists()) {
+                    let data = snapshot.val();
+                    let ta = data.Tahun_Ajaran || "Belum Disetel";
+                    let bln = data.Bulan_Hijriyah || "Belum Disetel";
+                    
+                    document.getElementById('displayTahunAjaran').innerText = ta;
+                    document.getElementById('displayBulanHijriyah').innerText = bln;
+                    
+                    localStorage.setItem('globalTahunAjaran', ta);
+                    localStorage.setItem('globalBulanAktif', bln);
+                } else {
+                    document.getElementById('displayTahunAjaran').innerText = "Belum Disetel";
+                    document.getElementById('displayBulanHijriyah').innerText = "Belum Disetel";
+                }
+            });
+        }
+
+        function bukaModalMasterSwitch() {
+            vibrateClick();
+            let ta = document.getElementById('displayTahunAjaran').innerText;
+            let bln = document.getElementById('displayBulanHijriyah').innerText;
+            
+            if(ta !== "Belum Disetel") document.getElementById('ms_tahun_ajaran').value = ta;
+            if(bln !== "Belum Disetel") document.getElementById('ms_bulan_hijriyah').value = bln;
+            
+            document.getElementById('modalMasterSwitch').style.display = 'flex';
+            window.history.pushState({ modalOpen: true }, "", window.location.href);
+        }
+
+        document.getElementById('formMasterSwitch').addEventListener('submit', async function(e) {
+            e.preventDefault(); vibrateClick();
+            if (!navigator.onLine) { showToast("Sinyal Terputus."); vibrateHeavy(); return; }
+
+            let taBaru = document.getElementById('ms_tahun_ajaran').value;
+            let blnBaru = document.getElementById('ms_bulan_hijriyah').value;
+            
+            document.getElementById('loadingText').innerText = "Menerapkan Waktu Global...";
+            document.getElementById('loadingLayar').style.display = 'flex';
+
+            try {
+                await database.ref('pengaturan_global').update({
+                    Tahun_Ajaran: taBaru,
+                    Bulan_Hijriyah: blnBaru,
+                    Terakhir_Diupdate: new Date().toLocaleString('id-ID'),
+                    Oleh: localStorage.getItem('namaPengguna') || 'Admin'
+                });
+                showToast("Waktu Global Berhasil Diterapkan!"); vibrateSuccess();
+                tutupModal('modalMasterSwitch');
+            } catch(e) { showToast('Gagal terhubung ke Firebase.'); vibrateHeavy(); }
+            
+            document.getElementById('loadingLayar').style.display = 'none';
+        });
+
+        // --- 2. FIREBASE: PROFIL MADRASAH ---
+        function muatProfilMadrasah() {
+            database.ref('pengaturan_global/profil_madrasah').on('value', snap => {
+                if(snap.exists()) {
+                    let data = snap.val();
+                    document.getElementById('p_nama').value = data.Nama || '';
+                    document.getElementById('p_alamat').value = data.Alamat || '';
+                    document.getElementById('p_kepala').value = data.Kepala || '';
+                }
+            });
+        }
+
+        document.getElementById('formProfil').addEventListener('submit', async function(e) {
+            e.preventDefault(); vibrateClick();
+            if (!navigator.onLine) { showToast("Sinyal Terputus."); vibrateHeavy(); return; }
+            
+            let btn = document.getElementById('btnSimpanProfil');
+            let txtAsli = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...'; btn.disabled = true;
+
+            try {
+                await database.ref('pengaturan_global/profil_madrasah').update({
+                    Nama: document.getElementById('p_nama').value,
+                    Alamat: document.getElementById('p_alamat').value,
+                    Kepala: document.getElementById('p_kepala').value
+                });
+                showToast("Profil Madrasah Diperbarui!"); vibrateSuccess();
+            } catch(e) { showToast("Gagal menyimpan profil."); vibrateHeavy(); }
+            btn.innerHTML = txtAsli; btn.disabled = false;
+        });
+
+        // --- 3. FIREBASE: MANAJEMEN PENGGUNA (TIDAK ADA LOGIKA YANG DIUBAH) ---
+        function muatDataUsersRealtime() {
+            database.ref('users').on('value', snapshot => {
+                let tbody = document.getElementById('tabel-users');
+                tbody.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Belum ada data pengguna.</div></td></tr>';
+                    return;
+                }
+
+                snapshot.forEach(child => {
+                    let uname = child.key;
+                    let row = child.val();
+                    
+                    let roleStr = row.Role || row.role || 'Operator';
+                    let roleLower = roleStr.toLowerCase();
+                    let badgeClass = 'badge-operator';
+                    
+                    if(roleLower === 'developer') badgeClass = 'badge-dev';
+                    else if(roleLower === 'administrator') badgeClass = 'badge-admin';
+                    else if(roleLower === 'supervisor') badgeClass = 'badge-supervisor';
+                    else if(roleLower === 'demo') badgeClass = 'badge-demo';
+
+                    let nama = row.NamaLengkap || row.nama_lengkap || row.Nama_Lengkap || 'Tanpa Nama';
+                    let wa = row.NomorWA || row.nomor_wa || row.WA || '-';
+                    let lastLogin = row.LastLogin || 'Belum ada riwayat';
+                    
+                    let statusAwal = row.Status || row.status || 'Aktif';
+                    let statusClass = statusAwal.toLowerCase() === 'nonaktif' ? 'status-nonaktif' : 'status-aktif';
+
+                    let aksiHtml = '';
+                    if (roleLower === 'developer' && hakAksesLokal !== 'Developer') {
+                        aksiHtml = `<button class="btn-aksi-tabel" style="opacity: 0.5; cursor: not-allowed; background: transparent; box-shadow: none;" title="Akses Dilindungi"><i class="fa-solid fa-lock"></i></button>`;
+                    } else {
+                        aksiHtml = `
+                            <button class="btn-aksi-tabel btn-edit" onclick="bukaModalEditRole('${uname}', '${roleStr}', '${statusAwal}')" title="Ubah Akses/Status"><i class="fa-solid fa-sliders"></i></button>
+                            <button class="btn-aksi-tabel btn-reset" onclick="bukaModalReset('${uname}')" title="Reset Sandi Paksa"><i class="fa-solid fa-key"></i></button>
+                        `;
+                    }
+
+                    let tr = document.createElement('tr');
+                    tr.className = "baris-user";
+                    tr.innerHTML = `
+                        <td class="kolom-username"><strong>${uname}</strong></td>
+                        <td class="kolom-nama" style="font-weight:600;">
+                            ${nama}
+                            <div class="info-terakhir-login"><i class="fa-regular fa-clock"></i> Log: ${lastLogin}</div>
+                        </td>
+                        <td><span class="badge-role ${badgeClass}">${roleStr}</span></td>
+                        <td class="${statusClass}">${statusAwal}</td>
+                        <td>${wa}</td>
+                        <td><div class="action-btns">${aksiHtml}</div></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                cariUser(); 
+            });
+        }
+
+        function cariUser() {
+            let input = document.getElementById("searchInput").value.toLowerCase();
+            let tr = document.querySelectorAll(".baris-user");
+            tr.forEach(baris => {
+                let textUsername = baris.querySelector(".kolom-username").innerText.toLowerCase();
+                let textNama = baris.querySelector(".kolom-nama").innerText.toLowerCase();
+                if(textUsername.includes(input) || textNama.includes(input)) { baris.style.display = ""; } 
+                else { baris.style.display = "none"; }
+            });
+        }
+
+        function aturOpsiRole(currentRole) {
+            let optDev = document.getElementById('opt_developer');
+            if (currentRole === 'Developer') { optDev.style.display = 'block'; optDev.disabled = false; } 
+            else { optDev.style.display = 'none'; optDev.disabled = true; }
+        }
+
+        function bukaModalUser() {
+            vibrateClick();
+            document.getElementById('formMode').value = 'tambah';
+            document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-user-plus"></i> Tambah Pengguna Baru';
+            document.getElementById('formUser').reset();
+            
+            aturOpsiRole(''); 
+            
+            document.getElementById('grupPassword').style.display = 'block';
+            document.getElementById('u_username').readOnly = false;
+            document.getElementById('u_username').style.opacity = "1";
+            document.getElementById('u_nama').parentElement.style.display = 'block';
+            document.getElementById('grupGender').style.display = 'block';
+            document.getElementById('u_wa').parentElement.style.display = 'block';
+            document.getElementById('grupStatus').style.display = 'none'; 
+            
+            document.getElementById('u_password').required = true;
+            document.getElementById('btnSimpanUser').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Buat Pengguna';
+            
+            document.getElementById('modalUser').style.display = 'flex';
+            window.history.pushState({ modalOpen: true }, "", window.location.href);
+        }
+
+        function bukaModalEditRole(username, currentRole, currentStatus) {
+            vibrateClick();
+            document.getElementById('formMode').value = 'edit_role';
+            document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-sliders"></i> Ubah Hak Akses / Status';
+            
+            aturOpsiRole(currentRole);
+            
+            document.getElementById('u_username').value = username;
+            document.getElementById('u_username').readOnly = true; 
+            document.getElementById('u_username').style.opacity = "0.6"; 
+            document.getElementById('u_role').value = currentRole;
+            document.getElementById('u_status').value = currentStatus;
+
+            document.getElementById('grupStatus').style.display = 'block'; 
+            document.getElementById('grupPassword').style.display = 'none';
+            document.getElementById('u_nama').parentElement.style.display = 'none';
+            document.getElementById('grupGender').style.display = 'none';
+            document.getElementById('u_wa').parentElement.style.display = 'none';
+            
+            document.getElementById('u_password').required = false;
+            document.getElementById('btnSimpanUser').innerHTML = '<i class="fa-solid fa-check-double"></i> Perbarui Data';
+            
+            document.getElementById('modalUser').style.display = 'flex';
+            window.history.pushState({ modalOpen: true }, "", window.location.href);
+        }
+
+        function bukaModalReset(username) {
+            vibrateClick();
+            document.getElementById('reset_username').value = username;
+            document.getElementById('reset_label_user').innerText = username;
+            document.getElementById('formResetSandi').reset();
+            
+            document.getElementById('modalResetSandi').style.display = 'flex';
+            window.history.pushState({ modalOpen: true }, "", window.location.href);
+        }
+
+        // EKSEKUSI FORM USER (ENKRIPSI)
+        document.getElementById('formUser').addEventListener('submit', async function(e) {
+            e.preventDefault(); vibrateClick();
+            if (!navigator.onLine) { showToast("Sinyal Terputus."); vibrateHeavy(); return; }
+
+            let mode = document.getElementById('formMode').value;
+            let usernameInput = document.getElementById('u_username').value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+            let roleDipilih = document.getElementById('u_role').value;
+            
+            let btnSimpan = document.getElementById('btnSimpanUser');
+            let txtAsli = btnSimpan.innerHTML;
+            btnSimpan.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Memproses...'; btnSimpan.disabled = true;
+
+            try {
+                if (mode === 'tambah') {
+                    if(roleDipilih === 'Developer') {
+                        showToast("Sistem Menolak: Anda tidak bisa menciptakan Developer baru."); vibrateHeavy();
+                        btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false; return;
+                    }
+
+                    let snapshot = await database.ref('users/' + usernameInput).once('value');
+                    if (snapshot.exists()) {
+                        showToast("Aksi Ditolak: Username tersebut sudah dipakai!"); vibrateHeavy();
+                        btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false; return;
+                    }
+
+                    // --- ENKRIPSI SANDI LEVEL DEWA ---
+                    let plainPassword = document.getElementById('u_password').value;
+                    let hashedPassword = CryptoJS.SHA256(plainPassword + usernameInput).toString();
+
+                    await database.ref('users/' + usernameInput).set({
+                        Username: usernameInput,
+                        Password: hashedPassword, 
+                        NamaLengkap: document.getElementById('u_nama').value.trim(),
+                        Role: roleDipilih,
+                        Gender: document.getElementById('u_gender').value,
+                        NomorWA: document.getElementById('u_wa').value.trim(),
+                        Status: 'Aktif',
+                        LastLogin: '-'
+                    });
+                    showToast('Pengguna baru berhasil diciptakan!'); vibrateSuccess(); tutupModal('modalUser');
+
+                } else if (mode === 'edit_role') {
+                    let statusBaru = document.getElementById('u_status').value;
+
+                    if (usernameInput === usernameAsliLokal) {
+                        if (statusBaru === 'Nonaktif') { showToast("Gagal: Anda tidak diizinkan memblokir akun Anda sendiri!"); vibrateHeavy(); btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false; return; }
+                        if (hakAksesLokal === 'Developer' && roleDipilih !== 'Developer') { showToast("Gagal: Jabatan Developer adalah mutlak dan tidak bisa diturunkan."); vibrateHeavy(); btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false; return; }
+                    }
+
+                    await database.ref('users/' + usernameInput).update({ Role: roleDipilih, Status: statusBaru });
+                    showToast('Hak akses berhasil diperbarui!'); vibrateSuccess(); tutupModal('modalUser');
+                }
+            } catch (err) { showToast('Terjadi kesalahan jaringan Firebase!'); vibrateHeavy(); }
+            btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false;
+        });
+
+        // EKSEKUSI RESET SANDI (ENKRIPSI)
+        document.getElementById('formResetSandi').addEventListener('submit', async function(e) {
+            e.preventDefault(); vibrateClick();
+            if (!navigator.onLine) { showToast("Sinyal Terputus."); vibrateHeavy(); return; }
+
+            let usernameTarget = document.getElementById('reset_username').value;
+            let passBaru = document.getElementById('new_reset_password').value;
+
+            // --- ENKRIPSI SANDI LEVEL DEWA SAAT RESET ---
+            let hashedPassword = CryptoJS.SHA256(passBaru + usernameTarget).toString();
+
+            let btnSimpan = document.getElementById('btnSimpanReset');
+            let txtAsli = btnSimpan.innerHTML;
+            btnSimpan.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Meretas Sandi...'; btnSimpan.disabled = true;
+
+            try {
+                await database.ref('users/' + usernameTarget).update({ Password: hashedPassword });
+                showToast('Sandi berhasil diganti & dienkripsi!'); vibrateSuccess(); tutupModal('modalResetSandi');
+            } catch (err) { showToast('Gagal menghubungi server.'); vibrateHeavy(); }
+            btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false;
+        });
+
+        // --- 4. FIREBASE: CCTV DIGITAL (AUDIT TRAIL) ---
+        function muatCCTVRealtime() {
+            // Menarik maksimal 100 aktivitas terakhir
+            database.ref('audit_trail').limitToLast(100).on('value', snap => {
+                let wadah = document.getElementById('wadahCCTV');
+                let html = '';
+                let rawArr = [];
+                
+                snap.forEach(c => { rawArr.push(c.val()); });
+                rawArr.reverse(); // Dibalik agar yang paling baru di atas
+
+                if(rawArr.length === 0) {
+                    wadah.innerHTML = '<div class="empty-state"><i class="fa-solid fa-folder-open" style="font-size:30px; margin-bottom:10px;"></i><br>Log server masih bersih.</div>';
+                    return;
+                }
+
+                rawArr.forEach(d => {
+                    html += `
+                    <div class="cctv-item">
+                        <div class="cctv-head">
+                            <span class="cctv-user"><i class="fa-solid fa-user-shield" style="color:var(--text-muted); font-size:10px; margin-right:4px;"></i> ${d.Eksekutor} <span style="font-weight:500; font-size:10px;">(${d.Role})</span></span>
+                            <span class="cctv-time">${d.Waktu}</span>
+                        </div>
+                        <div class="cctv-body">
+                            <span class="cctv-menu">${d.Menu}</span> - ${d.Aksi}<br>
+                            <span style="font-size:11px; margin-top:3px; display:inline-block;">${d.Detail}</span>
+                        </div>
+                    </div>`;
+                });
+                wadah.innerHTML = html;
+            });
+        }
+    </script>
+</body>
+</html>
