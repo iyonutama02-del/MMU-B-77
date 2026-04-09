@@ -15,7 +15,15 @@
     <script src="firebase-config.js"></script>
 
     <script>
+        // --- PENGAMANAN SESI & ROLE ---
         if (!localStorage.getItem('usernameAsli')) window.location.replace('index.html');
+        
+        // Blokir Akun Demo (Celah Keamanan Terperbaiki)
+        if (localStorage.getItem('hakAkses') === 'Demo') {
+            alert("🔒 AKSES DIBATASI: Akun Demo tidak diperbolehkan masuk ke Pusat Chat.");
+            window.location.replace('beranda.html');
+        }
+
         if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
     </script>
 
@@ -153,6 +161,25 @@
             t.className = "show"; setTimeout(() => t.className = "", 3000); 
         }
 
+        // --- SISTEM AUTO-LOGOUT 15 MENIT (Pencegahan Sesi Abadi) ---
+        let waktuLogout;
+        function resetTimerLogout() {
+            clearTimeout(waktuLogout);
+            waktuLogout = setTimeout(() => {
+                if(navigator.vibrate) navigator.vibrate(500);
+                showToast("Sesi habis (15 Menit). Keluar demi keamanan...");
+                setTimeout(() => {
+                    localStorage.removeItem('usernameAsli');
+                    window.location.replace('index.html#logout');
+                }, 2500);
+            }, 15 * 60 * 1000); 
+        }
+        window.onload = resetTimerLogout; 
+        document.onmousemove = resetTimerLogout; 
+        document.onkeypress = resetTimerLogout; 
+        document.ontouchstart = resetTimerLogout;
+
+
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('show'); }
         function toggleSecret() {
             isSecretMode = !isSecretMode;
@@ -193,7 +220,7 @@
         function formatMessage(text) {
             if(!text) return "";
             // SMART LINK (INV-, KSK-, KSM-)
-            text = text.replace(/(INV-\S+|KSK-\S+|KSM-\S+)/g, '<a href="#" class="smart-link" onclick="vibrateClick(); alert(\'Mencari rincian $1 di database...\')"><i class="fa-solid fa-magnifying-glass-dollar"></i> $1</a>');
+            text = text.replace(/(INV-\S+|KSK-\S+|KSM-\S+)/g, '<a href="#" class="smart-link" onclick="if(navigator.vibrate) navigator.vibrate(30); alert(\'Mencari rincian $1 di database...\')"><i class="fa-solid fa-magnifying-glass-dollar"></i> $1</a>');
             // MENTION (@Nama)
             text = text.replace(/(@\S+)/g, '<span class="mention-tag">$1</span>');
             return text;
@@ -258,7 +285,7 @@
         }
 
         function scrollToMsg(id) { let el = document.getElementById(id); if(el) el.scrollIntoView(); el.style.background = "rgba(59, 130, 246, 0.2)"; setTimeout(()=>el.style.background="", 1000); }
-        function prosesGambar(e) { /* Sama seperti sebelumnya (Base64) */ }
+        function prosesGambar(e) { /* Proses gambar base64 */ }
     </script>
 </body>
 </html>
