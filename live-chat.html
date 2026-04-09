@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#e0e5ec">
+    <title>Madrasah Command Center - MMU B-77</title>
+    
+    <link rel="icon" type="image/png" href="Logo-Favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        if (!localStorage.getItem('usernameAsli')) window.location.replace('index.html');
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+
+    <style>
+        :root {
+            --bg-main: #e0e5ec; --text-dark: #31344b; --text-muted: #8C96A3;
+            --shadow-dark: rgba(163, 177, 198, 0.6); --shadow-light: rgba(255, 255, 255, 0.6);
+            --c-green: #22c55e; --c-blue: #3b82f6; --c-red: #ef4444; --c-orange: #f59e0b;
+        }
+        [data-theme="dark"] {
+            --bg-main: #2d3748; --text-dark: #f0f4f8; --text-muted: #a0aec0;
+            --shadow-dark: #202835; --shadow-light: #3a4556;
+        }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { margin: 0; padding: 0; background: var(--bg-main); font-family: 'Poppins', sans-serif; color: var(--text-dark); height: 100vh; display: flex; flex-direction: column; overflow: hidden; transition: 0.3s;}
+        
+        /* HEADER & SEARCH */
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; background: var(--bg-main); z-index: 100; gap: 15px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .search-wrapper { flex: 1; position: relative; }
+        .search-input { width: 100%; padding: 10px 15px 10px 35px; border: none; border-radius: 12px; background: var(--bg-main); font-family: 'Poppins'; font-size: 12px; box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); outline: none; }
+        .search-wrapper i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 12px; }
+
+        /* SIDEBAR PRESENCE */
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { width: 260px; background: var(--bg-main); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; transition: 0.3s; }
+        @media (max-width: 768px) { .sidebar { display: none; position: absolute; height: 100%; z-index: 200; box-shadow: 10px 0 20px rgba(0,0,0,0.1); } .sidebar.show { display: flex; } }
+        .user-item { display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 15px; margin: 5px 10px; transition: 0.2s; cursor: pointer;}
+        .user-item:hover { background: rgba(0,0,0,0.02); }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--shadow-dark); display: flex; justify-content: center; align-items: center; color: white; font-weight: 800; position: relative; font-family: 'Montserrat'; }
+        .status-dot { width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--bg-main); position: absolute; bottom: 0; right: 0; }
+        .dot-online { background-color: var(--c-green); box-shadow: 0 0 5px var(--c-green); }
+        .dot-offline { background-color: var(--text-muted); }
+
+        /* PINNED MESSAGE BAR */
+        .pinned-bar { background: var(--bg-main); padding: 10px 20px; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; position: relative; z-index: 50;}
+        .pinned-bar:hover { background: rgba(0,0,0,0.02); }
+        .pinned-bar i { color: var(--c-orange); font-size: 14px; }
+        .pinned-text { font-size: 11px; font-weight: 700; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+
+        /* CHAT AREA */
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--bg-main); position: relative; }
+        .chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+        
+        .bubble-wrapper { display: flex; flex-direction: column; max-width: 85%; transition: 0.3s; }
+        .wrapper-in { align-self: flex-start; }
+        .wrapper-out { align-self: flex-end; align-items: flex-end; }
+        
+        .chat-bubble { padding: 12px 16px; border-radius: 18px; font-size: 13px; line-height: 1.5; position: relative; box-shadow: 4px 4px 10px rgba(0,0,0,0.05); word-wrap: break-word;}
+        .bubble-in { background: var(--bg-main); color: var(--text-dark); border-top-left-radius: 0; box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); }
+        .bubble-out { background: linear-gradient(135deg, #2df077 0%, #00d26a 100%); color: white; border-top-right-radius: 0; box-shadow: 4px 4px 12px rgba(0, 210, 106, 0.3); cursor: pointer;}
+        
+        /* REPLY & MENTION STYLES */
+        .reply-context { background: rgba(0,0,0,0.05); padding: 8px 12px; border-radius: 10px; border-left: 4px solid var(--c-blue); margin-bottom: 8px; font-size: 11px; color: var(--text-muted); cursor: pointer;}
+        .mention-tag { color: var(--c-orange) !important; font-weight: 800; background: rgba(245, 158, 11, 0.1); padding: 0 4px; border-radius: 4px; }
+        .smart-link { background: var(--c-blue); color: white !important; padding: 4px 10px; border-radius: 8px; text-decoration: none; font-weight: 800; font-family: 'Montserrat'; font-size: 10px; display: inline-flex; align-items: center; gap: 5px; margin: 5px 0; box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3); }
+
+        /* INPUT AREA & REPLY PREVIEW */
+        .reply-preview { display: none; background: var(--bg-main); padding: 10px 20px; border-top: 1px solid rgba(0,0,0,0.05); border-left: 5px solid var(--c-blue); position: relative; animation: slideUp 0.3s; }
+        .input-area { padding: 15px 20px; background: var(--bg-main); box-shadow: 0 -5px 15px rgba(0,0,0,0.03); display: flex; align-items: center; gap: 12px; z-index: 100;}
+        .chat-input { flex: 1; padding: 14px 22px; border: none; border-radius: 25px; background: var(--bg-main); font-family: 'Poppins'; font-size: 13px; color: var(--text-dark); box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); outline: none; }
+        
+        .btn-icon-sm { width: 42px; height: 42px; border-radius: 50%; border: none; background: var(--bg-main); color: var(--text-muted); display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); transition: 0.2s; }
+        .btn-icon-sm:active { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); }
+        .btn-send { background: var(--c-blue); color: white; box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3); }
+
+        #toast { visibility: hidden; min-width: 250px; background-color: #31344b; color: #fff; text-align: center; border-radius: 15px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 100px; transform: translateX(-50%); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div id="toast"><i class="fa-solid fa-circle-info"></i> <span id="toastMsg">Pesan</span></div>
+    <audio id="notifSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
+
+    <div class="header">
+        <button class="btn-icon-sm" onclick="window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
+        <div class="search-wrapper">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" class="search-input" id="searchChat" placeholder="Cari instruksi atau nominal..." onkeyup="filterChat()">
+        </div>
+        <button class="btn-icon-sm" onclick="toggleSidebar()"><i class="fa-solid fa-users"></i></button>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar" id="sidebar">
+            <div style="padding: 20px; font-family:'Montserrat'; font-weight:900; font-size:11px; color:var(--text-muted); letter-spacing:1px;">TIM MONITORING</div>
+            <div id="userListArea"></div>
+        </div>
+
+        <div class="chat-area">
+            <div class="pinned-bar" onclick="handlePinnedClick()">
+                <i class="fa-solid fa-thumbtack"></i>
+                <div class="pinned-text" id="pinnedText">Memuat pengumuman penting...</div>
+            </div>
+
+            <div class="chat-box" id="chatBox">
+                <div style="text-align:center; color:var(--text-muted); font-size:11px; margin:20px 0;">
+                    <i class="fa-solid fa-shield-halved"></i> Jalur komunikasi internal terenkripsi.
+                </div>
+            </div>
+
+            <div class="reply-preview" id="replyPreview">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <b id="replyTargetName" style="font-size:11px; color:var(--c-blue);">Membalas Seseorang</b>
+                    <i class="fa-solid fa-xmark" style="cursor:pointer; color:var(--c-red);" onclick="cancelReply()"></i>
+                </div>
+                <p id="replyTargetText" style="font-size:10px; color:var(--text-muted); margin:4px 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></p>
+            </div>
+
+            <div class="input-area">
+                <button class="btn-icon-sm" id="btnSecret" onclick="toggleSecret()" title="Mode Rahasia"><i class="fa-solid fa-user-ninja"></i></button>
+                <button class="btn-icon-sm" onclick="document.getElementById('fileInput').click()"><i class="fa-solid fa-paperclip"></i></button>
+                <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="prosesGambar(event)">
+                
+                <input type="text" class="chat-input" id="chatInput" placeholder="Ketik pesan atau gunakan @..." onkeypress="if(event.key === 'Enter') kirimPesan()">
+                <button class="btn-icon-sm btn-send" onclick="kirimPesan()"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const myUid = localStorage.getItem('usernameAsli');
+        const myName = localStorage.getItem('namaPengguna');
+        const myRole = localStorage.getItem('hakAkses');
+        
+        let isSecretMode = false;
+        let replyId = null;
+        let currentBase64Img = "";
+        let soundEl = document.getElementById('notifSound');
+
+        function showToast(msg) { 
+            let t = document.getElementById("toast"); document.getElementById("toastMsg").innerText = msg;
+            t.className = "show"; setTimeout(() => t.className = "", 3000); 
+        }
+
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('show'); }
+        function toggleSecret() {
+            isSecretMode = !isSecretMode;
+            document.getElementById('btnSecret').style.color = isSecretMode ? 'var(--c-red)' : 'var(--text-muted)';
+            if(isSecretMode) showToast("Mode Ninja: Pesan hancur dalam 5 menit!");
+        }
+
+        // --- FITUR 14: PRESENCE & LOKASI ---
+        database.ref('chat_presence/' + myUid).set({ name: myName, status: 'online', activePage: 'Command Center', lastSeen: firebase.database.ServerValue.TIMESTAMP });
+        database.ref('chat_presence/' + myUid).onDisconnect().update({ status: 'offline', lastSeen: firebase.database.ServerValue.TIMESTAMP });
+
+        database.ref('chat_presence').on('value', snap => {
+            let area = document.getElementById('userListArea'); area.innerHTML = '';
+            snap.forEach(c => {
+                let u = c.val(); if(c.key === myUid) return;
+                let dot = u.status === 'online' ? 'dot-online' : 'dot-offline';
+                area.innerHTML += `
+                <div class="user-item">
+                    <div class="user-avatar">${u.name.charAt(0)}<div class="status-dot ${dot}"></div></div>
+                    <div style="flex:1;"><h4 style="margin:0; font-size:12px;">${u.name}</h4><p style="margin:0; font-size:9px; color:var(--text-muted);">${u.status==='online'?u.activePage:'Offline'}</p></div>
+                </div>`;
+            });
+        });
+
+        // --- FITUR 5: PINNED MESSAGE LOGIC ---
+        database.ref('chat_pinned').on('value', snap => {
+            document.getElementById('pinnedText').innerText = snap.val() || "Belum ada pengumuman hari ini.";
+        });
+
+        function handlePinnedClick() {
+            if(myRole === 'Administrator' || myRole === 'Supervisor') {
+                let p = prompt("Tulis Pengumuman Baru (Pin):", document.getElementById('pinnedText').innerText);
+                if(p !== null) database.ref('chat_pinned').set(p);
+            } else { showToast("Hanya Pimpinan yang bisa mengubah Pin."); }
+        }
+
+        // --- FITUR 7, 8, 12, 13: LOGIKA DISPLAY PESAN ---
+        function formatMessage(text) {
+            if(!text) return "";
+            // SMART LINK (INV-, KSK-, KSM-)
+            text = text.replace(/(INV-\S+|KSK-\S+|KSM-\S+)/g, '<a href="#" class="smart-link" onclick="vibrateClick(); alert(\'Mencari rincian $1 di database...\')"><i class="fa-solid fa-magnifying-glass-dollar"></i> $1</a>');
+            // MENTION (@Nama)
+            text = text.replace(/(@\S+)/g, '<span class="mention-tag">$1</span>');
+            return text;
+        }
+
+        async function kirimPesan() {
+            let inp = document.getElementById('chatInput'); let text = inp.value.trim();
+            if(text === "" && currentBase64Img === "") return;
+            
+            let msgId = "MSG-" + Date.now();
+            let payload = {
+                id: msgId, uid: myUid, name: myName, text: text, img: currentBase64Img,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                isSecret: isSecretMode, isDeleted: false, status: 'sent', replyTo: replyId
+            };
+            if(isSecretMode) payload.expireAt = Date.now() + (5 * 60000);
+
+            await database.ref('chat_messages/' + msgId).set(payload);
+            inp.value = ""; cancelReply(); if(isSecretMode) toggleSecret();
+        }
+
+        database.ref('chat_messages').limitToLast(50).on('value', snap => {
+            let box = document.getElementById('chatBox'); box.innerHTML = '';
+            snap.forEach(c => {
+                let m = c.val();
+                if(m.isSecret && m.expireAt && Date.now() > m.expireAt) { database.ref('chat_messages/'+m.id).remove(); return; }
+                if(m.uid !== myUid && m.status !== 'read') database.ref('chat_messages/'+m.id).update({status:'read'});
+
+                let isMe = m.uid === myUid;
+                let replyHtml = "";
+                if(m.replyTo) {
+                    replyHtml = `<div class="reply-context" onclick="scrollToMsg('${m.replyTo}')">📜 Membalas pesan sebelumnya...</div>`;
+                }
+
+                box.innerHTML += `
+                <div class="bubble-wrapper ${isMe?'wrapper-out':'wrapper-in'}" id="${m.id}">
+                    ${!isMe ? `<div style="font-size:10px; font-weight:800; margin-bottom:4px; color:var(--text-muted);">${m.name}</div>` : ''}
+                    <div class="chat-bubble ${isMe?'bubble-out':'bubble-in'} ${m.isSecret?'secret-bubble':''}" onclick="setReply('${m.id}', '${m.name}', '${m.text}')">
+                        ${replyHtml}
+                        ${m.img ? `<img src="${m.img}" style="max-width:100%; border-radius:10px; margin-bottom:8px;">` : ''}
+                        <div>${m.isDeleted ? '<i>Pesan telah ditarik</i>' : formatMessage(m.text)}</div>
+                    </div>
+                </div>`;
+            });
+            box.scrollTop = box.scrollHeight;
+        });
+
+        // --- FITUR 4 & 9: UTILS ---
+        function setReply(id, name, text) { 
+            replyId = id; document.getElementById('replyTargetName').innerText = "Membalas " + name;
+            document.getElementById('replyTargetText').innerText = text;
+            document.getElementById('replyPreview').style.display = 'block';
+            document.getElementById('chatInput').focus();
+        }
+        function cancelReply() { replyId = null; document.getElementById('replyPreview').style.display = 'none'; }
+        
+        function filterChat() {
+            let val = document.getElementById('searchChat').value.toLowerCase();
+            document.querySelectorAll('.bubble-wrapper').forEach(b => {
+                b.style.display = b.innerText.toLowerCase().includes(val) ? 'flex' : 'none';
+            });
+        }
+
+        function scrollToMsg(id) { let el = document.getElementById(id); if(el) el.scrollIntoView(); el.style.background = "rgba(59, 130, 246, 0.2)"; setTimeout(()=>el.style.background="", 1000); }
+        function prosesGambar(e) { /* Sama seperti sebelumnya (Base64) */ }
+    </script>
+</body>
+</html>
