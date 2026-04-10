@@ -858,11 +858,21 @@
             } catch(e) { document.getElementById('importLoading').style.display = 'none'; showToast("Gagal memuat rekam jejak server."); vibrateHeavy(); }
         }
         function tutupRapor() { vibrateClick(); document.getElementById('modalRapor').style.display = 'none'; }
+        
+        // ====== PERBAIKAN BUG PDF: Tambahan pagebreak agar tabel tidak terpotong ======
         function unduhRaporPDF() {
             vibrateClick(); showToast("Mempersiapkan PDF Transparansi..."); let printArea = document.getElementById('area-cetak-rapor');
-            var opt = { margin: 0.5, filename: `Rekam_Jejak_${currentRaporNama.replace(/ /g, '_')}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } };
+            var opt = { 
+                margin: [0.5, 0.5, 0.5, 0.5], 
+                filename: `Rekam_Jejak_${currentRaporNama.replace(/ /g, '_')}.pdf`, 
+                image: { type: 'jpeg', quality: 0.98 }, 
+                html2canvas: { scale: 2, useCORS: true }, 
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
+            };
             html2pdf().set(opt).from(printArea).save().then(() => { showToast("File PDF berhasil diunduh!"); vibrateSuccess(); });
         }
+        // ==============================================================================
 
 
         // ==========================================
@@ -984,16 +994,20 @@
             if(select.value === 'BARU') { inputManual.style.display = 'block'; inputManual.focus(); } else { inputManual.style.display = 'none'; }
         }
 
+        // ====== PERBAIKAN BUG UX: Mengembalikan teks tombol yang tidak di-hardcode ======
         function tarikDataBerdasarkanKelas() {
             vibrateClick(); let kelasDicari = document.getElementById('kelasAsal').value; let btnCari = document.getElementById('btnCariTarik');
+            let teksAsli = btnCari.innerHTML; // Menyimpan teks aslinya
             btnCari.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Menyaring...'; btnCari.disabled = true;
             setTimeout(() => {
                 let hasilFilter = semuaDataSantriMutasi;
                 if(kelasDicari !== "") hasilFilter = semuaDataSantriMutasi.filter(row => row.Kelas && String(row.Kelas).trim() === kelasDicari);
                 renderTabelMutasi(hasilFilter);
-                btnCari.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Tampilkan Santri'; btnCari.disabled = false;
+                btnCari.innerHTML = teksAsli; // Mengembalikan teks asli tanpa peduli bahasa
+                btnCari.disabled = false;
             }, 300); 
         }
+        // ================================================================================
 
         async function prosesMutasi() {
             vibrateClick();
