@@ -601,10 +601,19 @@
                     loader.style.display = 'flex'; progressTxt.innerText = `Menyusun data untuk ${targetSantri.length} santri...`;
 
                     targetSantri.forEach((s, idx) => {
-                        // KUNCI ABSOLUT: Menggunakan s.idSistemNode
-                        let invID = `INV-${s.idSistemNode}-${kodeUang}-${timestamp}-${idx}`;
+                        // KUNCI ABSOLUT: Menggunakan s.idSistemNode + RANDOM
+                        let randId = Math.floor(Math.random() * 10000);
+                        let invID = `INV-${s.idSistemNode}-${kodeUang}-${timestamp}-${idx}-${randId}`;
                         let namaValid = s.Nama_Lengkap || s.Nama_Santri || "Hamba Allah"; 
-                        updates[`tagihan/${invID}`] = { ID_Tagihan: invID, ID_Murid: String(s.idSistemNode), Nama_Santri: namaValid, Kelas: s.Kelas, Kode_Uang: String(kodeUang), Nama_Pos: posName, Nominal: nominalAngka, Terbayar: 0, Keterangan: ket, Tanggal_Buat: tglIndo, Status: 'Belum Lunas', Admin_Pembuat: admin };
+                        
+                        let nomAkhir = nominalAngka;
+                        let statTagihan = 'Belum Lunas';
+                        if(s.Dispensasi_Aktif) {
+                            nomAkhir = 0;
+                            statTagihan = 'Dispensasi: ' + (s.Alasan_Dispensasi || 'Global');
+                        }
+
+                        updates[`tagihan/${invID}`] = { ID_Tagihan: invID, ID_Murid: String(s.idSistemNode), Nama_Santri: namaValid, Kelas: s.Kelas, Kode_Uang: String(kodeUang), Nama_Pos: posName, Nominal: nomAkhir, Terbayar: 0, Keterangan: ket, Tanggal_Buat: tglIndo, Status: statTagihan, Admin_Pembuat: admin };
                     });
                     
                     infoCCTV = `Menerbitkan Tagihan Massal Pos: ${posName} untuk Kelas ${kls} (${targetSantri.length} Anak)`;
@@ -622,8 +631,15 @@
 
                     loader.style.display = 'flex'; progressTxt.innerText = `Menyusun tagihan individu...`;
 
-                    let invID = `INV-${idAbsolut}-${kodeUang}-${timestamp}`;
-                    updates[`tagihan/${invID}`] = { ID_Tagihan: invID, ID_Murid: String(idAbsolut), Nama_Santri: nama, Kelas: kls, Kode_Uang: String(kodeUang), Nama_Pos: posName, Nominal: nominalAngka, Terbayar: 0, Keterangan: ket, Tanggal_Buat: tglIndo, Status: 'Belum Lunas', Admin_Pembuat: admin };
+                    let invID = `INV-${idAbsolut}-${kodeUang}-${timestamp}-${Math.floor(Math.random() * 10000)}`;
+                    let dataS = dbSantriAktif.find(x => String(x.idSistemNode) === String(idAbsolut));
+                    let nomAkhir = nominalAngka;
+                    let statTagihan = 'Belum Lunas';
+                    if(dataS && dataS.Dispensasi_Aktif) {
+                        nomAkhir = 0;
+                        statTagihan = 'Dispensasi: ' + (dataS.Alasan_Dispensasi || 'Global');
+                    }
+                    updates[`tagihan/${invID}`] = { ID_Tagihan: invID, ID_Murid: String(idAbsolut), Nama_Santri: nama, Kelas: kls, Kode_Uang: String(kodeUang), Nama_Pos: posName, Nominal: nomAkhir, Terbayar: 0, Keterangan: ket, Tanggal_Buat: tglIndo, Status: statTagihan, Admin_Pembuat: admin };
                     infoCCTV = `Menerbitkan Tagihan Individu Pos: ${posName} untuk Santri: ${nama} (${idAbsolut})`;
                 }
 
