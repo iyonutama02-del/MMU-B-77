@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blueprint Nota Keuangan - MMU B-77</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-main: #e0e5ec;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-dark);
+            margin: 0; padding: 40px 20px;
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 30px;
+        }
+
+        /* STRUKTUR DASAR KUITANSI */
+        .kuitansi-box {
+            width: 100%; max-width: 380px; background: #ffffff; border-radius: 20px; 
+            padding: 35px 25px; box-shadow: 15px 15px 30px rgba(163, 177, 198, 0.4), -15px -15px 30px rgba(255,255,255, 0.8); 
+            position: relative; overflow: hidden; 
+            background-image: radial-gradient(#f1f5f9 10%, transparent 11%); background-size: 20px 20px;
+        }
+        .k-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 150px; color: rgba(0,0,0,0.02); z-index: 0; pointer-events: none; }
+        
+        .k-header { display: flex; align-items: center; gap: 15px; border-bottom: 2px dashed #cbd5e1; padding-bottom: 20px; margin-bottom: 20px; position: relative; z-index: 1;}
+        .k-icon { font-size: 35px; }
+        .k-title { font-family: 'Montserrat'; font-weight: 900; font-size: 18px; margin: 0; letter-spacing: 0.5px; }
+        .k-sub { font-size: 10px; color: var(--text-muted); margin: 2px 0 0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
+        .k-id { font-family: monospace; font-size: 11px; margin: 8px 0 0; font-weight: 700; color: #94a3b8; background: #f1f5f9; display: inline-block; padding: 3px 8px; border-radius: 6px;}
+        
+        .k-body { font-size: 12px; position: relative; z-index: 1;}
+        .k-row { display: flex; justify-content: space-between; border-bottom: 1px solid #f8fafc; padding: 10px 0; }
+        .k-row span { color: var(--text-muted); font-weight: 500;}
+        .k-row strong { color: var(--text-dark); font-weight: 700; text-align: right; max-width: 65%;}
+        
+        .k-total { padding: 15px; border-radius: 15px; text-align: center; margin: 20px 0; position: relative; z-index: 1;}
+        .k-total span { display: block; font-size: 10px; font-weight: 800; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;}
+        .k-total h2 { margin: 5px 0 0; font-family: 'Montserrat'; font-size: 28px; font-weight: 900; letter-spacing: -1px;}
+        .k-sisa { font-size: 11px; margin: 8px 0 0; font-weight: 800; background: white; display: inline-block; padding: 4px 10px; border-radius: 8px;}
+        
+        .k-pesan { text-align: center; background: #f8fafc; padding: 15px; border-radius: 12px; font-size: 11px; font-weight: 600; color: #475569; font-style: italic; line-height: 1.6; position: relative; z-index: 1;}
+        
+        .k-footer { text-align: center; font-size: 9px; color: #94a3b8; margin-top: 25px; font-weight: 500; position: relative; z-index: 1; border-top: 1px solid #f1f5f9; padding-top: 15px;}
+
+        /* ==========================================
+           TEMA 1: KEKURANGAN / ANGSURAN (ORANGE)
+           ========================================== */
+        .k-theme-orange { border-top: 15px solid #f59e0b; } 
+        .k-theme-orange .k-icon { color: #f59e0b; } 
+        .k-theme-orange .k-total { background: rgba(245, 158, 11, 0.1); color: #b45309; border: 1px dashed #f59e0b;}
+        .k-theme-orange .k-pesan { border-left: 4px solid #f59e0b; }
+        .k-theme-orange .k-sisa { color: #ef4444; border: 1px solid #fecaca; }
+
+        /* ==========================================
+           TEMA 2: BAYAR PAS / LUNAS (HIJAU)
+           ========================================== */
+        .k-theme-green { border-top: 15px solid #22c55e; } 
+        .k-theme-green .k-icon { color: #22c55e; } 
+        .k-theme-green .k-total { background: rgba(34, 197, 94, 0.1); color: #15803d; border: 1px dashed #22c55e;}
+        .k-theme-green .k-pesan { border-left: 4px solid #22c55e; }
+        .k-theme-green .k-sisa { color: #22c55e; border: 1px solid #bbf7d0; }
+
+        /* ==========================================
+           TEMA 3: BAYAR LEBIH / INFAQ (BIRU)
+           ========================================== */
+        .k-theme-blue { border-top: 15px solid #3b82f6; } 
+        .k-theme-blue .k-icon { color: #3b82f6; } 
+        .k-theme-blue .k-total { background: rgba(59, 130, 246, 0.1); color: #1d4ed8; border: 1px dashed #3b82f6;}
+        .k-theme-blue .k-pesan { border-left: 4px solid #3b82f6; }
+        .k-theme-blue .k-sisa { color: #3b82f6; border: 1px solid #bfdbfe; }
+    </style>
+</head>
+<body>
+
+    <div class="kuitansi-box k-theme-orange">
+        <div class="k-watermark"><i class="fa-solid fa-building-columns"></i></div>
+        
+        <div class="k-header">
+            <div class="k-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+            <div>
+                <h1 class="k-title">BUKTI ANGSURAN</h1>
+                <p class="k-sub">Madrasah Miftahul Ulum B-77</p>
+                <p class="k-id">ID: PAY-1447-1718293012</p>
+            </div>
+        </div>
+        
+        <div class="k-body">
+            <div class="k-row"><span>Tgl. Transaksi</span><strong>10 April 2026</strong></div>
+            <div class="k-row"><span>Diterima Dari</span><strong>Bpk. Budi (Wali Ahmad)</strong></div>
+            <div class="k-row"><span>Pembayaran</span><strong>Buku / Kitab Ula</strong></div>
+            <div class="k-row"><span>Total Tagihan</span><strong>Rp 100.000</strong></div>
+        </div>
+        
+        <div class="k-total">
+            <span>DIBAYARKAN (TUNAI)</span>
+            <h2>Rp 50.000</h2>
+            <p class="k-sisa">SISA TAGIHAN: Rp 50.000</p>
+        </div>
+
+        <div class="k-pesan">
+            <i class="fa-solid fa-quote-left" style="color:#fcd34d;"></i>
+            Terima kasih atas angsuran administrasi ananda. Semoga Allah senantiasa memberikan kelancaran dan kelapangan rezeki bagi keluarga Bapak/Ibu.
+            <i class="fa-solid fa-quote-right" style="color:#fcd34d;"></i>
+        </div>
+        
+        <div class="k-footer">
+            Dokumen ini diterbitkan secara digital oleh Sistem Keuangan MMU B-77.<br>Sah sebagai bukti pembayaran sementara.
+        </div>
+    </div>
+
+    <div class="kuitansi-box k-theme-green">
+        <div class="k-watermark"><i class="fa-solid fa-building-columns"></i></div>
+        
+        <div class="k-header">
+            <div class="k-icon"><i class="fa-solid fa-check-double"></i></div>
+            <div>
+                <h1 class="k-title">BUKTI LUNAS</h1>
+                <p class="k-sub">Madrasah Miftahul Ulum B-77</p>
+                <p class="k-id">ID: PAY-1447-1718294455</p>
+            </div>
+        </div>
+        
+        <div class="k-body">
+            <div class="k-row"><span>Tgl. Transaksi</span><strong>10 April 2026</strong></div>
+            <div class="k-row"><span>Diterima Dari</span><strong>Ibu Siti (Wali Fatimah)</strong></div>
+            <div class="k-row"><span>Pembayaran</span><strong>SPP Syawal 1447 H</strong></div>
+            <div class="k-row"><span>Total Tagihan</span><strong>Rp 50.000</strong></div>
+        </div>
+        
+        <div class="k-total">
+            <span>DIBAYARKAN (PAS)</span>
+            <h2>Rp 50.000</h2>
+            <p class="k-sisa"><i class="fa-solid fa-check"></i> LUNAS TIDAK ADA TUNGGAKAN</p>
+        </div>
+
+        <div class="k-pesan">
+            <i class="fa-solid fa-quote-left" style="color:#86efac;"></i>
+            Alhamdulillah, kewajiban administrasi telah tertunaikan. Jazakumullah ahsanal jaza. Semoga ilmu yang didapat ananda menjadi barokah dan bermanfaat di dunia maupun akhirat.
+            <i class="fa-solid fa-quote-right" style="color:#86efac;"></i>
+        </div>
+        
+        <div class="k-footer">
+            Dokumen ini diterbitkan secara digital oleh Sistem Keuangan MMU B-77.<br>Sah dan valid sebagai bukti pelunasan resmi.
+        </div>
+    </div>
+
+    <div class="kuitansi-box k-theme-blue">
+        <div class="k-watermark"><i class="fa-solid fa-building-columns"></i></div>
+        
+        <div class="k-header">
+            <div class="k-icon"><i class="fa-solid fa-hand-holding-heart"></i></div>
+            <div>
+                <h1 class="k-title">BUKTI LUNAS & INFAQ</h1>
+                <p class="k-sub">Madrasah Miftahul Ulum B-77</p>
+                <p class="k-id">ID: PAY-1447-1718295999</p>
+            </div>
+        </div>
+        
+        <div class="k-body">
+            <div class="k-row"><span>Tgl. Transaksi</span><strong>10 April 2026</strong></div>
+            <div class="k-row"><span>Diterima Dari</span><strong>Hamba Allah (Wali Hasan)</strong></div>
+            <div class="k-row"><span>Pembayaran</span><strong>Uang Gedung</strong></div>
+            <div class="k-row"><span>Total Tagihan</span><strong>Rp 100.000</strong></div>
+        </div>
+        
+        <div class="k-total">
+            <span>DIBAYARKAN (TUNAI)</span>
+            <h2>Rp 150.000</h2>
+            <p class="k-sisa"><i class="fa-solid fa-heart"></i> ALOKASI INFAQ: Rp 50.000</p>
+        </div>
+
+        <div class="k-pesan">
+            <i class="fa-solid fa-quote-left" style="color:#93c5fd;"></i>
+            Syukron jazilan atas pelunasan sekaligus infaq sukarela yang diberikan. Semoga kelebihan harta yang disedekahkan di jalan Allah ini menjadi amal jariyah yang pahalanya mengalir tiada henti.
+            <i class="fa-solid fa-quote-right" style="color:#93c5fd;"></i>
+        </div>
+        
+        <div class="k-footer">
+            Dokumen ini diterbitkan secara digital oleh Sistem Keuangan MMU B-77.<br>Sah sebagai bukti pelunasan dan penerimaan infaq.
+        </div>
+    </div>
+
+</body>
+</html>
