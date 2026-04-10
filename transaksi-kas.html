@@ -295,7 +295,7 @@
                 showToast("Mode Pengawas: Anda hanya dapat melihat data & riwayat.");
             }
 
-            // SINKRONISASI KODE KEUANGAN & FILTER OTOMATIS
+            // SINKRONISASI KODE KEUANGAN & FILTER OTOMATIS (VERSI KEBAL)
             database.ref('kode_keuangan').on('value', snap => {
                 let optMasuk = '<option value="">-- Pilih Pos Pemasukan --</option>';
                 let optKeluar = '<option value="">-- Pilih Pos Pengeluaran --</option>';
