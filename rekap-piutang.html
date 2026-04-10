@@ -108,7 +108,7 @@
         .btn-nuklir:active { transform: translateY(3px); box-shadow: inset 3px 3px 8px rgba(0,0,0,0.2); }
 
         .btn-excel { background: var(--bg-main); color: var(--c-green); padding: 10px 15px; border-radius: 10px; font-size: 12px; font-weight: 700; font-family: 'Poppins'; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light); }
-        .btn-excel:active { box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light); }
+        .btn-excel:active { box-shadow: inset 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light); }
         
         .empty-state { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; font-weight: 600; }
     </style>
@@ -419,6 +419,7 @@
             window.open(`https://wa.me/${noWA}?text=${pesan}`, '_blank');
         }
 
+        // ====== BAGIAN YANG DIMODIFIKASI: PENCEGAHAN BLOKIR POP-UP ======
         async function eksekusiBomNuklir() {
             vibrateHeavy();
             let filterKls = document.getElementById('filterKelas').value;
@@ -431,23 +432,29 @@
                 showToast("Tidak ada sasaran valid (Nomor WA kosong semua)!"); return;
             }
 
-            let msg = `⚠️ BOM NUKLIR DIAKTIFKAN ⚠️\n\nAnda akan membuka ${validTargets.length} tab WhatsApp beruntun untuk mengirim tagihan ke wali santri kelas [${filterKls}].\n\nPastikan WhatsApp Web Anda sudah terhubung di browser ini.\nLanjutkan eksekusi?`;
+            // Pesan peringatan pop-up yang diperjelas
+            let msg = `⚠️ PERHATIAN PENTING! ⚠️\n\nSistem akan membuka ${validTargets.length} tab WhatsApp beruntun.\n\nJIKA TAB TIDAK TERBUKA (DIBLOKIR BROWSER):\nLihat pojok kanan atas URL (address bar), klik ikon silang merah (Pop-up Blocked), dan pilih "Always Allow / Selalu Izinkan".\n\nApakah Anda siap mengeksekusi?`;
             
             if(!confirm(msg)) return;
 
-            showToast(`Mengeksekusi ${validTargets.length} pesan beruntun... Pastikan pop-up browser diizinkan!`);
+            showToast(`Mengeksekusi ${validTargets.length} pesan beruntun... Jangan tutup halaman ini!`);
             
             await catatAuditTrail('Penagihan Massal', `Broadcast WA ke ${validTargets.length} wali santri kelas [${filterKls}]`);
 
-            // Eksekusi beruntun (Jeda 1 detik per tab untuk menghindari freeze browser)
+            // Eksekusi beruntun (Jeda 2 detik per tab untuk menghindari blokir Anti-Spam Browser)
             validTargets.forEach((t, index) => {
                 setTimeout(() => {
                     let noWA = formatNoWA(t.wa);
                     let pesan = generatePesan(t);
                     window.open(`https://wa.me/${noWA}?text=${pesan}`, '_blank');
-                }, index * 1000); 
+                    
+                    if (index === validTargets.length - 1) {
+                        setTimeout(() => showToast("✅ Seluruh perintah pengiriman selesai!"), 2000);
+                    }
+                }, index * 2000); 
             });
         }
+        // ================================================================
 
         // --- EKSPOR EXCEL ---
         function exportExcel() {
