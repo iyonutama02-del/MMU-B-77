@@ -376,6 +376,17 @@
             const btn = document.getElementById('btnSimpanMasuk');
             btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MEMPOSTING...';
 
+            // --- PERBAIKAN CELAH: VALIDASI WAKTU GLOBAL (DEFISIT GAIB) ---
+            let ta_global = localStorage.getItem('globalTahunAjaran');
+            let bln_global = localStorage.getItem('globalBulanAktif');
+
+            if (!ta_global || ta_global === "Belum Disetel" || !bln_global || bln_global === "Belum Disetel") {
+                showToast("Transaksi Ditolak: Pimpinan belum menyetel Waktu Global!");
+                vibrateHeavy();
+                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-download"></i> SIMPAN PEMASUKAN';
+                return;
+            }
+
             try {
                 let ts = new Date().getTime();
                 let waktu = new Date().toLocaleString('id-ID');
@@ -386,9 +397,6 @@
                 let admin = document.getElementById('inKasir').value;
                 let sel = document.getElementById('inKode');
                 let katNama = sel.options[sel.selectedIndex].text.split(' - ')[1];
-
-                let ta_global = localStorage.getItem('globalTahunAjaran') || "Umum";
-                let bln_global = localStorage.getItem('globalBulanAktif') || "Umum";
 
                 let dataObj = {
                     ID_Transaksi: idTX, Waktu: waktu, Kategori_Nama: katNama,
@@ -425,6 +433,17 @@
             const btn = document.getElementById('btnSimpanKeluar');
             btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MEMPOSTING...';
 
+            // --- PERBAIKAN CELAH: VALIDASI WAKTU GLOBAL (DEFISIT GAIB) ---
+            let ta_global = localStorage.getItem('globalTahunAjaran');
+            let bln_global = localStorage.getItem('globalBulanAktif');
+
+            if (!ta_global || ta_global === "Belum Disetel" || !bln_global || bln_global === "Belum Disetel") {
+                showToast("Transaksi Ditolak: Pimpinan belum menyetel Waktu Global!");
+                vibrateHeavy();
+                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-upload"></i> SIMPAN PENGELUARAN';
+                return;
+            }
+
             try {
                 let ts = new Date().getTime();
                 let waktu = new Date().toLocaleString('id-ID');
@@ -435,9 +454,6 @@
                 let admin = document.getElementById('outKasir').value;
                 let sel = document.getElementById('outKode');
                 let katNama = sel.options[sel.selectedIndex].text.split(' - ')[1];
-
-                let ta_global = localStorage.getItem('globalTahunAjaran') || "Umum";
-                let bln_global = localStorage.getItem('globalBulanAktif') || "Umum";
 
                 let dataObj = {
                     ID_Transaksi: idTX, Waktu: waktu, Kategori_Nama: katNama,
