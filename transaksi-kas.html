@@ -316,10 +316,10 @@
                     let jenisPos = String(k.Jenis || '').toLowerCase();
                     
                     if(statusPos !== 'nonaktif') {
-                        // Deteksi berdasarkan Jenis ATAU Awalan Kode (1 & 2 Masuk, 5 & 6 Keluar)
+                        // Deteksi berdasarkan Jenis ATAU Awalan Kode (1 & 2 Masuk, 3-5 Keluar)
                         if(jenisPos.includes('masuk') || jenisPos.includes('pemasukan') || key.startsWith('1') || key.startsWith('2')) {
                             optMasuk += `<option value="${key}">${key} - ${k.Nama_Pos}</option>`;
-                        } else if(jenisPos.includes('keluar') || jenisPos.includes('pengeluaran') || key.startsWith('5') || key.startsWith('6')) {
+                        } else if(jenisPos.includes('keluar') || jenisPos.includes('pengeluaran') || key.startsWith('3') || key.startsWith('4') || key.startsWith('5')) {
                             optKeluar += `<option value="${key}">${key} - ${k.Nama_Pos}</option>`;
                         }
                     }
