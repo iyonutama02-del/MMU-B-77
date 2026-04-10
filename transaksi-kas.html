@@ -141,7 +141,7 @@
                     <div class="input-group">
                         <label>Pos Pemasukan (Sinkron Master)</label>
                         <select class="input-edit" id="inKode" required style="cursor: pointer;">
-                            <option value="">-- Memuat Kategori Pemasukan --</option>
+                            <option value="">-- Pilih Pos Pemasukan --</option>
                         </select>
                         <i class="fa-solid fa-chevron-down select-icon"></i>
                     </div>
@@ -174,7 +174,7 @@
                     <div class="input-group">
                         <label>Pos Pengeluaran (Sinkron Master)</label>
                         <select class="input-edit" id="outKode" required style="cursor: pointer;">
-                            <option value="">-- Memuat Kategori Pengeluaran --</option>
+                            <option value="">-- Pilih Pos Pengeluaran --</option>
                         </select>
                         <i class="fa-solid fa-chevron-down select-icon"></i>
                     </div>
@@ -255,15 +255,24 @@
         document.onmousemove = resetTimerLogout; document.onkeypress = resetTimerLogout; document.ontouchstart = resetTimerLogout;
 
         let saldoTersedia = 0; 
+        let globalHistMasuk = []; // Variabel untuk misahkan riwayat
+        let globalHistKeluar = []; // Variabel untuk misahkan riwayat
+        let tabAktif = 'masuk'; // Status tab saat ini
+
         function formatRupiah(n) { return 'Rp ' + parseInt(n || 0).toLocaleString('id-ID'); }
 
+        // FUNGSI PINDAH TAB & RIWAYAT OTOMATIS BERUBAH
         function switchTab(jenis, el) {
             vibrateClick();
+            tabAktif = jenis; // Update status tab
+            
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'masuk', 'keluar'));
             document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
             
             el.classList.add('active', jenis);
             document.getElementById('sec-' + jenis).classList.add('active');
+            
+            renderRiwayatTerpisah(); // Panggil fungsi perbarui riwayat
         }
 
         // --- SISTEM AUDIT TRAIL (CCTV DIGITAL) ---
@@ -322,40 +331,57 @@
 
             // SINKRONISASI SALDO & RIWAYAT TERPADU
             database.ref('buku_kas').on('value', snap => {
-                let totalMasuk = 0; let totalKeluar = 0; let html = '';
-                let tempHist = [];
+                let totalMasuk = 0; let totalKeluar = 0;
+                globalHistMasuk = []; globalHistKeluar = []; // Kosongkan wadah
 
                 snap.forEach(c => {
                     let d = c.val();
                     let nom = parseInt(d.Nominal || 0);
-                    if(d.Jenis === 'MASUK') { totalMasuk += nom; } 
-                    else if(d.Jenis === 'KELUAR') { totalKeluar += nom; }
-                    tempHist.push(d);
+                    if(d.Jenis === 'MASUK') { 
+                        totalMasuk += nom; 
+                        globalHistMasuk.push(d); // Pisahkan data masuk
+                    } 
+                    else if(d.Jenis === 'KELUAR') { 
+                        totalKeluar += nom; 
+                        globalHistKeluar.push(d); // Pisahkan data keluar
+                    }
                 });
 
                 saldoTersedia = totalMasuk - totalKeluar;
                 document.getElementById('txtSaldoMutlak').innerText = formatRupiah(saldoTersedia);
 
-                // Tampilkan 15 transaksi terbaru
-                tempHist.sort((a,b) => new Date(b.Waktu.split(',')[0].split('/').reverse().join('-')) - new Date(a.Waktu.split(',')[0].split('/').reverse().join('-')) || b.ID_Transaksi.localeCompare(a.ID_Transaksi));
-                
-                tempHist.slice(0, 15).forEach(d => {
-                    let isMasuk = d.Jenis === 'MASUK';
-                    let borderCls = isMasuk ? 'border-in' : 'border-out';
-                    let priceCls = isMasuk ? 'in' : 'out';
-                    let sign = isMasuk ? '+' : '-';
-                    let subName = isMasuk ? (d.Sumber || 'Pemasukan') : (d.Penerima || 'Pengeluaran');
+                // Urutkan kedua wadah dari yang terbaru
+                let sortFn = (a,b) => new Date(b.Waktu.split(',')[0].split('/').reverse().join('-')) - new Date(a.Waktu.split(',')[0].split('/').reverse().join('-')) || b.ID_Transaksi.localeCompare(a.ID_Transaksi);
+                globalHistMasuk.sort(sortFn);
+                globalHistKeluar.sort(sortFn);
 
-                    html += `
-                    <div class="history-item ${borderCls}">
-                        <div><h4>${subName}</h4><p>${d.Kategori_Nama} • ${d.Waktu.split(' ')[0]}</p></div>
-                        <div class="h-price ${priceCls}">${sign} ${formatRupiah(d.Nominal)}</div>
-                    </div>`;
-                });
-
-                document.getElementById('wadahHistory').innerHTML = html || '<p style="text-align:center; font-size:12px; color:var(--text-muted); font-weight:600; padding:20px;">Belum ada riwayat transaksi.</p>';
+                renderRiwayatTerpisah(); // Render ulang riwayat saat data dari Firebase masuk
             });
         };
+
+        // FUNGSI CETAK RIWAYAT YANG FOKUS PADA TAB AKTIF
+        function renderRiwayatTerpisah() {
+            let html = '';
+            let dataTarget = tabAktif === 'masuk' ? globalHistMasuk : globalHistKeluar;
+            let pesanKosong = tabAktif === 'masuk' ? 'Belum ada riwayat Kas Masuk.' : 'Belum ada riwayat Kas Keluar.';
+
+            // Tampilkan maksimal 15 transaksi sesuai tab yang aktif
+            dataTarget.slice(0, 15).forEach(d => {
+                let isMasuk = d.Jenis === 'MASUK';
+                let borderCls = isMasuk ? 'border-in' : 'border-out';
+                let priceCls = isMasuk ? 'in' : 'out';
+                let sign = isMasuk ? '+' : '-';
+                let subName = isMasuk ? (d.Sumber || 'Pemasukan') : (d.Penerima || 'Pengeluaran');
+
+                html += `
+                <div class="history-item ${borderCls}">
+                    <div><h4>${subName}</h4><p>${d.Kategori_Nama} • ${d.Waktu.split(' ')[0]}</p></div>
+                    <div class="h-price ${priceCls}">${sign} ${formatRupiah(d.Nominal)}</div>
+                </div>`;
+            });
+
+            document.getElementById('wadahHistory').innerHTML = html || `<p style="text-align:center; font-size:12px; color:var(--text-muted); font-weight:600; padding:20px;">${pesanKosong}</p>`;
+        }
 
         // VALIDASI SALDO UNTUK PENGELUARAN
         function validasiSaldo() {
