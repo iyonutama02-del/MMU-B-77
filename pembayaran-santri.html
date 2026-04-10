@@ -18,7 +18,7 @@
     <script src="firebase-config.js"></script>
 
     <script>
-        // --- TEMUAN #1: PENGAMANAN MUTLAK Cek Sesi Login di Atas ---
+        // --- PENGAMANAN MUTLAK Cek Sesi Login di Atas ---
         if (!localStorage.getItem('usernameAsli')) {
             window.location.replace('index.html');
         }
@@ -90,7 +90,6 @@
         .btn-kembali { background: transparent; color: var(--text-muted); border: none; font-family: 'Poppins'; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; margin-bottom: 20px; transition: 0.2s; padding: 10px; border-radius: 10px;}
         .btn-kembali:active { background: rgba(0,0,0,0.05); }
 
-        /* TEMUAN #4: STRUKTUR TOAST YANG AMAN DAN RAPI */
         #toast { visibility: hidden; min-width: 250px; background-color: #31344b; color: #fff; text-align: center; border-radius: 15px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
         @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
@@ -100,14 +99,10 @@
         .neumorphic-spinner { width: 50px; height: 50px; border-radius: 50%; background: var(--bg-main); box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); border: 4px solid transparent; border-top-color: var(--c-green); animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* KUITANSI */
+        /* --- DESAIN KUITANSI 3 TEMA --- */
         #kuitansi-cetak-wrapper { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9000; display:flex; justify-content:center; align-items:center; opacity:0; pointer-events:none; transition:0.3s; padding:20px; }
         .kuitansi-box { width: 100%; max-width: 420px; background: #ffffff; border-radius: 20px; padding: 35px 30px; font-family: 'Poppins', sans-serif; color: #1e293b; box-shadow: 0 25px 50px rgba(0,0,0,0.5); position: relative; overflow: hidden; background-image: radial-gradient(#f8fafc 10%, transparent 11%); background-size: 20px 20px; }
         .k-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 150px; color: rgba(0,0,0,0.03); z-index: 0; pointer-events: none; }
-        
-        .k-theme-emas { border-top: 15px solid #fbbf24; } .k-theme-emas .k-icon { color: #fbbf24; } .k-theme-emas .k-total { background: rgba(251, 191, 36, 0.1); color: #b45309; border: 1px dashed #fbbf24;}
-        .k-theme-hijau { border-top: 15px solid #22c55e; } .k-theme-hijau .k-icon { color: #22c55e; } .k-theme-hijau .k-total { background: rgba(34, 197, 94, 0.1); color: #15803d; border: 1px dashed #22c55e;}
-        .k-theme-abu { border-top: 15px solid #64748b; } .k-theme-abu .k-icon { color: #64748b; } .k-theme-abu .k-total { background: rgba(100, 116, 139, 0.08); color: #334155; border: 1px dashed #94a3b8;}
         
         .k-header { display: flex; align-items: center; gap: 15px; border-bottom: 2px dashed #cbd5e1; padding-bottom: 20px; margin-bottom: 20px; position: relative; z-index: 1;}
         .k-icon { font-size: 35px; }
@@ -123,13 +118,32 @@
         .k-total { padding: 20px; border-radius: 15px; text-align: center; margin: 25px 0; position: relative; z-index: 1;}
         .k-total span { display: block; font-size: 11px; font-weight: 800; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;}
         .k-total h2 { margin: 5px 0 0; font-family: 'Montserrat'; font-size: 32px; font-weight: 900; letter-spacing: -1px;}
-        .k-sisa { font-size: 12px; color: #ef4444; margin: 8px 0 0; font-weight: 800; background: white; display: inline-block; padding: 4px 10px; border-radius: 8px;}
+        .k-sisa { font-size: 11px; margin: 8px 0 0; font-weight: 800; background: white; display: inline-block; padding: 4px 10px; border-radius: 8px;}
         
-        .k-pesan { text-align: center; background: #f8fafc; padding: 15px; border-radius: 12px; border-left: 4px solid #cbd5e1; font-size: 11px; font-weight: 600; color: #475569; font-style: italic; line-height: 1.6; position: relative; z-index: 1;}
-        .k-pesan i { font-size: 10px; color: #94a3b8; margin: 0 5px;}
+        .k-pesan { text-align: center; background: #f8fafc; padding: 15px; border-radius: 12px; font-size: 11px; font-weight: 600; color: #475569; font-style: italic; line-height: 1.6; position: relative; z-index: 1;}
+        .k-pesan i { font-size: 10px; margin: 0 5px;}
         
         .k-footer { text-align: center; font-size: 9px; color: #94a3b8; margin-top: 25px; font-weight: 500; position: relative; z-index: 1; border-top: 1px solid #f1f5f9; padding-top: 15px;}
         
+        /* 3 TEMA DINAMIS */
+        .k-theme-orange { border-top: 15px solid #f59e0b; } 
+        .k-theme-orange .k-icon { color: #f59e0b; } 
+        .k-theme-orange .k-total { background: rgba(245, 158, 11, 0.1); color: #b45309; border: 1px dashed #f59e0b;}
+        .k-theme-orange .k-pesan { border-left: 4px solid #f59e0b; }
+        .k-theme-orange .k-sisa { color: #ef4444; border: 1px solid #fecaca; }
+
+        .k-theme-green { border-top: 15px solid #22c55e; } 
+        .k-theme-green .k-icon { color: #22c55e; } 
+        .k-theme-green .k-total { background: rgba(34, 197, 94, 0.1); color: #15803d; border: 1px dashed #22c55e;}
+        .k-theme-green .k-pesan { border-left: 4px solid #22c55e; }
+        .k-theme-green .k-sisa { color: #22c55e; border: 1px solid #bbf7d0; }
+
+        .k-theme-blue { border-top: 15px solid #3b82f6; } 
+        .k-theme-blue .k-icon { color: #3b82f6; } 
+        .k-theme-blue .k-total { background: rgba(59, 130, 246, 0.1); color: #1d4ed8; border: 1px dashed #3b82f6;}
+        .k-theme-blue .k-pesan { border-left: 4px solid #3b82f6; }
+        .k-theme-blue .k-sisa { color: #3b82f6; border: 1px solid #bfdbfe; }
+
         .k-controls { position:absolute; bottom:30px; display:flex; gap:10px; width:100%; max-width:440px; padding:0 20px; }
         .inp-wa { flex:1; padding:15px; border-radius:15px; border:none; outline:none; font-family:'Poppins'; font-weight:600; box-shadow:0 5px 15px rgba(0,0,0,0.2); }
         .btn-wa { background:#25D366; color:white; border:none; padding:0 20px; border-radius:15px; font-weight:800; font-family:'Montserrat'; cursor:pointer; box-shadow:0 5px 15px rgba(37, 211, 102, 0.4); transition:0.2s; }
@@ -179,9 +193,9 @@
             <div class="k-watermark"><i class="fa-solid fa-building-columns"></i></div>
             
             <div class="k-header">
-                <div class="k-icon"><i class="fa-solid fa-receipt"></i></div>
+                <div class="k-icon" id="k_icon"><i class="fa-solid fa-receipt"></i></div>
                 <div>
-                    <h1 class="k-title">BUKTI PEMBAYARAN</h1>
+                    <h1 class="k-title" id="k_title">BUKTI PEMBAYARAN</h1>
                     <p class="k-sub">Madrasah Miftahul Ulum B-77</p>
                     <p class="k-id" id="k_id">ID: -</p>
                 </div>
@@ -204,9 +218,9 @@
             </div>
 
             <div class="k-pesan">
-                <i class="fa-solid fa-quote-left"></i>
+                <i class="fa-solid fa-quote-left" id="k_quote_left"></i>
                 <span id="k_pesan_teks">Terima kasih atas kepercayaannya.</span>
-                <i class="fa-solid fa-quote-right"></i>
+                <i class="fa-solid fa-quote-right" id="k_quote_right"></i>
             </div>
             
             <div class="k-footer">
@@ -230,7 +244,6 @@
         
         const formatRp = (n) => 'Rp ' + parseInt(n || 0).toLocaleString('id-ID');
         
-        // --- TEMUAN #4: FUNGSI TOAST ---
         function showToast(msg) {
             let toast = document.getElementById("toast"); 
             document.getElementById("toastMsg").innerText = msg; 
@@ -254,7 +267,6 @@
         window.addEventListener('online', () => { showToast("Sinyal Internet Kembali Normal."); vibrateSuccess(); });
         window.addEventListener('offline', () => { showToast("Sinyal Terputus. Sebagian fitur diblokir."); vibrateHeavy(); });
 
-        // --- TEMUAN #3: KEAMANAN AUTO-LOGOUT 15 MENIT ---
         let waktuLogout;
         function resetTimerLogout() {
             clearTimeout(waktuLogout);
@@ -282,20 +294,8 @@
             } catch(e) { console.error("Gagal catat audit", e); }
         }
 
-        const doaTepatWaktu = [
-            "Terima kasih atas pembayaran administrasi ananda. Semoga ilmu yang didapat menjadi ilmu yang barokah dan bermanfaat.",
-            "Alhamdulillah, kewajiban administrasi telah tertunaikan. Jazakumullah ahsanal jaza atas kerja samanya.",
-            "Pembayaran telah kami terima dengan baik. Semoga Allah senantiasa melimpahkan kelancaran rezeki bagi keluarga.",
-            "Syukron atas ketepatan waktu pembayarannya. Semoga ananda menjadi santri yang sholeh/sholehah."
-        ];
-        const doaTelatAbu = [
-            "Alhamdulillah, pembayaran telah kami terima dan tercatat di sistem. Terima kasih atas kerja samanya.",
-            "Kewajiban administrasi ananda telah masuk ke pembukuan kami. Semoga Allah senantiasa mempermudah segala urusan Bapak/Ibu."
-        ];
-        function getRandomDoa(arrayDoa) { return arrayDoa[Math.floor(Math.random() * arrayDoa.length)]; }
-
         window.onload = function() {
-            resetTimerLogout(); // Inisiasi Auto-Logout
+            resetTimerLogout(); 
             
             let user = localStorage.getItem('namaPengguna');
             if(!user) window.location.href = 'index.html';
@@ -317,19 +317,17 @@
                 if(dbTagihan.length > 0) renderDaftarSantriBerhutang();
             });
 
-            // ====== PERTAHANAN LAPIS BAJA (Defensive Parsing Firebase) ======
             database.ref('tagihan').on('value', snap => {
                 dbTagihan = []; 
                 snap.forEach(c => {
                     let d = c.val();
-                    d.ID_Tagihan = d.ID_Tagihan || c.key; // Memastikan ID Tagihan selalu ada
-                    d.ID_Murid = String(d.ID_Murid || "").trim(); // Menghapus spasi gaib dari database
+                    d.ID_Tagihan = d.ID_Tagihan || c.key; 
+                    d.ID_Murid = String(d.ID_Murid || "").trim(); 
                     dbTagihan.push(d);
                 });
                 if(dbSantriUtama.length > 0) renderDaftarSantriBerhutang();
                 if(idSantriAktif) renderTagihan(idSantriAktif);
             });
-            // ================================================================
         };
 
         function getNamaMutlak(idMutlak, namaFallback) {
@@ -338,13 +336,12 @@
             return (namaFallback || "Hamba Allah");
         }
 
-        // ====== LOGIKA ANTRIAN YANG DIPERKUAT ======
         function renderDaftarSantriBerhutang() {
             let tagihanAktif = dbTagihan.filter(t => t.Status === 'Belum Lunas' || t.Status === 'Cicilan');
             let rekap = {};
             
             tagihanAktif.forEach(t => {
-                let sId = String(t.ID_Murid).trim(); // Cegah error ID tidak terdeteksi karena spasi
+                let sId = String(t.ID_Murid).trim(); 
                 if(!rekap[sId]) {
                     let namaValid = getNamaMutlak(sId, t.Nama_Santri);
                     rekap[sId] = { id: sId, nama: namaValid, kelas: t.Kelas, count: 0, total: 0 };
@@ -377,7 +374,6 @@
                 </div>`;
             });
         }
-        // ===========================================
 
         function cariData() {
             let input = document.getElementById('cariSantri').value.toLowerCase();
@@ -488,6 +484,9 @@
             if(profil && profil.WA_Wali) document.getElementById('txtWA').value = profil.WA_Wali;
         }
 
+        // ========================================================
+        // EKSEKUSI PEMBAYARAN (DENGAN DETEKSI INFAQ & 3 TEMA NOTA)
+        // ========================================================
         async function eksekusiBayar(idTagihan, tagihanHarusDibayar, tglBuat) {
             vibrateClick();
             
@@ -502,8 +501,19 @@
             let inputTerima = parseInt(document.getElementById(`terima_${idTagihan}`).value) || 0;
 
             if(inputBayar <= 0) { showToast("Masukkan nominal bayar dengan benar!"); vibrateHeavy(); return; }
-            if(inputBayar > tagihanHarusDibayar) { showToast("Nominal bayar tidak boleh melebihi sisa tagihan!"); vibrateHeavy(); return; }
             if(inputTerima > 0 && inputTerima < inputBayar) { showToast("Uang yang diterima kurang dari nominal bayar!"); vibrateHeavy(); return; }
+
+            let infaq = 0;
+            let bayarPokok = inputBayar;
+
+            // DETEKSI UANG LEBIH / INFAQ
+            if (inputBayar > tagihanHarusDibayar) {
+                infaq = inputBayar - tagihanHarusDibayar;
+                if (!confirm(`⚠️ NOMINAL LEBIH BESAR DARI TAGIHAN! ⚠️\n\nSisa Tagihan: ${formatRp(tagihanHarusDibayar)}\nNominal Diketik: ${formatRp(inputBayar)}\n\nKelebihan sebesar ${formatRp(infaq)} akan otomatis dicatat ke dalam sistem kas sebagai INFAQ/SEDEKAH.\n\nApakah Anda yakin ingin memproses ini?`)) {
+                    return;
+                }
+                bayarPokok = tagihanHarusDibayar;
+            }
 
             let btn = document.getElementById(`btn_${idTagihan}`);
             if (btn.disabled) return;
@@ -526,7 +536,7 @@
                 }
 
                 let tgh = dbTagihan.find(t => t.ID_Tagihan === idTagihan);
-                let sisaBaru = tagihanHarusDibayar - inputBayar;
+                let sisaBaru = tagihanHarusDibayar - bayarPokok;
                 let statusBaru = sisaBaru <= 0 ? 'Lunas' : 'Cicilan';
                 
                 let ts = new Date().getTime(); 
@@ -536,17 +546,46 @@
                 let ta_angka = ta_global.replace(/\D/g, '').slice(-4);
                 let smartID = `PAY-${ta_angka}-${ts}`;
 
-                let selisihHari = (new Date() - new Date(tglBuat.split(' ')[0].split('/').reverse().join('-'))) / (1000 * 3600 * 24);
-                let levelKuitansi = 'k-theme-hijau'; let pesanDoa = getRandomDoa(doaTepatWaktu);
+                // --- PENENTUAN 3 TEMA KUITANSI ---
+                let levelKuitansi = ''; let kIcon = ''; let kTitle = ''; 
+                let kLabelTotal = ''; let kSisaHTML = ''; let pesanDoa = ''; let qColor = '';
                 
-                if (selisihHari > 30) { levelKuitansi = 'k-theme-abu'; pesanDoa = getRandomDoa(doaTelatAbu); }
+                if (inputBayar < tagihanHarusDibayar) {
+                    // TEMA ORANGE (Angsuran)
+                    levelKuitansi = 'k-theme-orange';
+                    kIcon = '<i class="fa-solid fa-clock-rotate-left"></i>';
+                    kTitle = 'BUKTI ANGSURAN';
+                    kLabelTotal = 'DIBAYARKAN (TUNAI)';
+                    kSisaHTML = `SISA TAGIHAN: ${formatRp(sisaBaru)}`;
+                    pesanDoa = "Terima kasih atas angsuran administrasi ananda. Semoga Allah senantiasa memberikan kelancaran dan kelapangan rezeki bagi keluarga Bapak/Ibu.";
+                    qColor = '#f59e0b';
+                } else if (inputBayar === tagihanHarusDibayar) {
+                    // TEMA HIJAU (Pas/Lunas)
+                    levelKuitansi = 'k-theme-green';
+                    kIcon = '<i class="fa-solid fa-check-double"></i>';
+                    kTitle = 'BUKTI LUNAS';
+                    kLabelTotal = 'DIBAYARKAN (PAS)';
+                    kSisaHTML = '<i class="fa-solid fa-check"></i> LUNAS TIDAK ADA TUNGGAKAN';
+                    pesanDoa = "Alhamdulillah, kewajiban administrasi telah tertunaikan. Jazakumullah ahsanal jaza. Semoga ilmu yang didapat ananda menjadi barokah dan bermanfaat di dunia maupun akhirat.";
+                    qColor = '#22c55e';
+                } else {
+                    // TEMA BIRU (Lunas + Infaq)
+                    levelKuitansi = 'k-theme-blue';
+                    kIcon = '<i class="fa-solid fa-hand-holding-heart"></i>';
+                    kTitle = 'BUKTI LUNAS & INFAQ';
+                    kLabelTotal = 'DIBAYARKAN (LEBIH)';
+                    kSisaHTML = `<i class="fa-solid fa-heart"></i> ALOKASI INFAQ: ${formatRp(infaq)}`;
+                    pesanDoa = "Syukron jazilan atas pelunasan sekaligus infaq sukarela yang diberikan. Semoga kelebihan harta yang disedekahkan di jalan Allah ini menjadi amal jariyah yang pahalanya mengalir tiada henti.";
+                    qColor = '#3b82f6';
+                }
 
                 let updates = {};
                 let namaAsli = getNamaMutlak(tgh.ID_Murid, tgh.Nama_Santri);
                 
+                let ketKas = infaq > 0 ? `Pelunasan ${tgh.Nama_Pos} + Infaq Sukarela` : `Pembayaran ${tgh.Nama_Pos}`;
                 let dataMasuk = {
                     ID_Transaksi: smartID, Waktu: waktu, Kategori_Nama: tgh.Nama_Pos,
-                    Nominal: inputBayar, Sumber: namaAsli, Keterangan: `Pembayaran ${tgh.Nama_Pos}`,
+                    Nominal: inputBayar, Sumber: namaAsli, Keterangan: ketKas,
                     Admin_Penerima: kasir, Jenis: 'MASUK',
                     Tahun_Ajaran: ta_global, Bulan_Hijriyah: bln_global
                 };
@@ -557,7 +596,7 @@
                 let historiBaru = tgh.Histori_Cicilan || [];
                 historiBaru.push({ Waktu: waktu, Nominal: inputBayar, Kasir: kasir, ID_Trans: smartID });
 
-                let sdhBayar = parseInt(tgh.Terbayar || 0) + inputBayar;
+                let sdhBayar = parseInt(tgh.Terbayar || 0) + bayarPokok;
                 
                 if(statusBaru === 'Lunas') {
                     updates[`tagihan/${idTagihan}/Status`] = 'Lunas';
@@ -576,6 +615,19 @@
                 
                 await catatAuditTrail('Payment', `Menerima pembayaran ${tgh.Nama_Pos} sebesar ${formatRp(inputBayar)} dari Santri: ${namaAsli} (${tgh.ID_Murid})`);
 
+                // --- UPDATE DOM KUITANSI ---
+                document.getElementById('k_icon').innerHTML = kIcon;
+                document.getElementById('k_title').innerText = kTitle;
+                document.getElementById('k_label_total').innerText = kLabelTotal;
+                
+                let sisaTeks = document.getElementById('k_sisa_tagihan');
+                sisaTeks.innerHTML = kSisaHTML; 
+                sisaTeks.style.display = 'inline-block';
+                
+                document.getElementById('k_pesan_teks').innerText = pesanDoa;
+                document.getElementById('k_quote_left').style.color = qColor;
+                document.getElementById('k_quote_right').style.color = qColor;
+
                 document.getElementById('k_id').innerText = `ID: ${smartID}`;
                 document.getElementById('k_tgl').innerText = waktu.split(' ')[0];
                 document.getElementById('k_nama').innerText = namaAsli;
@@ -593,7 +645,6 @@
                 }
                 document.getElementById('k_nominal').innerText = formatRp(inputBayar);
                 document.getElementById('k_nominal_detail').innerText = kuitansiNominal;
-                document.getElementById('k_pesan_teks').innerText = pesanDoa;
                 
                 let riwayatHTML = '';
                 if(historiBaru.length > 1) {
@@ -605,10 +656,6 @@
                 
                 let areaCetak = document.getElementById('areaCetak');
                 areaCetak.className = `kuitansi-box ${levelKuitansi}`;
-
-                let sisaTeks = document.getElementById('k_sisa_tagihan');
-                if(sisaBaru > 0) { sisaTeks.innerText = `Sisa Tagihan: ${formatRp(sisaBaru)}`; sisaTeks.style.display = 'block'; } 
-                else { sisaTeks.style.display = 'none'; }
 
                 document.getElementById('loadingLayar').style.display = 'none';
                 document.getElementById('kuitansi-cetak-wrapper').style.opacity = '1';
