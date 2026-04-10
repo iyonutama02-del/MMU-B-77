@@ -317,11 +317,19 @@
                 if(dbTagihan.length > 0) renderDaftarSantriBerhutang();
             });
 
+            // ====== PERTAHANAN LAPIS BAJA (Defensive Parsing Firebase) ======
             database.ref('tagihan').on('value', snap => {
-                dbTagihan = []; snap.forEach(c => dbTagihan.push(c.val()));
+                dbTagihan = []; 
+                snap.forEach(c => {
+                    let d = c.val();
+                    d.ID_Tagihan = d.ID_Tagihan || c.key; // Memastikan ID Tagihan selalu ada
+                    d.ID_Murid = String(d.ID_Murid || "").trim(); // Menghapus spasi gaib dari database
+                    dbTagihan.push(d);
+                });
                 if(dbSantriUtama.length > 0) renderDaftarSantriBerhutang();
                 if(idSantriAktif) renderTagihan(idSantriAktif);
             });
+            // ================================================================
         };
 
         function getNamaMutlak(idMutlak, namaFallback) {
@@ -330,12 +338,13 @@
             return (namaFallback || "Hamba Allah");
         }
 
+        // ====== LOGIKA ANTRIAN YANG DIPERKUAT ======
         function renderDaftarSantriBerhutang() {
             let tagihanAktif = dbTagihan.filter(t => t.Status === 'Belum Lunas' || t.Status === 'Cicilan');
             let rekap = {};
             
             tagihanAktif.forEach(t => {
-                let sId = t.ID_Murid;
+                let sId = String(t.ID_Murid).trim(); // Cegah error ID tidak terdeteksi karena spasi
                 if(!rekap[sId]) {
                     let namaValid = getNamaMutlak(sId, t.Nama_Santri);
                     rekap[sId] = { id: sId, nama: namaValid, kelas: t.Kelas, count: 0, total: 0 };
@@ -368,6 +377,7 @@
                 </div>`;
             });
         }
+        // ===========================================
 
         function cariData() {
             let input = document.getElementById('cariSantri').value.toLowerCase();
