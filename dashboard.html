@@ -8,6 +8,7 @@
     
     <link rel="icon" type="image/png" href="Logo-Favicon.png">
     <link rel="apple-touch-icon" href="Logo-Favicon.png">
+    <link rel="manifest" href="manifest.json">
     
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -45,7 +46,7 @@
 
         .app-container { max-width: 1000px; margin: 0 auto; padding: 20px; }
 
-        /* TOAST */
+        /* TOAST NOTIFIKASI */
         #toast { visibility: hidden; min-width: 250px; background-color: #31344b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; top: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; width: 85%; display: flex; align-items: center; justify-content: center; gap: 8px;}
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
         @keyframes fadein { from { top: 0; opacity: 0; } to { top: 30px; opacity: 1; } }
@@ -109,7 +110,7 @@
         .li-info p { margin: 0; font-size: 10px; color: var(--text-muted); font-weight: 600; }
         .li-val { font-family: 'Montserrat'; font-size: 13px; font-weight: 800; color: #ff758c; }
 
-        /* MODAL DRILL-DOWN (KLIK RINCIAN) */
+        /* MODAL DRILL-DOWN */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 4000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
         .modal-content { background: var(--bg-main); width: 100%; max-width: 500px; max-height: 80vh; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.3); animation: slideUp 0.3s; }
         @keyframes slideUp { from { transform: translateY(30px); opacity:0;} to { transform: translateY(0); opacity:1;} }
@@ -131,46 +132,46 @@
         .sync-loader.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
 
         /* ========================================== */
-        /* PRINT MODE (ANTI KERTAS KOSONG)            */
+        /* PRINT MODE (COMPACT & PROFESSIONAL PDF)    */
         /* ========================================== */
-        #pdf-template { 
-            display: none; /* Sengaja kita hilangkan saat normal */
-            background: white; 
-            color: black; 
-            font-family: Arial, sans-serif; 
-            width: 800px; /* WAJIB 800px agar A4 presisi */
-            margin: 0; 
+        #pdf-wrapper { 
             position: absolute; 
-            top: 0; 
-            left: 0; 
-            z-index: -9999; 
+            top: 0; left: 0; width: 800px; 
+            z-index: -9999; visibility: hidden; 
         }
         
-        .pdf-page { padding: 40px; background: white; page-break-after: always; position: relative;}
-        .pdf-page:last-child { page-break-after: auto; }
-        .pdf-header { border-bottom: 3px solid #1e293b; padding-bottom: 15px; margin-bottom: 25px; display: flex; align-items: center; gap: 20px; }
-        .pdf-header img { width: 70px; }
-        .pdf-title-box { flex: 1; }
-        .pdf-h1 { margin: 0; font-size: 22px; font-weight: bold; color: #0f172a; text-transform: uppercase; }
-        .pdf-h2 { margin: 5px 0 0 0; font-size: 12px; color: #64748b; font-weight: normal; }
-        
-        .pdf-kpi-row { display: flex; justify-content: space-between; margin-bottom: 30px; gap: 15px;}
-        .pdf-kpi { border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; flex: 1; text-align: center; }
-        .pdf-kpi-val { font-size: 18px; font-weight: bold; margin-top: 5px; color: #0f172a;}
-        
-        .pdf-section-title { font-size: 14px; font-weight: bold; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 15px; text-transform: uppercase; margin-top: 30px;}
-        .pdf-text { font-size: 12px; line-height: 1.6; color: #334155; margin-bottom: 15px; }
-        
-        .pdf-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px; }
-        .pdf-table th { background: #f1f5f9; color: #334155; padding: 10px; text-align: left; border: 1px solid #cbd5e1; font-weight: bold; }
-        .pdf-table td { padding: 8px 10px; border: 1px solid #cbd5e1; color: #1e293b; }
-        .pdf-table tr:nth-child(even) { background-color: #f8fafc; }
-        .pdf-table-total { background: #e2e8f0 !important; font-weight: bold; }
+        #pdf-template { 
+            background: white; color: black; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+            width: 100%; display: block; 
+        }
 
-        .pdf-watermark { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 60px; color: rgba(239, 68, 68, 0.1); font-weight: 900; z-index: 0; pointer-events: none; border: 10px solid rgba(239, 68, 68, 0.1); padding: 20px; border-radius: 20px;}
-        .pdf-watermark.audited { color: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.1); }
+        .pdf-container { padding: 30px 40px; position: relative; background: white; }
         
-        .pdf-footer { margin-top: 50px; display: flex; justify-content: space-between; text-align: center; font-size: 12px; }
+        .pdf-header { border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; }
+        .pdf-header img { width: 55px; }
+        .pdf-title-box { flex: 1; }
+        .pdf-h1 { margin: 0; font-size: 18px; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;}
+        .pdf-h2 { margin: 2px 0 0 0; font-size: 11px; color: #64748b; font-weight: 500; }
+        
+        .pdf-kpi-row { display: flex; justify-content: space-between; margin-bottom: 15px; gap: 10px;}
+        .pdf-kpi { border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; flex: 1; text-align: center; background: #f8fafc; }
+        .pdf-kpi-val { font-size: 15px; font-weight: 900; margin-top: 4px; color: #0f172a;}
+        
+        .pdf-section-title { font-size: 11px; font-weight: 800; color: #1e293b; border-bottom: 1.5px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 8px; text-transform: uppercase; margin-top: 15px;}
+        .pdf-text { font-size: 10px; line-height: 1.5; color: #334155; margin-bottom: 10px; padding: 10px; background: #f1f5f9; border-left: 3px solid #3b82f6; border-radius: 0 4px 4px 0;}
+        
+        .pdf-grid-table { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 10px; }
+        
+        .pdf-table { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 5px; }
+        .pdf-table th { background: #e2e8f0; color: #1e293b; padding: 6px 8px; text-align: left; border: 1px solid #cbd5e1; font-weight: bold; text-transform: uppercase; font-size: 8px;}
+        .pdf-table td { padding: 5px 8px; border: 1px solid #cbd5e1; color: #334155; }
+        .pdf-table tr:nth-child(even) { background-color: #f8fafc; }
+        .pdf-table-total { background: #cbd5e1 !important; font-weight: 800; color: #0f172a !important; }
+
+        .pdf-watermark { position: absolute; top: 250px; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 80px; color: rgba(239, 68, 68, 0.06); font-weight: 900; z-index: 0; pointer-events: none; border: 8px solid rgba(239, 68, 68, 0.06); padding: 15px 30px; border-radius: 20px;}
+        .pdf-watermark.audited { color: rgba(34, 197, 94, 0.06); border-color: rgba(34, 197, 94, 0.06); }
+        
+        .pdf-footer { margin-top: 25px; display: flex; justify-content: space-between; text-align: center; font-size: 10px; page-break-inside: avoid; }
     </style>
 </head>
 <body>
@@ -282,65 +283,65 @@
         </div>
     </div>
 
-    <div id="pdf-template">
-        <div class="pdf-page" id="pdf-page-1">
-            <div class="pdf-watermark" id="pdfWM1">UNAUDITED</div>
-            <div class="pdf-header">
-                <img src="Logo-Favicon.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3353/3353138.png'">
-                <div class="pdf-title-box">
-                    <h1 class="pdf-h1">EXECUTIVE FINANCIAL REPORT</h1>
-                    <h2 class="pdf-h2">Madrasah Miftahul Ulum B-77 | Periode: <span id="pdfBulanTahun"></span></h2>
+    <div id="pdf-wrapper">
+        <div id="pdf-template">
+            <div class="pdf-container">
+                <div class="pdf-watermark" id="pdfWM1">UNAUDITED</div>
+                
+                <div class="pdf-header">
+                    <img src="Logo-Favicon.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3353/3353138.png'">
+                    <div class="pdf-title-box">
+                        <h1 class="pdf-h1">Executive Financial Report</h1>
+                        <h2 class="pdf-h2">Madrasah Miftahul Ulum B-77 | Periode: <span id="pdfBulanTahun"></span></h2>
+                    </div>
+                </div>
+                
+                <div class="pdf-section-title">A. Ringkasan Eksekutif (AI Insight)</div>
+                <div class="pdf-text" id="pdfAiText"></div>
+
+                <div class="pdf-section-title">B. Indikator Kinerja Utama (KPI)</div>
+                <div class="pdf-kpi-row">
+                    <div class="pdf-kpi"><div style="font-size:9px; color:#64748b;">Total Kas Aktif</div><div class="pdf-kpi-val" id="pdfKas">Rp 0</div></div>
+                    <div class="pdf-kpi"><div style="font-size:9px; color:#64748b;">Pemasukan Bulan Ini</div><div class="pdf-kpi-val" id="pdfMasuk" style="color:#10b981;">Rp 0</div><div style="font-size:8px; color:#64748b; margin-top:3px;" id="pdfMasukYoY"></div></div>
+                    <div class="pdf-kpi"><div style="font-size:9px; color:#64748b;">Pengeluaran Bulan Ini</div><div class="pdf-kpi-val" id="pdfKeluar" style="color:#ef4444;">Rp 0</div><div style="font-size:8px; color:#64748b; margin-top:3px;" id="pdfKeluarYoY"></div></div>
+                </div>
+                <div class="pdf-kpi-row" style="margin-top: -5px;">
+                    <div class="pdf-kpi"><div style="font-size:9px; color:#64748b;">Piutang Berjalan</div><div class="pdf-kpi-val" id="pdfPiutang" style="color:#f59e0b;">Rp 0</div></div>
+                    <div class="pdf-kpi"><div style="font-size:9px; color:#64748b;">Kolektibilitas Tagihan</div><div class="pdf-kpi-val" id="pdfKolek" style="color:#10b981;">0%</div></div>
+                </div>
+
+                <div class="pdf-grid-table">
+                    <div>
+                        <div class="pdf-section-title" style="margin-top:0;">C. Rincian Pemasukan</div>
+                        <table class="pdf-table">
+                            <thead><tr><th style="width:10%;">No</th><th style="width:50%;">Kategori</th><th style="width:40%; text-align:right;">Nominal</th></tr></thead>
+                            <tbody id="pdfTbodyIn"></tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <div class="pdf-section-title" style="margin-top:0;">D. Rincian Pengeluaran</div>
+                        <table class="pdf-table">
+                            <thead><tr><th style="width:10%;">No</th><th style="width:50%;">Kategori</th><th style="width:40%; text-align:right;">Nominal</th></tr></thead>
+                            <tbody id="pdfTbodyOut"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="pdf-section-title">E. Daftar Top Tunggakan Santri <span id="pdfKelasFilter" style="font-weight:normal; font-size:9px;"></span></div>
+                <table class="pdf-table">
+                    <thead><tr><th style="width:5%;">No</th><th style="width:35%;">Nama Santri</th><th style="width:15%;">Kelas</th><th style="width:25%;">Rincian Tagihan</th><th style="width:20%; text-align:right;">Sisa Tunggakan (Rp)</th></tr></thead>
+                    <tbody id="pdfTbodyPiutang"></tbody>
+                </table>
+
+                <div class="pdf-footer">
+                    <div><p style="margin:0;">Mengetahui,</p><br><br><br><p style="margin:0; font-weight:bold; text-decoration:underline;">Kepala Madrasah</p></div>
+                    <div>
+                        <p style="margin:0;">Dicetak Oleh,</p><br><br><br>
+                        <p style="margin:0; font-weight:bold; text-decoration:underline;" id="pdfAdminName">Administrator</p>
+                        <p style="margin:2px 0 0 0; font-size:8px; color:#64748b;" id="pdfPrintDate"></p>
+                    </div>
                 </div>
             </div>
-            
-            <div class="pdf-section-title">A. Ringkasan Eksekutif (AI Insight)</div>
-            <div class="pdf-text" id="pdfAiText" style="background:#f8fafc; padding:15px; border-left:4px solid #3b82f6;"></div>
-
-            <div class="pdf-section-title">B. Indikator Kinerja Utama (KPI)</div>
-            <div class="pdf-kpi-row">
-                <div class="pdf-kpi"><div style="font-size:11px; color:#64748b;">Total Kas Aktif</div><div class="pdf-kpi-val" id="pdfKas">Rp 0</div></div>
-                <div class="pdf-kpi"><div style="font-size:11px; color:#64748b;">Piutang Berjalan</div><div class="pdf-kpi-val" id="pdfPiutang" style="color:#f59e0b;">Rp 0</div></div>
-                <div class="pdf-kpi"><div style="font-size:11px; color:#64748b;">Kolektibilitas</div><div class="pdf-kpi-val" id="pdfKolek" style="color:#10b981;">0%</div></div>
-            </div>
-            <div class="pdf-kpi-row">
-                <div class="pdf-kpi"><div style="font-size:11px; color:#64748b;">Pemasukan Bulan Ini</div><div class="pdf-kpi-val" id="pdfMasuk" style="color:#10b981;">Rp 0</div><div style="font-size:10px; color:#64748b; margin-top:5px;" id="pdfMasukYoY"></div></div>
-                <div class="pdf-kpi"><div style="font-size:11px; color:#64748b;">Pengeluaran Bulan Ini</div><div class="pdf-kpi-val" id="pdfKeluar" style="color:#ef4444;">Rp 0</div><div style="font-size:10px; color:#64748b; margin-top:5px;" id="pdfKeluarYoY"></div></div>
-            </div>
-            
-            <div style="position:absolute; bottom:40px; left:40px; right:40px; font-size:10px; color:#94a3b8; text-align:center; border-top:1px solid #e2e8f0; padding-top:10px;">Hal. 1</div>
-        </div>
-
-        <div class="pdf-page" id="pdf-page-2">
-            <div class="pdf-watermark" id="pdfWM2">UNAUDITED</div>
-            <div class="pdf-section-title" style="margin-top:0;">C. Rincian Pemasukan Kas Bulan Ini</div>
-            <table class="pdf-table">
-                <thead><tr><th style="width:10%;">No</th><th style="width:60%;">Kategori / Sumber</th><th style="width:30%; text-align:right;">Nominal (Rp)</th></tr></thead>
-                <tbody id="pdfTbodyIn"></tbody>
-            </table>
-
-            <div class="pdf-section-title">D. Rincian Pengeluaran Kas Bulan Ini</div>
-            <table class="pdf-table">
-                <thead><tr><th style="width:10%;">No</th><th style="width:60%;">Kategori / Pos Pengeluaran</th><th style="width:30%; text-align:right;">Nominal (Rp)</th></tr></thead>
-                <tbody id="pdfTbodyOut"></tbody>
-            </table>
-            
-            <div style="position:absolute; bottom:40px; left:40px; right:40px; font-size:10px; color:#94a3b8; text-align:center; border-top:1px solid #e2e8f0; padding-top:10px;">Hal. 2</div>
-        </div>
-
-        <div class="pdf-page" id="pdf-page-3">
-            <div class="pdf-watermark" id="pdfWM3">UNAUDITED</div>
-            <div class="pdf-section-title" style="margin-top:0;">E. Daftar Top Tunggakan Santri <span id="pdfKelasFilter" style="font-weight:normal; font-size:12px;"></span></div>
-            <table class="pdf-table">
-                <thead><tr><th style="width:10%;">No</th><th style="width:40%;">Nama Santri</th><th style="width:20%;">Kelas</th><th style="width:30%; text-align:right;">Sisa Tunggakan (Rp)</th></tr></thead>
-                <tbody id="pdfTbodyPiutang"></tbody>
-            </table>
-
-            <div class="pdf-footer">
-                <div><p>Mengetahui,</p><br><br><br><p style="font-weight:bold; text-decoration:underline;">Kepala Madrasah</p></div>
-                <div><p>Dicetak Oleh,</p><br><br><br><p style="font-weight:bold; text-decoration:underline;" id="pdfAdminName">Administrator</p><p style="margin:0; font-size:10px; color:#64748b;" id="pdfPrintDate"></p></div>
-            </div>
-            
-            <div style="position:absolute; bottom:40px; left:40px; right:40px; font-size:10px; color:#94a3b8; text-align:center; border-top:1px solid #e2e8f0; padding-top:10px;">Hal. 3</div>
         </div>
     </div>
 
@@ -358,7 +359,7 @@
         function resetTimerLogout() {
             clearTimeout(waktuLogout);
             waktuLogout = setTimeout(() => {
-                showToast("Sesi habis. Keluar demi keamanan.");
+                showToast("Sesi habis (15 Menit tidak aktif). Keluar demi keamanan.");
                 setTimeout(() => {
                     localStorage.removeItem('usernameAsli');
                     window.location.replace('index.html');
@@ -370,8 +371,11 @@
         async function catatAuditTrail(aksi, detail) {
             try {
                 await database.ref('audit_trail').push({
-                    Waktu: new Date().toLocaleString('id-ID'), Eksekutor: localStorage.getItem('namaPengguna') || 'Unknown',
-                    Role: localStorage.getItem('hakAkses') || 'Unknown', Menu: 'Analitik Dashboard', Aksi: aksi, Detail: detail
+                    Waktu: new Date().toLocaleString('id-ID'),
+                    Eksekutor: localStorage.getItem('namaPengguna') || 'Unknown',
+                    Role: localStorage.getItem('hakAkses') || 'Unknown',
+                    Menu: 'Analitik Dashboard',
+                    Aksi: aksi, Detail: detail
                 });
             } catch(e) {}
         }
@@ -602,7 +606,7 @@
                     <div class="li-val">${formatRp(t.sisaReal)}</div>
                 </div>`;
             });
-            document.getElementById('listTunggakan').innerHTML = htmlTunggakan || '<p style="text-align:center; font-size:11px; font-weight:600; opacity:0.6; padding:20px;">Lancar, tidak ada tunggakan.</p>';
+            document.getElementById('listTunggakan').innerHTML = htmlTunggakan || '<p style="text-align:center; font-size:11px; font-weight:600; opacity:0.6; padding:20px;">Lancar, tidak ada tunggakan di kelas ini.</p>';
 
             drawCashflowChart(labels6Bulan, hist6In, hist6Out, hist6Bulan);
             
@@ -712,11 +716,14 @@
             document.getElementById('drilldownModal').style.display = 'flex';
         }
 
-        // ================================================================
-        // PERBAIKAN BUG ANTI-KERTAS KOSONG SAAT CETAK PDF
-        // ================================================================
+        // ===================================================================================
+        // PERBAIKAN FINAL KERTAS KOSONG & BOROS KERTAS - PDF COMPACT VVIP
+        // ===================================================================================
         function eksporPDFProfesional() {
             if(navigator.vibrate) navigator.vibrate(30);
+            
+            // Kunci scroll ke atas agar kamera tidak meleset
+            window.scrollTo(0, 0); 
             
             let selMonth = document.getElementById('monthFilter');
             let bulanText = selMonth.options[selMonth.selectedIndex].text;
@@ -734,6 +741,7 @@
             document.getElementById('pdfKeluar').innerText = document.getElementById('valKeluar').innerText;
             document.getElementById('pdfKeluarYoY').innerHTML = document.getElementById('yoyKeluar').innerHTML;
 
+            // Render Tabel In
             let tbIn = ''; let noIn = 1; let sumIn = 0;
             Object.keys(pdfDataMapIn).forEach(k => {
                 tbIn += `<tr><td>${noIn++}</td><td>${k}</td><td style="text-align:right;">${formatRp(pdfDataMapIn[k])}</td></tr>`;
@@ -741,6 +749,7 @@
             });
             document.getElementById('pdfTbodyIn').innerHTML = tbIn + `<tr class="pdf-table-total"><td colspan="2">TOTAL PEMASUKAN</td><td style="text-align:right; color:#10b981;">${formatRp(sumIn)}</td></tr>`;
 
+            // Render Tabel Out
             let tbOut = ''; let noOut = 1; let sumOut = 0;
             Object.keys(pdfDataMapOut).forEach(k => {
                 tbOut += `<tr><td>${noOut++}</td><td>${k}</td><td style="text-align:right;">${formatRp(pdfDataMapOut[k])}</td></tr>`;
@@ -748,11 +757,12 @@
             });
             document.getElementById('pdfTbodyOut').innerHTML = tbOut + `<tr class="pdf-table-total"><td colspan="2">TOTAL PENGELUARAN</td><td style="text-align:right; color:#ef4444;">${formatRp(sumOut)}</td></tr>`;
 
+            // Render Tabel Piutang
             document.getElementById('pdfKelasFilter').innerText = kelasText === 'SEMUA' ? "(Semua Kelas)" : `(Khusus Kelas ${kelasText})`;
             let tbP = ''; let noP = 1;
-            if(pdfTopTunggakan.length === 0) tbP = `<tr><td colspan="4" style="text-align:center;">Alhamdulillah, tidak ada data tunggakan.</td></tr>`;
+            if(pdfTopTunggakan.length === 0) tbP = `<tr><td colspan="5" style="text-align:center;">Alhamdulillah, tidak ada data tunggakan.</td></tr>`;
             pdfTopTunggakan.forEach(t => {
-                tbP += `<tr><td>${noP++}</td><td><b>${t.Nama_Santri}</b><br><span style="color:#64748b;">${t.Nama_Pos}</span></td><td>${t.Kelas}</td><td style="text-align:right; font-weight:bold; color:#ef4444;">${formatRp(t.sisaReal)}</td></tr>`;
+                tbP += `<tr><td>${noP++}</td><td><b>${t.Nama_Santri}</b></td><td>${t.Kelas}</td><td>${t.Nama_Pos}</td><td style="text-align:right; font-weight:bold; color:#ef4444;">${formatRp(t.sisaReal)}</td></tr>`;
             });
             document.getElementById('pdfTbodyPiutang').innerHTML = tbP;
 
@@ -761,42 +771,43 @@
 
             catatAuditTrail('Export Laporan Eksekutif', `Cetak Laporan Multi-Halaman Periode ${bulanText}`);
 
-            // 1. Tampilkan Layar Loading Penuh
             let loader = document.getElementById('syncLoader');
-            document.getElementById('loaderText').innerText = "Menggambar Tinta PDF... Mohon Tunggu.";
+            document.getElementById('loaderText').innerText = "Melukis Tinta PDF... Jangan di-scroll!";
             loader.classList.add('show');
 
-            // 2. Tarik Elemen PDF dan Paksa Render di Browser
-            let el = document.getElementById('pdf-template');
-            el.style.display = 'block';
+            let pdfWrapper = document.getElementById('pdf-wrapper');
+            let templateEl = document.getElementById('pdf-template');
+            
+            // Tampilkan untuk kamera PDF
+            pdfWrapper.style.visibility = 'visible';
 
-            // 3. Konfigurasi Ekstra Ketat html2canvas
+            // Aturan html2pdf yang lebih pintar (membiarkan sistem memotong halaman otomatis)
             let opt = { 
-                margin: 0, 
+                margin: [0.4, 0.4, 0.4, 0.4], // Margin rapi di segala sisi
                 filename: `Executive_Report_${bulanText.replace(/ /g,'_')}.pdf`, 
                 image: { type: 'jpeg', quality: 1 }, 
                 html2canvas: { 
                     scale: 2, 
                     useCORS: true,
-                    allowTaint: true,
+                    scrollX: 0, 
                     scrollY: 0,
-                    scrollX: 0,
-                    windowWidth: 800 // KUNCI UTAMA: Paksa lensa kamera jadi 800px (Anti terpotong di HP)
+                    windowWidth: 800 // Mengunci lebar seperti kertas asli
                 }, 
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } 
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } // Fitur Anti Potong Baris Sembarangan
             };
             
-            // 4. Jeda 1 Detik agar Font & Tabel 100% Tercetak sebelum difoto
+            // Jeda agar tabel tergambar
             setTimeout(() => {
-                html2pdf().set(opt).from(el).save().then(() => {
-                    el.style.display = 'none'; // Sembunyikan lagi
+                html2pdf().set(opt).from(templateEl).save().then(() => {
+                    pdfWrapper.style.visibility = 'hidden'; 
                     document.getElementById('loaderText').innerText = "Menarik Data Cloud...";
                     loader.classList.remove('show');
-                    showToast("Laporan PDF Berhasil Diunduh!");
+                    showToast("✅ Laporan Eksekutif KAP Berhasil Dicetak!");
                 }).catch(err => {
-                    el.style.display = 'none';
+                    pdfWrapper.style.visibility = 'hidden';
                     loader.classList.remove('show');
-                    showToast("Gagal membuat dokumen PDF.");
+                    showToast("❌ Gagal membuat PDF. Coba gunakan Chrome.");
                 });
             }, 1000); 
         }
