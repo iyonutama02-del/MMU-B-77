@@ -105,7 +105,6 @@
         .greeting-salam { font-size: 11px; color: var(--text-muted); margin: 0 0 2px 0; font-weight: 500; }
         .greeting-name { font-family: 'Montserrat', sans-serif; font-size: 18px; color: var(--text-dark); margin: 0; font-weight: 800; text-transform: uppercase; }
 
-        /* Desain Ikon Obrolan (Tanpa Kotak) */
         .header-chat-btn {
             position: relative;
             color: var(--text-dark);
@@ -114,14 +113,12 @@
             transition: 0.2s; cursor: pointer;
             padding: 5px;
         }
-        .header-chat-btn:active {
-            color: #06d16f; transform: scale(0.95);
-        }
+        .header-chat-btn:active { color: #06d16f; transform: scale(0.95); }
         .chat-badge {
             position: absolute; top: 3px; right: 0px;
             width: 12px; height: 12px; background-color: #ef4444;
             border-radius: 50%; border: 2px solid var(--bg-main);
-            display: none; /* Default disembunyikan sampai ada pesan */
+            display: none; 
         }
 
         /* --- WIDGET JAM & KALENDER --- */
@@ -160,9 +157,10 @@
         .icon-santri-path { fill: var(--text-dark); transition: 0.3s; }
         .icon-santri-stroke { stroke: var(--text-dark); transition: 0.3s; }
 
-        /* --- VISUAL LOCK (SATPAM GAIB) --- */
-        .locked-menu { opacity: 0.45; filter: grayscale(80%); }
-        .lock-badge { position: absolute; top: -6px; right: -6px; background: var(--bg-main); color: #ff4757; border-radius: 50%; padding: 5px; font-size: 10px; box-shadow: 2px 2px 5px var(--shadow-dark), -2px -2px 5px var(--shadow-light); }
+        /* --- VISUAL LOCK (SATPAM SERVER) --- */
+        .locked-menu { opacity: 0.45; filter: grayscale(80%); cursor: not-allowed !important; }
+        .lock-badge { position: absolute; top: -6px; right: -6px; background: var(--bg-main); color: #ff4757; border-radius: 50%; padding: 5px; font-size: 10px; box-shadow: 2px 2px 5px var(--shadow-dark), -2px -2px 5px var(--shadow-light); display: none;}
+        .locked-menu .lock-badge { display: block; } /* Ditampilkan hanya jika ada class locked-menu */
 
         .footer-text { text-align: center; margin: 30px 0 20px; font-size: 10px; color: var(--text-muted); font-weight: 500; padding: 0 20px; line-height: 1.5; }
 
@@ -241,7 +239,7 @@
 
         <div class="menu-section">
             <div style="padding: 0 20px; max-width: 500px; margin: 0 auto;">
-                <div class="section-title">Master Data</div>
+                <div class="section-title">Area Persiapan</div>
             </div>
             <div class="menu-grid">
                 <a onclick="cekAksesDanPindah('data-santri.html', 'menuDataSantri')" class="menu-item" id="menuDataSantri">
@@ -254,12 +252,19 @@
                     </div>
                     <span class="menu-text">Data & Mutasi<br>Santri</span>
                 </a>
-                <a onclick="cekAksesDanPindah('pos-keuangan.html', 'menuPosKeuangan')" class="menu-item" id="menuPosKeuangan">
-                    <div class="menu-icon-neo"><i class="fa-solid fa-wallet" style="color: #4834d4;"></i></div>
+
+                <a onclick="cekAksesDanPindah('pos-keuangan.html', 'menuPosKeuangan')" class="menu-item locked-menu" id="menuPosKeuangan">
+                    <div class="menu-icon-neo">
+                        <i class="fa-solid fa-wallet" style="color: #4834d4;"></i>
+                        <i class="fa-solid fa-lock lock-badge"></i>
+                    </div>
                     <span class="menu-text">Pos<br>Keuangan</span>
                 </a>
-                <a onclick="cekAksesDanPindah('manajemen-tagihan.html', 'menuManTagihan')" class="menu-item" id="menuManTagihan">
-                    <div class="menu-icon-neo"><i class="fa-solid fa-file-invoice-dollar" style="color: #eb4d4b;"></i></div>
+                <a onclick="cekAksesDanPindah('manajemen-tagihan.html', 'menuManTagihan')" class="menu-item locked-menu" id="menuManTagihan">
+                    <div class="menu-icon-neo">
+                        <i class="fa-solid fa-file-invoice-dollar" style="color: #eb4d4b;"></i>
+                        <i class="fa-solid fa-lock lock-badge"></i>
+                    </div>
                     <span class="menu-text">Manajemen<br>Tagihan</span>
                 </a>
             </div>
@@ -267,7 +272,7 @@
 
         <div class="menu-section">
             <div style="padding: 0 20px; max-width: 500px; margin: 0 auto;">
-                <div class="section-title">Transaksi</div>
+                <div class="section-title">Area Transaksi</div>
             </div>
             <div class="menu-grid">
                 <a onclick="cekAksesDanPindah('pembayaran-santri.html', 'menuPembayaran')" class="menu-item" id="menuPembayaran">
@@ -287,19 +292,26 @@
 
         <div class="menu-section">
             <div style="padding: 0 20px; max-width: 500px; margin: 0 auto;">
-                <div class="section-title">Lain-Lain</div>
+                <div class="section-title">Area Pimpinan</div>
             </div>
             <div class="menu-grid">
                 <a onclick="cekAksesDanPindah('rekap-piutang.html', 'menuRekapPiutang')" class="menu-item" id="menuRekapPiutang">
                     <div class="menu-icon-neo"><i class="fa-brands fa-whatsapp" style="color: #25D366; font-size: 28px;"></i></div>
                     <span class="menu-text">Rekap Piutang<br>& WA</span>
                 </a>
-                <a onclick="cekAksesDanPindah('tutup-buku.html', 'menuTutupBuku')" class="menu-item" id="menuTutupBuku">
-                    <div class="menu-icon-neo"><i class="fa-solid fa-file-pdf" style="color: #be2edd;"></i></div>
+
+                <a onclick="cekAksesDanPindah('tutup-buku.html', 'menuTutupBuku')" class="menu-item locked-menu" id="menuTutupBuku">
+                    <div class="menu-icon-neo">
+                        <i class="fa-solid fa-file-pdf" style="color: #be2edd;"></i>
+                        <i class="fa-solid fa-lock lock-badge"></i>
+                    </div>
                     <span class="menu-text">Laporan<br>Tutup Buku</span>
                 </a>
-                <a onclick="cekAksesDanPindah('pengaturan.html', 'menuPengaturan')" class="menu-item" id="menuPengaturan">
-                    <div class="menu-icon-neo"><i class="fa-solid fa-user-shield" style="color: #535c68;"></i></div>
+                <a onclick="cekAksesDanPindah('pengaturan.html', 'menuPengaturan')" class="menu-item locked-menu" id="menuPengaturan">
+                    <div class="menu-icon-neo">
+                        <i class="fa-solid fa-user-shield" style="color: #535c68;"></i>
+                        <i class="fa-solid fa-lock lock-badge"></i>
+                    </div>
                     <span class="menu-text">Pengaturan<br>Sistem</span>
                 </a>
             </div>
@@ -325,41 +337,22 @@
     </div>
 
     <script>
-        // --- 1. PENGAMANAN DASAR ANTARMUKA (Anti-Snooping) ---
+        // --- PENGAMANAN UI ---
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.onkeydown = function(e) {
-            if(e.keyCode == 123) return false;
-            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
-            if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false;
-            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
-            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+            if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 67 || e.keyCode == 74)) || (e.ctrlKey && e.keyCode == 85)) return false;
         };
 
-        // --- 2. HAPTIC FEEDBACK ---
         function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
         function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); }
 
-        // --- PERBAIKAN BUG #4: TOAST AMAN ---
         function showToast(msg) {
             let toast = document.getElementById("toast"); 
-            document.getElementById("toastMsg").innerText = msg; // Hanya update teks, ikon aman
+            document.getElementById("toastMsg").innerText = msg; // Aman XSS
             toast.className = "show"; 
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }
 
-        // --- 3. SISTEM DETEKSI SINYAL ---
-        function updateOnlineStatus() {
-            if (!navigator.onLine) {
-                showToast("Sinyal Terputus. Sebagian menu akan diblokir.");
-                vibrateHeavy();
-            } else {
-                showToast("Sinyal Internet Kembali Normal.");
-            }
-        }
-        window.addEventListener('online', updateOnlineStatus);
-        window.addEventListener('offline', updateOnlineStatus);
-
-        // --- 4. KEAMANAN AUTO-LOGOUT 15 MENIT ---
         let waktuLogout;
         function resetTimerLogout() {
             clearTimeout(waktuLogout);
@@ -375,15 +368,13 @@
         window.onload = resetTimerLogout; document.onmousemove = resetTimerLogout; 
         document.onkeypress = resetTimerLogout; document.ontouchstart = resetTimerLogout;
 
-        // --- TRANSISI HALAMAN SLIDE-IN/OUT ---
         function pindahHalaman(url) {
             document.getElementById('main-content').classList.add('fade-out');
             setTimeout(() => { window.location.href = url; }, 300);
         }
 
         function navSlide(e, element, url) {
-            e.preventDefault();
-            vibrateClick();
+            e.preventDefault(); vibrateClick();
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             element.classList.add('active'); setIndicatorPosition();
             pindahHalaman(url);
@@ -395,7 +386,6 @@
             if(activeItem && indicator) indicator.style.transform = `translateX(${activeItem.offsetLeft}px)`;
         }
 
-        // --- 5. NAVIGASI BACK BUTTON ANDROID (History API) ---
         function tutupPopupBismillah() {
             vibrateClick();
             document.getElementById('popupBismillah').style.opacity = '0';
@@ -410,33 +400,95 @@
             }
         };
 
-        // --- SATPAM GAIB (PENGECEKAN AKSES & VISUAL LOCK LOGIC) ---
-        function cekAksesDanPindah(url, menuId) {
-            vibrateClick();
-            
+        // =========================================================================
+        // PERBAIKAN CELAH #2: OTORISASI SERVER-SIDE (Menggantikan LocalStorage)
+        // =========================================================================
+        function verifikasiOtorisasiServer() {
             if (!navigator.onLine) {
-                showToast("TIDAK ADA SINYAL: Anda harus Online untuk membuka menu ini.");
-                vibrateHeavy();
+                showToast("Sinyal Offline. Memverifikasi dari data lokal.");
+                // Jika offline, fallback ke localStorage sementara, tapi menu tetap terkunci jika bukan admin
+                let localRole = localStorage.getItem('hakAkses') || 'Operator';
+                if (localRole === 'Administrator' || localRole === 'Developer') {
+                    bukaGembokEksekutif();
+                }
                 return;
             }
 
-            let role = localStorage.getItem('hakAkses') || 'Operator';
-            
-            const lockedMenus = ['menuPosKeuangan', 'menuManTagihan', 'menuTutupBuku', 'menuPengaturan'];
-            if(lockedMenus.includes(menuId)) {
-                if(role === 'Operator' || role === 'Supervisor') {
-                    showToast("AKSES DITOLAK: Area ini khusus untuk Administrator."); 
-                    vibrateHeavy();
+            const uid = localStorage.getItem('usernameAsli');
+            if(!uid) return window.location.replace('index.html');
+
+            // Tanya ke Database, bukan ke LocalStorage
+            database.ref('users/' + uid).once('value').then(snapshot => {
+                if (!snapshot.exists()) {
+                    showToast("Akun tidak ditemukan di Server!");
+                    setTimeout(() => window.location.replace('index.html'), 2000);
                     return;
                 }
+
+                let dataAkun = snapshot.val();
+
+                // Cek Status Blokir Paksa
+                if (String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif') {
+                    showToast("Akses Ditolak: Akun Anda telah diblokir Admin.");
+                    localStorage.clear();
+                    setTimeout(() => window.location.replace('index.html'), 2000);
+                    return;
+                }
+
+                // Cek Force Logout Sinyal dari Pengaturan
+                if (dataAkun.forceLogout && dataAkun.forceLogout > (Date.now() - 30000)) {
+                    showToast("Sesi diputus paksa oleh Server.");
+                    localStorage.clear();
+                    setTimeout(() => window.location.replace('index.html'), 2000);
+                    return;
+                }
+
+                // XSS Prevention: Isi nama menggunakan innerText
+                document.getElementById('user-name').innerText = dataAkun.NamaLengkap || 'Pengguna';
+                
+                // Perbarui LocalStorage Cache
+                localStorage.setItem('hakAkses', dataAkun.Role);
+                
+                // Eksekusi Buka Gembok jika Pimpinan
+                const validRole = dataAkun.Role || 'Operator';
+                if (validRole === 'Administrator' || validRole === 'Developer') {
+                    bukaGembokEksekutif();
+                }
+
+            }).catch(error => {
+                console.error("Gagal terhubung ke keamanan server:", error);
+            });
+        }
+
+        // Fungsi mencopot gembok UI setelah dikonfirmasi Firebase
+        function bukaGembokEksekutif() {
+            const lockedIds = ['menuPosKeuangan', 'menuManTagihan', 'menuTutupBuku', 'menuPengaturan'];
+            lockedIds.forEach(id => {
+                let el = document.getElementById(id);
+                if(el) {
+                    el.classList.remove('locked-menu');
+                }
+            });
+        }
+
+        // Fungsi Satpam Penjaga Klik Menu
+        function cekAksesDanPindah(url, menuId) {
+            vibrateClick();
+            
+            let el = document.getElementById(menuId);
+            
+            // Cek visual DOM: Jika tombol masih punya class 'locked-menu', tolak!
+            if(el && el.classList.contains('locked-menu')) {
+                showToast("AKSES DITOLAK SERVER: Area ini khusus untuk Administrator."); 
+                vibrateHeavy();
+                return;
             }
             
             pindahHalaman(url);
         }
+        // =========================================================================
 
         window.addEventListener('DOMContentLoaded', (event) => {
-            // (Login Check dipindahkan ke head agar lebih aman)
-            
             if(!sessionStorage.getItem('hasSeenPopup')) { 
                 document.getElementById('popupBismillah').style.display = 'flex'; 
                 window.history.pushState(null, "", window.location.href);
@@ -444,8 +496,8 @@
             
             setIndicatorPosition(); window.addEventListener('resize', setIndicatorPosition);
 
-            const savedName = localStorage.getItem('namaPengguna');
-            if (savedName) document.getElementById('user-name').innerText = savedName;
+            // Tampilkan cache sementara sambil nunggu server
+            document.getElementById('user-name').innerText = localStorage.getItem('namaPengguna') || 'Memuat...';
 
             const hour = new Date().getHours(); let ucapan = "Selamat Pagi";
             if (hour >= 11 && hour < 15) ucapan = "Selamat Siang";
@@ -453,22 +505,8 @@
             else if (hour >= 18 || hour < 4) ucapan = "Selamat Malam";
             document.getElementById('greeting-salam').innerText = `Assalamu'alaikum, ${ucapan}`;
 
-            // --- EKSEKUSI VISUAL LOCK UNTUK OPERATOR & SUPERVISOR ---
-            const userRole = localStorage.getItem('hakAkses') || 'Operator';
-            if(userRole === 'Operator' || userRole === 'Supervisor') {
-                const lockedIds = ['menuPosKeuangan', 'menuManTagihan', 'menuTutupBuku', 'menuPengaturan'];
-                
-                lockedIds.forEach(id => {
-                    let el = document.getElementById(id);
-                    if(el) {
-                        el.classList.add('locked-menu');
-                        let iconBox = el.querySelector('.menu-icon-neo');
-                        if(iconBox) {
-                            iconBox.innerHTML += '<i class="fa-solid fa-lock lock-badge"></i>';
-                        }
-                    }
-                });
-            }
+            // PANGGIL SATPAM SERVER
+            verifikasiOtorisasiServer();
 
             const now = new Date();
             const namaBulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -478,14 +516,13 @@
             initAstronomiClock();
         });
 
-        // --- 6. INDIKATOR NOTIFIKASI LIVE CHAT OTOMATIS ---
+        // --- INDIKATOR NOTIFIKASI LIVE CHAT OTOMATIS ---
         const myUidForChat = localStorage.getItem('usernameAsli');
         if (myUidForChat) {
             database.ref('chat_messages').limitToLast(3).on('value', snap => {
                 let hasUnread = false;
                 snap.forEach(c => {
                     let m = c.val();
-                    // Jika ada pesan dari orang lain yang statusnya belum "read"
                     if (m.uid !== myUidForChat && m.status !== 'read') {
                         hasUnread = true;
                     }
@@ -548,7 +585,7 @@
                                 headers: { 'Accept-Language': 'id' }
                             });
                             
-                            if (!response.ok) throw new Error("API Terkena Limit (HTTP " + response.status + ")");
+                            if (!response.ok) throw new Error("API Limit");
 
                             let data = await response.json(); 
                             let address = data.address;
