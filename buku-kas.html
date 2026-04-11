@@ -21,22 +21,17 @@
     <script src="firebase-config.js"></script>
 
     <script>
-        // --- PENGAMANAN MUTLAK Cek Sesi Login di Atas ---
-        if (!localStorage.getItem('usernameAsli')) {
-            window.location.replace('index.html');
-        }
-
+        if (!localStorage.getItem('usernameAsli')) window.location.replace('index.html');
         if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
         
-        // PENGAMANAN AKSES DEMO
-        if(localStorage.getItem('hakAkses') === 'Demo') {
+        const roleLokal = localStorage.getItem('hakAkses') || 'Operator';
+        if(roleLokal === 'Demo') {
             alert("🔒 AKSES DIBATASI: Akun Demo tidak memiliki izin mengakses Buku Kas Utama.");
             window.location.replace('beranda.html');
         }
     </script>
 
     <style>
-        /* --- TEMA NEUMORPHISM PREMIUM --- */
         :root {
             --bg-main: #e0e5ec; --text-dark: #31344b; --text-muted: #8C96A3;
             --shadow-dark: rgba(163, 177, 198, 0.6); --shadow-light: rgba(255, 255, 255, 0.6);
@@ -54,28 +49,22 @@
         .app-container { max-width: 800px; margin: 0 auto; padding: 25px 20px; animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* TOAST */
         #toast { visibility: hidden; min-width: 250px; background-color: #31344b; color: #fff; text-align: center; border-radius: 15px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; width: 85%; max-width:400px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
         @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
         @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
 
-        /* HEADER */
         .nav-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
         .btn-icon { width: 45px; height: 45px; border-radius: 15px; background: var(--bg-main); display: flex; justify-content: center; align-items: center; color: var(--text-dark); box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); cursor: pointer; border: none; transition: 0.2s; font-size: 16px;}
         .btn-icon:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
         .header-title { font-family: 'Montserrat'; font-weight: 900; font-size: 18px; margin: 0; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dark);}
 
-        /* SUMMARY CARDS (3D FLOATING) */
         .summary-wrapper { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
         .sum-card { flex: 1; min-width: 100px; background: var(--bg-main); border-radius: 20px; padding: 20px 15px; text-align: center; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); display: flex; flex-direction: column; justify-content: center; align-items: center;}
         .sum-card p { margin: 0 0 8px 0; font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
         .sum-card h3 { margin: 0; font-family: 'Montserrat'; font-weight: 900; font-size: 18px; }
-        #totMasuk { color: var(--c-green); } 
-        #totKeluar { color: var(--c-red); } 
-        #totSaldo { color: var(--c-blue); }
+        #totMasuk { color: var(--c-green); } #totKeluar { color: var(--c-red); } #totSaldo { color: var(--c-blue); }
 
-        /* AKORDION REKAPITULASI POS */
         .accordion-card { background: var(--bg-main); border-radius: 20px; margin-bottom: 25px; box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); overflow: hidden; transition: 0.3s;}
         .acc-header { padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-family: 'Montserrat'; font-weight: 800; font-size: 12px; color: var(--text-dark); transition: 0.2s;}
         .acc-header:active { background: rgba(0,0,0,0.02); }
@@ -88,7 +77,6 @@
         .sl-item span:last-child { font-family: 'Montserrat'; font-weight: 800; }
         @media (max-width: 500px) { .subledger-grid { grid-template-columns: 1fr; } }
 
-        /* FILTER PANEL */
         .filter-card { background: var(--bg-main); padding: 25px; border-radius: 25px; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); margin-bottom: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 20px; }
         .input-group { position: relative; }
         .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; margin-left: 5px;}
@@ -100,8 +88,10 @@
         .btn-action:active { transform: translateY(2px); box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2); }
         .btn-pdf { background: var(--grad-red); box-shadow: 4px 4px 12px rgba(239, 68, 68, 0.3); }
         .btn-excel { background: var(--grad-green); box-shadow: 4px 4px 12px rgba(34, 197, 94, 0.3); }
+        
+        .btn-load { background: var(--bg-main); color: var(--text-dark); border: 2px dashed var(--text-muted); box-shadow: none; width: 100%; margin-top: 10px;}
+        .btn-load:hover { background: rgba(0,0,0,0.03); }
 
-        /* ADVANCED MUTATION CARD DESIGN */
         .mutasi-list { display: flex; flex-direction: column; gap: 18px; }
         .mutasi-card { background: var(--bg-main); border-radius: 20px; padding: 20px; box-shadow: 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light); display: flex; flex-direction: column; gap: 15px; position: relative; overflow: hidden; transition: 0.3s;}
         .mutasi-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; border-radius: 20px 0 0 20px; }
@@ -113,12 +103,15 @@
         .m-title { font-family: 'Montserrat'; font-weight: 800; font-size: 15px; color: var(--text-dark); margin: 0;}
         .m-subtitle { font-size: 11px; font-weight: 600; color: var(--text-muted); margin: 0; display: flex; align-items: center; gap: 6px;}
         
-        .m-head-right { text-align: right; }
+        .m-head-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end;}
         .m-amt { font-family: 'Montserrat'; font-weight: 900; font-size: 16px; margin: 0 0 4px 0;}
         .m-amt-in { color: var(--c-green); } 
         .m-amt-out { color: var(--c-red); }
         .m-saldo-badge { font-size: 10px; font-weight: 700; background: rgba(0,0,0,0.03); padding: 4px 8px; border-radius: 8px;}
         
+        .btn-delete { background: transparent; border: none; color: var(--c-red); cursor: pointer; font-size: 13px; margin-top: 6px; padding: 5px; opacity: 0.6; transition: 0.2s;}
+        .btn-delete:hover { opacity: 1; transform: scale(1.1); }
+
         .m-body { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-dark); }
         .m-desc { line-height: 1.5; font-weight: 500; }
         .badge { padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; font-family: 'Montserrat'; letter-spacing: 0.5px;}
@@ -127,15 +120,7 @@
 
         .empty-state { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center;}
 
-        /* PRINT TEMPLATE (PROFESSIONAL PDF) - PERBAIKAN POTONGAN */
-        #print-wrapper { 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 1123px; 
-            z-index: -9999; 
-            visibility: hidden; /* Menyembunyikan dari layar user tanpa merusak koordinat html2canvas */
-        }
+        #print-wrapper { position: absolute; top: 0; left: 0; width: 1123px; z-index: -9999; visibility: hidden; }
         #print-area { width: 100%; background: white; padding: 40px; color: black; font-family: Arial, sans-serif; display: block; }
         .pdf-kop { text-align: center; border-bottom: 4px double black; padding-bottom: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 25px; }
         .pdf-kop img { width: 90px; }
@@ -184,18 +169,18 @@
         <div class="filter-card">
             <div class="input-group" style="grid-column: span 2;">
                 <label>Pencarian Riwayat</label>
-                <input type="text" class="input-edit" id="cariData" placeholder="Cari ID, Pos, Nominal, atau Keterangan..." onkeyup="prosesData()">
+                <input type="text" class="input-edit" id="cariData" placeholder="Cari ID, Pos, Nominal, atau Keterangan..." onkeyup="prosesData(true)">
             </div>
             <div class="input-group">
                 <label>Tahun Ajaran</label>
-                <select class="input-edit" id="fTahun" onchange="prosesData()">
+                <select class="input-edit" id="fTahun" onchange="prosesData(true)">
                     <option value="">-- Semua Tahun --</option>
                 </select>
                 <i class="fa-solid fa-chevron-down select-icon"></i>
             </div>
             <div class="input-group">
                 <label>Bulan Hijriyah</label>
-                <select class="input-edit" id="fBulan" onchange="prosesData()">
+                <select class="input-edit" id="fBulan" onchange="prosesData(true)">
                     <option value="">-- Semua Bulan --</option>
                     <option value="Muharram">Muharram</option>
                     <option value="Safar">Safar</option>
@@ -256,14 +241,10 @@
     <script>
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.onkeydown = function(e) {
-            if(e.keyCode == 123) return false;
-            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
-            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
-            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+            if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) return false;
         };
 
         function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
-        
         function showToast(msg) { 
             let toast = document.getElementById("toast"); 
             document.getElementById("toastMsg").innerText = msg;
@@ -271,56 +252,50 @@
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000); 
         }
 
-        // --- SISTEM AUDIT TRAIL (CCTV DIGITAL) ---
         async function catatAuditTrail(aksi, detail) {
             try {
                 await database.ref('audit_trail').push({
                     Waktu: new Date().toLocaleString('id-ID'),
                     Eksekutor: localStorage.getItem('namaPengguna') || 'Unknown',
-                    Role: localStorage.getItem('hakAkses') || 'Unknown',
+                    Role: roleLokal,
                     Menu: 'Buku Kas Harian',
                     Aksi: aksi,
                     Detail: detail
                 });
-            } catch(e) { console.error("Gagal catat audit", e); }
+            } catch(e) {}
         }
 
         let rawData = [];
-        let currentExcelData = []; // Penyimpan Data khusus untuk Excel
+        let currentFilteredData = []; 
+        let limitTampil = 50; // Batas Pagination (Mencegah Lag)
         const formatRp = (n) => parseInt(n || 0).toLocaleString('id-ID');
 
-        // Fungsi Konversi Hijriyah Akurat
         function getHijriDate(dateObj) {
             try { return new Intl.DateTimeFormat('id-ID-u-ca-islamic', {day: 'numeric', month: 'long', year: 'numeric'}).format(dateObj); } 
             catch (e) { return "-"; }
         }
 
-        // Fungsi Parsing Waktu Presisi Tinggi (Memastikan urutan detik tidak tertukar)
+        // PEMBACA WAKTU SUPER AKURAT (Fix Urutan Berantakan)
         function parseWaktuAbsolut(waktuStr) {
+            if (!waktuStr) return 0;
             try {
-                let parts = waktuStr.split(', ');
-                let d = parts[0].split('/');
-                let t = (parts[1] || '00:00:00').split(':');
-                return new Date(d[2], d[1]-1, d[0], t[0], t[1], t[2]).getTime();
+                let cleanStr = waktuStr.replace(/ - /g, ' ').replace(/, /g, ' ');
+                let parts = cleanStr.split(' ');
+                let d = (parts[0] || '').split('/'); 
+                let t = (parts[1] || '00:00:00').replace(/\./g, ':').split(':');
+                return new Date(d[2]||0, (d[1]||1)-1, d[0]||0, t[0]||0, t[1]||0, t[2]||0).getTime();
             } catch(e) { return 0; }
         }
 
-        // AKORDION TOGGLE
         function toggleSubLedger() {
             vibrateClick();
             let body = document.getElementById('subLedgerBody');
             let icon = document.getElementById('accIcon');
-            if (body.style.display === 'block') {
-                body.style.display = 'none';
-                icon.style.transform = 'rotate(0deg)';
-            } else {
-                body.style.display = 'block';
-                icon.style.transform = 'rotate(180deg)';
-            }
+            if (body.style.display === 'block') { body.style.display = 'none'; icon.style.transform = 'rotate(0deg)';
+            } else { body.style.display = 'block'; icon.style.transform = 'rotate(180deg)'; }
         }
 
         window.onload = function() {
-            const roleLokal = localStorage.getItem('hakAkses');
             const globalTahun = localStorage.getItem('globalTahunAjaran') || '';
             const globalBulan = localStorage.getItem('globalBulanAktif') || '';
 
@@ -329,7 +304,6 @@
                 document.getElementById('fBulan').value = globalBulan;
                 document.getElementById('fTahun').disabled = true;
                 document.getElementById('fBulan').disabled = true;
-                setTimeout(() => showToast("Mode Kasir: Menampilkan mutasi periode berjalan saja."), 1000);
             }
 
             database.ref('buku_kas').on('value', snap => {
@@ -348,66 +322,80 @@
                     document.getElementById('fTahun').innerHTML = optTahun;
                 }
                 
-                // SISTEM SORTING PRESISI TINGGI (Terbaru PASTI paling atas)
-                rawData.sort((a,b) => parseWaktuAbsolut(b.Waktu) - parseWaktuAbsolut(a.Waktu) || b.ID_Transaksi.localeCompare(a.ID_Transaksi));
-                
-                prosesData();
+                // Urutkan Paling Lama ke Baru (Untuk menghitung saldo dari 0)
+                rawData.sort((a,b) => parseWaktuAbsolut(a.Waktu) - parseWaktuAbsolut(b.Waktu) || a.ID_Transaksi.localeCompare(b.ID_Transaksi));
+                prosesData(true);
             });
         };
 
-        function prosesData() {
+        // FUNGSI PROSES UTAMA (Dilengkapi Sistem Anti-Error & Pagination)
+        function prosesData(resetLimit = false) {
+            if(resetLimit) limitTampil = 50;
+
             const cari = document.getElementById('cariData').value.toLowerCase();
             const fThn = document.getElementById('fTahun').value;
             const fBln = document.getElementById('fBulan').value;
             
             let filtered = rawData.filter(d => {
-                let adminInfo = d.Kasir || d.Admin_Penerima || d.Admin_Input || d.Penerima || '';
-                let matchCari = (d.ID_Transaksi.toLowerCase().includes(cari) || d.Kategori_Nama.toLowerCase().includes(cari) || (d.Sumber || d.Penerima || '').toLowerCase().includes(cari) || adminInfo.toLowerCase().includes(cari) || (d.Keterangan || '').toLowerCase().includes(cari) || String(d.Nominal).includes(cari));
+                // Konversi aman agar tidak error jika ada data kosong
+                let valId = String(d.ID_Transaksi || '').toLowerCase();
+                let valKat = String(d.Kategori_Nama || '').toLowerCase();
+                let valSumber = String(d.Sumber || d.Penerima || d.Nama_Santri || '').toLowerCase();
+                let valAdmin = String(d.Kasir || d.Admin_Penerima || d.Admin_Input || '').toLowerCase();
+                let valKet = String(d.Keterangan || '').toLowerCase();
+                let valNom = String(d.Nominal || '');
                 
+                let matchCari = valId.includes(cari) || valKat.includes(cari) || valSumber.includes(cari) || valAdmin.includes(cari) || valKet.includes(cari) || valNom.includes(cari);
                 let matchTahun = fThn ? (d.Tahun_Ajaran === fThn) : true;
                 let matchBulan = fBln ? (d.Bulan_Hijriyah === fBln) : true;
-                
                 return matchCari && matchTahun && matchBulan;
             });
 
             let saldoAkumulatif = 0; let totIn = 0; let totOut = 0;
             let rekapMasuk = {}; let rekapKeluar = {};
-            
-            // Dibalik sementara agar perhitungan Saldo Berjalan akurat dari yang terlama
-            let displayRows = [...filtered].reverse(); 
-            
-            let htmlUI = ''; let pdfHTML = '';
-            currentExcelData = []; // Reset Array Excel
 
-            displayRows.forEach(d => {
+            // Hitung Saldo dari transaksi paling lama (sudah di-sort di atas)
+            filtered.forEach(d => {
                 let nom = parseInt(d.Nominal || 0);
-                let isMasuk = d.Jenis === 'MASUK';
-                
-                if(isMasuk) { 
+                if(d.Jenis === 'MASUK') { 
                     saldoAkumulatif += nom; totIn += nom; 
                     rekapMasuk[d.Kategori_Nama] = (rekapMasuk[d.Kategori_Nama] || 0) + nom;
                 } else { 
                     saldoAkumulatif -= nom; totOut += nom; 
                     rekapKeluar[d.Kategori_Nama] = (rekapKeluar[d.Kategori_Nama] || 0) + nom;
                 }
+                d.saldoBerjalan = saldoAkumulatif; // Simpan jejak saldo di dalam object
+            });
 
-                let splitWaktu = d.Waktu.split(', ');
-                let tglMasehiStr = splitWaktu[0];
+            // Balik urutan agar Terbaru ada di atas
+            currentFilteredData = [...filtered].reverse(); 
+            
+            let htmlUI = '';
+            // Terapkan batas tampil (Pagination)
+            let rowsToShow = currentFilteredData.slice(0, limitTampil);
+
+            rowsToShow.forEach(d => {
+                let isMasuk = d.Jenis === 'MASUK';
+                let nom = parseInt(d.Nominal || 0);
+                let splitWaktu = (d.Waktu||'').split(', ');
+                let tglMasehiStr = splitWaktu[0] || '-';
                 let jamStr = splitWaktu[1] || '-';
                 
-                // Konversi Tanggal Hijriyah
                 let timestampMs = parseWaktuAbsolut(d.Waktu);
                 let tglHijriyah = getHijriDate(new Date(timestampMs));
                 
                 let adminAktor = d.Kasir || d.Admin_Penerima || d.Admin_Input || 'System Auto';
                 let entitasTerkait = d.Sumber || d.Penerima || d.Nama_Santri || 'Lain-lain';
 
-                // Teks merah menyala untuk saldo minus (Peringatan Defisit Gaib)
-                let saldoWarna = saldoAkumulatif < 0 ? 'var(--c-red)' : 'var(--text-muted)';
-                let saldoTextPdf = saldoAkumulatif < 0 ? `style="color:red; font-weight:bold; text-align:right;"` : `style="font-weight:bold; text-align:right;"`;
+                let saldoWarna = d.saldoBerjalan < 0 ? 'var(--c-red)' : 'var(--text-muted)';
 
-                // HTML Ditempel di depan (Prepend) agar data TERBARU selalu di ATAS UI
-                htmlUI = `
+                // TOMBOL HAPUS (Hanya untuk Non-Operator)
+                let btnHapus = '';
+                if(roleLokal !== 'Operator') {
+                    btnHapus = `<button class="btn-delete" onclick="hapusTrx('${d.ID_Transaksi}', '${d.Jenis}', ${nom}, '${d.Kategori_Nama||''}')" title="Hapus Permanen"><i class="fa-solid fa-trash-can"></i></button>`;
+                }
+
+                htmlUI += `
                 <div class="mutasi-card ${isMasuk ? 'in' : 'out'}">
                     <div class="m-header">
                         <div class="m-head-left">
@@ -417,46 +405,24 @@
                         </div>
                         <div class="m-head-right">
                             <h3 class="m-amt ${isMasuk ? 'm-amt-in' : 'm-amt-out'}">${isMasuk ? '+' : '-'} ${formatRp(nom)}</h3>
-                            <span class="m-saldo-badge" style="color: ${saldoWarna}; font-weight:800;">Saldo: ${formatRp(saldoAkumulatif)}</span>
+                            <span class="m-saldo-badge" style="color: ${saldoWarna}; font-weight:800;">Saldo: ${formatRp(d.saldoBerjalan)}</span>
+                            ${btnHapus}
                         </div>
                     </div>
                     <div class="m-body">
                         <div class="m-desc">
                             <span style="font-weight:700;">Ref:</span> <span style="font-family:monospace;">${d.ID_Transaksi}</span><br>
-                            <span style="color:var(--text-muted);">${d.Keterangan || 'Tidak ada catatan khusus'}</span><br>
+                            <span style="color:var(--text-muted);">${d.Keterangan || '-'}</span><br>
                             <span style="font-size:10px; color:var(--text-muted); margin-top:5px; display:inline-block;"><i class="fa-solid fa-user-check"></i> Petugas: ${adminAktor}</span>
                         </div>
-                        <div>
-                            <span class="badge ${isMasuk ? 'badge-in' : 'badge-out'}">${d.Kategori_Nama || 'Transaksi'}</span>
-                        </div>
+                        <div><span class="badge ${isMasuk ? 'badge-in' : 'badge-out'}">${d.Kategori_Nama || 'Transaksi'}</span></div>
                     </div>
-                </div>` + htmlUI;
-
-                // PDF Ditempel di depan
-                pdfHTML = `<tr>
-                    <td><b>${tglMasehiStr}</b><br><span style="font-size:10px; color:#555;">${tglHijriyah}</span><br><span style="font-size:9px;">${jamStr} WIB</span></td>
-                    <td><b style="font-family:monospace;">${d.ID_Transaksi}</b><br><span style="font-size:10px;">Oleh: ${adminAktor}</span></td>
-                    <td><b>${d.Kategori_Nama || 'Transaksi'}</b><br>${entitasTerkait}<br><span style="font-size:10px; color:#555;">${d.Keterangan || '-'}</span></td>
-                    <td style="text-align:right;">${isMasuk ? formatRp(nom) : '-'}</td>
-                    <td style="text-align:right; color:red;">${!isMasuk ? formatRp(nom) : '-'}</td>
-                    <td ${saldoTextPdf}>${formatRp(saldoAkumulatif)}</td>
-                </tr>` + pdfHTML;
-
-                // Masukkan ke Array Excel (Unshift agar terbaru di baris atas Excel)
-                currentExcelData.unshift([
-                    d.ID_Transaksi, tglMasehiStr, jamStr, tglHijriyah, d.Tahun_Ajaran || '-', d.Bulan_Hijriyah || '-',
-                    d.Kategori_Nama || 'Transaksi', d.Jenis, entitasTerkait, d.Keterangan || '-', adminAktor,
-                    isMasuk ? nom : 0, !isMasuk ? nom : 0, saldoAkumulatif
-                ]);
+                </div>`;
             });
 
-            // Tampilkan Baris Total di akhir PDF
-            pdfHTML += `<tr class="row-total">
-                <td colspan="3" style="text-align:center; font-size:13px;">TOTAL AKUMULASI PERIODE INI</td>
-                <td style="text-align:right; color:green; font-size:13px;">${formatRp(totIn)}</td>
-                <td style="text-align:right; color:red; font-size:13px;">${formatRp(totOut)}</td>
-                <td style="text-align:right; font-size:14px;">${formatRp(totIn - totOut)}</td>
-            </tr>`;
+            if(currentFilteredData.length > limitTampil) {
+                htmlUI += `<button class="btn-action btn-load" onclick="muatLebihBanyak()">Buka Lebih Banyak (${currentFilteredData.length - limitTampil} tersisa) <i class="fa-solid fa-angle-down"></i></button>`;
+            }
 
             // RENDER REKAPITULASI (SUB-LEDGER)
             let htmlRekapM = ''; let htmlRekapK = '';
@@ -469,16 +435,38 @@
             document.getElementById('bodyKas').innerHTML = htmlUI || `
                 <div class="empty-state">
                     <i class="fa-regular fa-folder-open" style="font-size:45px; margin-bottom:15px; opacity:0.5;"></i>
-                    <span>Tidak ada riwayat transaksi pada rentang waktu ini.</span>
+                    <span>Tidak ada data pada periode/pencarian ini.</span>
                 </div>`;
             
-            document.getElementById('pdfTableBody').innerHTML = pdfHTML;
             document.getElementById('totMasuk').innerText = 'Rp ' + formatRp(totIn);
             document.getElementById('totKeluar').innerText = 'Rp ' + formatRp(totOut);
             document.getElementById('totSaldo').innerText = 'Rp ' + formatRp(totIn - totOut);
         }
 
-        // FUNGSI EXPORT PDF (MODE TURBO / FAST RENDER)
+        function muatLebihBanyak() {
+            limitTampil += 50;
+            prosesData(false);
+        }
+
+        // FUNGSI HAPUS TRANSAKSI (Eksklusif Pimpinan)
+        async function hapusTrx(id, jenis, nominal, kategori) {
+            vibrateHeavy();
+            if(!confirm(`⚠️ BAHAYA: Anda yakin ingin MENGHAPUS permanen transaksi ini?\n\nID: ${id}\nPos: ${kategori}\nNominal: Rp ${formatRp(nominal)}\n\nTindakan ini akan mengubah total Saldo Kas!`)) return;
+            
+            try {
+                let updates = {};
+                updates[`buku_kas/${id}`] = null;
+                if(jenis === 'MASUK') updates[`kas_masuk/${id}`] = null;
+                else updates[`kas_keluar/${id}`] = null;
+                
+                await database.ref().update(updates);
+                await catatAuditTrail('Delete', `Menghapus Kas ${jenis} [${kategori}] senilai Rp ${formatRp(nominal)} (ID: ${id})`);
+                showToast("✅ Transaksi berhasil dihapus dan saldo diperbarui.");
+            } catch(e) {
+                showToast("❌ Gagal menghapus: " + e.message);
+            }
+        }
+
         function exportPDF() {
             vibrateClick();
             const fThn = document.getElementById('fTahun').value || 'Semua Tahun';
@@ -486,62 +474,73 @@
             
             document.getElementById('pdfTgl').innerText = `Periode: Bulan ${fBln} - TA. ${fThn}`;
             document.getElementById('wktCetak').innerText = new Date().toLocaleString('id-ID');
+            catatAuditTrail('Export', `Mengunduh PDF Buku Kas (Periode: ${fBln} ${fThn})`);
             
-            catatAuditTrail('Export', `Mengunduh Laporan PDF Buku Kas (Periode: ${fBln} ${fThn})`);
-            
-            // Beri tahu Pimpinan bahwa sistem sedang merender
-            showToast("Merender PDF... Makin banyak data, makin butuh waktu.");
             let btnPdf = document.querySelector('.btn-pdf');
             let txtAsli = btnPdf.innerHTML;
-            btnPdf.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+            btnPdf.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyusun Tabel...';
             btnPdf.disabled = true;
+
+            // Render ulang tabel PDF dari SEMUA data yang terfilter (Bukan hanya 50 limit)
+            let pdfHTML = '';
+            let tIn = 0; let tOut = 0;
+            currentFilteredData.forEach(d => {
+                let isM = d.Jenis === 'MASUK';
+                let nom = parseInt(d.Nominal || 0);
+                if(isM) tIn += nom; else tOut += nom;
+
+                let w = (d.Waktu||'').split(', ');
+                let tglH = getHijriDate(new Date(parseWaktuAbsolut(d.Waktu)));
+                let sText = d.saldoBerjalan < 0 ? `style="color:red; font-weight:bold; text-align:right;"` : `style="font-weight:bold; text-align:right;"`;
+
+                pdfHTML += `<tr>
+                    <td><b>${w[0]||'-'}</b><br><span style="font-size:10px; color:#555;">${tglH}</span><br><span style="font-size:9px;">${w[1]||'-'} WIB</span></td>
+                    <td><b style="font-family:monospace;">${d.ID_Transaksi}</b><br><span style="font-size:10px;">Oleh: ${d.Kasir || d.Admin_Penerima || 'Sistem'}</span></td>
+                    <td><b>${d.Kategori_Nama || 'Transaksi'}</b><br>${d.Sumber || d.Penerima || '-'}<br><span style="font-size:10px; color:#555;">${d.Keterangan || '-'}</span></td>
+                    <td style="text-align:right;">${isM ? formatRp(nom) : '-'}</td>
+                    <td style="text-align:right; color:red;">${!isM ? formatRp(nom) : '-'}</td>
+                    <td ${sText}>${formatRp(d.saldoBerjalan)}</td>
+                </tr>`;
+            });
+            pdfHTML += `<tr class="row-total">
+                <td colspan="3" style="text-align:center; font-size:13px;">TOTAL AKUMULASI PERIODE INI</td>
+                <td style="text-align:right; color:green; font-size:13px;">${formatRp(tIn)}</td>
+                <td style="text-align:right; color:red; font-size:13px;">${formatRp(tOut)}</td>
+                <td style="text-align:right; font-size:14px;">${formatRp(tIn - tOut)}</td>
+            </tr>`;
+            document.getElementById('pdfTableBody').innerHTML = pdfHTML;
 
             const wrapper = document.getElementById('print-wrapper');
             const element = document.getElementById('print-area');
-            
             wrapper.style.visibility = 'visible'; 
 
-            // OPTIMASI MESIN: Turunkan skala & matikan fitur berat
             let opt = { 
                 margin: 0.4, 
                 filename: `Jurnal_Kas_MMUB77_${fBln}_${new Date().getTime()}.pdf`, 
-                image: { type: 'jpeg', quality: 0.8 }, // Kualitas dikompres agar cepat
-                html2canvas: { 
-                    scale: 1.5, // 1.5 sudah sangat tajam & jauh lebih cepat dari 2
-                    useCORS: true, 
-                    scrollX: 0, 
-                    scrollY: 0,
-                    logging: false // Matikan pencatatan log background
-                }, 
+                image: { type: 'jpeg', quality: 0.8 },
+                html2canvas: { scale: 1.5, useCORS: true, scrollX: 0, scrollY: 0, logging: false }, 
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } 
             };
             
-            // Jeda 500ms agar animasi loading muter dulu sebelum browser terkunci untuk render
             setTimeout(() => {
                 html2pdf().set(opt).from(element).save().then(() => { 
                     wrapper.style.visibility = 'hidden';
-                    btnPdf.innerHTML = txtAsli;
-                    btnPdf.disabled = false;
-                    showToast("PDF Berhasil diunduh dengan cepat!"); 
+                    btnPdf.innerHTML = txtAsli; btnPdf.disabled = false;
+                    showToast("✅ PDF Berhasil diunduh!"); 
                 }).catch(err => {
                     wrapper.style.visibility = 'hidden';
-                    btnPdf.innerHTML = txtAsli;
-                    btnPdf.disabled = false;
-                    showToast("Gagal mengunduh: " + err.message);
+                    btnPdf.innerHTML = txtAsli; btnPdf.disabled = false;
                 });
             }, 500);
         }
 
-        // FUNGSI EXPORT EXCEL (LOGIKA BARU - RAPI DAN TERSTRUKTUR)
         function exportExcel() {
             vibrateClick();
             const fThn = document.getElementById('fTahun').value || 'Semua Tahun';
             const fBln = document.getElementById('fBulan').value || 'Semua Bulan';
-
             catatAuditTrail('Export', `Mengunduh Laporan Excel Buku Kas (Periode: ${fBln} ${fThn})`);
             showToast("Menyusun Data Excel...");
 
-            // Header Tabel Excel
             let finalExcelHeader = [
                 ["MADRASAH MIFTAHUL ULUM B-77"],
                 [`Jurnal Kas Umum - Periode: ${fBln} ${fThn}`],
@@ -549,20 +548,22 @@
                 ["No. Ref / ID", "Tanggal (M)", "Waktu (WIB)", "Tanggal Hijriyah", "Tahun Ajaran", "Bulan", "Kategori Pos", "Jenis", "Pihak Terkait", "Keterangan", "Kasir/Petugas", "Debet (Masuk)", "Kredit (Keluar)", "Saldo Akhir (Rp)"]
             ];
             
-            // Gabungkan Header dengan Data yang sudah disusun rapi
-            let outputGabungan = finalExcelHeader.concat(currentExcelData);
+            let dataExcelArr = currentFilteredData.map(d => {
+                let w = (d.Waktu||'').split(', ');
+                return [
+                    d.ID_Transaksi, w[0]||'-', w[1]||'-', getHijriDate(new Date(parseWaktuAbsolut(d.Waktu))), d.Tahun_Ajaran || '-', d.Bulan_Hijriyah || '-',
+                    d.Kategori_Nama || 'Transaksi', d.Jenis, d.Sumber || d.Penerima || '-', d.Keterangan || '-', d.Kasir || d.Admin_Penerima || 'Sistem',
+                    d.Jenis === 'MASUK' ? parseInt(d.Nominal||0) : 0, d.Jenis !== 'MASUK' ? parseInt(d.Nominal||0) : 0, d.saldoBerjalan
+                ];
+            });
 
             const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(outputGabungan);
-            
-            // Styling lebar kolom Excel otomatis
-            const wscols = [ {wch:22}, {wch:12}, {wch:10}, {wch:20}, {wch:15}, {wch:12}, {wch:20}, {wch:10}, {wch:25}, {wch:35}, {wch:18}, {wch:15}, {wch:15}, {wch:15} ];
-            ws['!cols'] = wscols;
+            const ws = XLSX.utils.aoa_to_sheet(finalExcelHeader.concat(dataExcelArr));
+            ws['!cols'] = [ {wch:22}, {wch:12}, {wch:10}, {wch:20}, {wch:15}, {wch:12}, {wch:20}, {wch:10}, {wch:25}, {wch:35}, {wch:18}, {wch:15}, {wch:15}, {wch:15} ];
 
             XLSX.utils.book_append_sheet(wb, ws, "Mutasi_Kas");
             XLSX.writeFile(wb, `Excel_Kas_MMUB77_${new Date().getTime()}.xlsx`);
-            
-            setTimeout(() => { showToast("Excel Berhasil diunduh!"); }, 1000);
+            setTimeout(() => { showToast("✅ Excel Berhasil diunduh!"); }, 1000);
         }
     </script>
 </body>
