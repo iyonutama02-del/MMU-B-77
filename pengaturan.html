@@ -24,16 +24,17 @@
     <script src="firebase-config.js"></script>
 
     <script>
-        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-        
-        let hakAksesLokal = localStorage.getItem('hakAkses');
-        if(hakAksesLokal !== 'Administrator' && hakAksesLokal !== 'Developer') {
-            alert("🔒 AKSES DITOLAK: Fitur Pengaturan dikunci secara Hardware. Hanya tingkat Pimpinan/Developer yang berhak.");
-            window.location.replace('beranda.html');
+        // --- CELAH #2: PENGAMANAN ANTI-FLICKER & OTORISASI ---
+        document.documentElement.style.display = 'none';
+
+        if (!localStorage.getItem('usernameAsli')) {
+            window.location.replace('index.html');
         }
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
     </script>
 
     <style>
+        /* --- TEMA NEUMORPHISM --- */
         :root {
             --bg-main: #e0e5ec; --text-dark: #31344b; --text-muted: #8C96A3;
             --shadow-dark: rgba(163, 177, 198, 0.6); --shadow-light: rgba(255, 255, 255, 0.6);
@@ -55,16 +56,19 @@
         .app-container { max-width: 1000px; margin: 0 auto; min-height: 100vh; padding: 25px 20px; animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* TOAST NOTIFIKASI */
         #toast { visibility: hidden; min-width: 250px; background-color: #31344b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; top: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; }
         #toast.show { visibility: visible; animation: fadeinToast 0.5s, fadeoutToast 0.5s 2.5s forwards; }
         @keyframes fadeinToast { from { top: 0; opacity: 0; } to { top: 30px; opacity: 1; } }
         @keyframes fadeoutToast { from { top: 30px; opacity: 1; } to { top: 0; opacity: 0; } }
 
+        /* HEADER NAVIGASI */
         .nav-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; position: relative; }
         .btn-icon { width: 45px; height: 45px; border-radius: 15px; background: var(--bg-main); display: flex; justify-content: center; align-items: center; color: var(--text-dark); box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light); transition: 0.3s; cursor: pointer; border: none; font-size: 16px; }
         .btn-icon:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
         .header-title { font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 800; margin: 0; position: absolute; left: 50%; transform: translateX(-50%); color: var(--text-dark); text-transform: uppercase;}
 
+        /* TAB NAVIGATION */
         .tab-container { display: flex; background: var(--bg-main); border-radius: 15px; padding: 8px; margin-bottom: 25px; box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); }
         .tab-btn { flex: 1; text-align: center; padding: 12px 0; border-radius: 12px; font-size: 11px; font-weight: 700; color: var(--text-muted); cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 4px;}
         .tab-btn i { font-size: 14px; }
@@ -75,6 +79,7 @@
         .form-section { display: none; animation: fadeIn 0.4s ease; }
         .form-section.active { display: block; }
 
+        /* WIDGET MASTER SWITCH */
         .master-switch-card { background: var(--blue-grad); border-radius: 25px; padding: 25px; margin-bottom: 25px; box-shadow: 8px 8px 16px rgba(79, 172, 254, 0.3); position: relative; overflow: hidden; color: white; }
         .master-switch-card::before { content:''; position:absolute; right:-20px; top:-20px; width:120px; height:120px; background:rgba(255,255,255,0.1); border-radius:50%; }
         .ms-title { font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
@@ -85,8 +90,10 @@
         .btn-edit-ms { background: rgba(255,255,255,0.2); border: none; color: white; padding: 10px 15px; border-radius: 12px; font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; margin-top: 15px; width: 100%; justify-content: center; box-shadow: 4px 4px 10px rgba(0,0,0,0.1);}
         .btn-edit-ms:active { background: rgba(255,255,255,0.3); transform: scale(0.98); }
 
+        /* FORM KARTU (PROFIL) */
         .panel-card { background: var(--bg-main); border-radius: 25px; padding: 25px; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); margin-bottom: 25px; }
 
+        /* AREA PENCARIAN USER */
         .search-box { display: flex; align-items: center; border-radius: 15px; padding: 14px 20px; background: var(--bg-main); box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); transition: 0.3s; margin-bottom: 20px; flex: 1;}
         .search-box i { color: var(--text-muted); font-size: 16px; }
         .search-box input { border: none; background: transparent; outline: none; width: 100%; font-family: 'Poppins', sans-serif; color: var(--text-dark); margin-left: 12px; font-size: 13px; }
@@ -95,13 +102,14 @@
         .btn-add-main { width: 100%; padding: 16px; background: var(--green-grad); color: white; border: none; border-radius: 16px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 5px 5px 15px rgba(6, 209, 111, 0.3); transition: 0.3s; margin-bottom: 25px; }
         .btn-add-main:active { box-shadow: inset 3px 3px 8px rgba(0,0,0,0.2); transform: translateY(2px); }
 
-        /* TABEL CONTAINER (DIPERBAIKI UNTUK SCROLL HP) */
-        .table-container { background: var(--bg-main); border-radius: 20px; box-shadow: 9px 9px 16px var(--shadow-dark), -9px -9px 16px var(--shadow-light); overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 25px;}
-        table { width: 100%; min-width: 650px; border-collapse: collapse; white-space: nowrap; font-size: 12px; text-align: left; }
-        th { color: var(--text-muted); font-weight: 700; padding: 16px 20px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; border-bottom: 2px solid var(--border-line); }
-        td { padding: 16px 20px; border-bottom: 1px solid var(--border-line); color: var(--text-dark); vertical-align: middle; }
+        /* TABEL CONTAINER */
+        .table-container { background: var(--bg-main); border-radius: 20px; padding: 10px 15px 15px; box-shadow: 9px 9px 16px var(--shadow-dark), -9px -9px 16px var(--shadow-light); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 12px; text-align: left; min-width: 700px;}
+        th { color: var(--text-muted); font-weight: 700; padding: 15px 12px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; border-bottom: 2px solid var(--border-line); }
+        td { padding: 15px 12px; border-bottom: 1px solid var(--border-line); color: var(--text-dark); vertical-align: middle; }
         tr:last-child td { border-bottom: none; }
 
+        /* BADGE ROLE & STATUS */
         .badge-role { padding: 5px 12px; border-radius: 8px; font-weight: 700; font-size: 10px; display: inline-block; text-align: center; }
         .badge-dev { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
         .badge-admin { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
@@ -260,11 +268,12 @@
                             <th>Nama Pengguna</th>
                             <th>Hak Akses</th>
                             <th>Status</th>
-                            <th>Aksi Keamanan</th>
+                            <th>No. WhatsApp</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="tabel-users">
-                        <tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin"></i><br>Menarik data enkripsi...</div></td></tr>
+                        <tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin"></i><br>Menarik data enkripsi...</div></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -428,7 +437,7 @@
                     <h2 id="pmInputCount" style="margin:5px 0 0; color:var(--c-green); font-size:24px;">0</h2>
                 </div>
             </div>
-            <p id="pmLastLogin" style="font-size:10px; color:var(--text-muted); margin-top:15px; font-weight:600;"><i class="fa-regular fa-clock"></i> Terakhir Login: -</p>
+            <p id="pmLastLogin" style="font-size:10px; color:var(--text-muted); margin-top:15px; font-weight:600;"><i class="fa-regular fa-clock"></i> Terakhir Login: <span id="pmLastLoginTime"></span></p>
         </div>
     </div>
 
@@ -474,13 +483,58 @@
             document.getElementById('sec-' + id).classList.add('active');
         }
 
+        // --- PENGAMANAN XSS & SERVER-SIDE AUTH ---
+        const escapeHTML = (str) => String(str).replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag));
+
         let usernameAsliLokal = localStorage.getItem('usernameAsli');
+        let hakAksesLokal = '';
         let cctvDataRaw = [];
         let isMaintenanceMode = false;
 
+        async function verifikasiOtorisasiServer() {
+            if (!navigator.onLine) {
+                alert("Sinyal Offline. Sistem keamanan membutuhkan koneksi internet.");
+                window.location.replace('beranda.html');
+                return;
+            }
+
+            const uid = localStorage.getItem('usernameAsli');
+            if(!uid) return window.location.replace('index.html');
+
+            try {
+                let snapshot = await database.ref('users/' + uid).once('value');
+                if (!snapshot.exists()) throw new Error("Akun tidak ditemukan");
+
+                let dataAkun = snapshot.val();
+                
+                if (String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif' || 
+                   (dataAkun.forceLogout && dataAkun.forceLogout > (Date.now() - 30000))) {
+                    localStorage.clear();
+                    window.location.replace('index.html');
+                    return;
+                }
+
+                const validRole = dataAkun.Role || 'Operator';
+                hakAksesLokal = validRole; 
+                
+                if (validRole !== 'Administrator' && validRole !== 'Developer') {
+                    alert("🔒 AKSES DITOLAK SERVER: Hanya tingkat Pimpinan/Developer yang berhak masuk ke Ruang Kendali.");
+                    window.location.replace('beranda.html');
+                    return;
+                }
+
+                // Lolos verifikasi server, buka tirai gaib
+                document.documentElement.style.display = '';
+                initData(); 
+                
+            } catch(e) {
+                alert("Koneksi aman gagal. Silakan coba lagi.");
+                window.location.replace('beranda.html');
+            }
+        }
+
         window.onload = function() {
-            if(!usernameAsliLokal) { window.location.href = 'index.html'; return; }
-            initData();
+            verifikasiOtorisasiServer();
         }
         
         function initData() {
@@ -502,7 +556,6 @@
             cekMaintenanceStatus();
         }
 
-        // --- WAKTU GLOBAL & PROFIL ---
         function muatDataMasterSwitch() {
             database.ref('pengaturan_global').on('value', snapshot => {
                 if(snapshot.exists()) {
@@ -563,44 +616,68 @@
             btn.innerHTML = txt; btn.disabled = false;
         });
 
-        // --- MANAJEMEN USER ---
+        // --- MANAJEMEN USER (XSS PROTECTED & REBUILT) ---
         function muatDataUsersRealtime() {
             database.ref('users').on('value', snapshot => {
-                let tbody = document.getElementById('tabel-users'); tbody.innerHTML = '';
+                let tbody = document.getElementById('tabel-users'); 
+                tbody.innerHTML = '';
                 
-                snapshot.forEach(child => {
-                    let uname = child.key; let row = child.val();
-                    let roleStr = row.Role || 'Operator';
-                    let roleLower = roleStr.toLowerCase();
-                    let badgeClass = 'badge-operator';
-                    if(roleLower === 'developer') badgeClass = 'badge-dev'; else if(roleLower === 'administrator') badgeClass = 'badge-admin'; else if(roleLower === 'supervisor') badgeClass = 'badge-supervisor'; else if(roleLower === 'demo') badgeClass = 'badge-demo';
+                if (!snapshot.exists()) {
+                    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Belum ada data pengguna.</div></td></tr>';
+                    return;
+                }
 
-                    let nama = row.NamaLengkap || 'Tanpa Nama';
-                    let lastLogin = row.LastLogin || 'Belum ada riwayat';
-                    let statusClass = (row.Status || 'Aktif') === 'Nonaktif' ? 'status-nonaktif' : 'status-aktif';
+                snapshot.forEach(child => {
+                    let unameRaw = child.key; 
+                    let row = child.val();
+                    
+                    // ANTI XSS: Bersihkan semua string sebelum masuk ke HTML
+                    let uname = escapeHTML(unameRaw);
+                    let roleStr = escapeHTML(row.Role || 'Operator');
+                    let roleLower = roleStr.toLowerCase();
+                    let nama = escapeHTML(row.NamaLengkap || 'Tanpa Nama');
+                    let lastLogin = escapeHTML(row.LastLogin || 'Belum ada riwayat');
+                    let statusAwal = escapeHTML(row.Status || 'Aktif');
+                    let wa = escapeHTML(row.NomorWA || '-');
+
+                    let badgeClass = 'badge-operator';
+                    if(roleLower === 'developer') badgeClass = 'badge-dev'; 
+                    else if(roleLower === 'administrator') badgeClass = 'badge-admin'; 
+                    else if(roleLower === 'supervisor') badgeClass = 'badge-supervisor'; 
+                    else if(roleLower === 'demo') badgeClass = 'badge-demo';
+
+                    let statusClass = statusAwal.toLowerCase() === 'nonaktif' ? 'status-nonaktif' : 'status-aktif';
 
                     let aksiHtml = '';
                     if (roleLower === 'developer' && hakAksesLokal !== 'Developer') {
-                        aksiHtml = `<button class="btn-aksi-tabel" style="opacity:0.3; cursor:not-allowed;"><i class="fa-solid fa-lock"></i></button>`;
+                        aksiHtml = `<button class="btn-aksi-tabel" style="opacity:0.3; cursor:not-allowed;" title="Akses Dilindungi"><i class="fa-solid fa-lock"></i></button>`;
                     } else {
-                        let kickBtn = (uname !== usernameAsliLokal) ? `<button class="btn-aksi-tabel btn-kick" onclick="tendangUser('${uname}', '${nama}')" title="Logout Paksa Kasir Ini"><i class="fa-solid fa-person-walking-arrow-right"></i></button>` : '';
+                        let kickBtn = (uname !== usernameAsliLokal) ? `<button class="btn-aksi-tabel btn-kick" data-uname="${uname}" data-nama="${nama}" onclick="tendangUser(this.dataset.uname, this.dataset.nama)" title="Logout Paksa Kasir Ini"><i class="fa-solid fa-person-walking-arrow-right"></i></button>` : '';
                         
                         aksiHtml = `
-                            <button class="btn-aksi-tabel btn-edit" onclick="bukaModalEditRole('${uname}', '${roleStr}', '${row.Status||'Aktif'}')"><i class="fa-solid fa-sliders"></i></button>
-                            <button class="btn-aksi-tabel btn-reset" onclick="bukaModalReset('${uname}')"><i class="fa-solid fa-key"></i></button>
+                            <button class="btn-aksi-tabel btn-edit" data-uname="${uname}" data-role="${roleStr}" data-status="${statusAwal}" onclick="bukaModalEditRole(this.dataset.uname, this.dataset.role, this.dataset.status)" title="Ubah Akses/Status"><i class="fa-solid fa-sliders"></i></button>
+                            <button class="btn-aksi-tabel btn-reset" data-uname="${uname}" onclick="bukaModalReset(this.dataset.uname)" title="Reset Sandi Paksa"><i class="fa-solid fa-key"></i></button>
                             ${kickBtn}
                         `;
                     }
 
-                    tbody.innerHTML += `<tr class="baris-user">
+                    // Gunakan DOM Creation agar onclick lebih aman dari string pecah
+                    let tr = document.createElement('tr');
+                    tr.className = "baris-user";
+                    tr.innerHTML = `
                         <td class="kolom-username"><strong>${uname}</strong></td>
-                        <td class="kolom-nama" style="font-weight:600; cursor:pointer; color:var(--c-blue);" onclick="bukaProfilMini('${uname}', '${nama}', '${lastLogin}')">
+                        <td class="kolom-nama" style="font-weight:600; cursor:pointer; color:var(--c-blue);" 
+                            data-uname="${uname}" data-nama="${nama}" data-login="${lastLogin}" 
+                            onclick="bukaProfilMini(this.dataset.uname, this.dataset.nama, this.dataset.login)">
                             ${nama} <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:9px;"></i>
+                            <div class="info-terakhir-login"><i class="fa-regular fa-clock"></i> Log: ${lastLogin}</div>
                         </td>
                         <td><span class="badge-role ${badgeClass}">${roleStr}</span></td>
-                        <td class="${statusClass}">${row.Status||'Aktif'}</td>
+                        <td class="${statusClass}">${statusAwal}</td>
+                        <td>${wa}</td>
                         <td><div class="action-btns">${aksiHtml}</div></td>
-                    </tr>`;
+                    `;
+                    tbody.appendChild(tr);
                 });
                 cariUser(); 
             });
@@ -617,9 +694,10 @@
             vibrateClick();
             document.getElementById('pmNama').innerText = nama;
             document.getElementById('pmUsername').innerText = "@" + uname;
-            document.getElementById('pmLastLogin').innerHTML = `<i class="fa-regular fa-clock"></i> Terakhir Login: ${lastlog}`;
+            document.getElementById('pmLastLoginTime').innerText = lastlog;
             
-            let count = cctvDataRaw.filter(c => c.Eksekutor === nama && c.Waktu.includes(new Date().getFullYear().toString())).length;
+            // Hitung aktivitas bulan ini dari CCTV
+            let count = cctvDataRaw.filter(c => escapeHTML(c.Eksekutor) === nama && escapeHTML(c.Waktu).includes(new Date().getFullYear().toString())).length;
             document.getElementById('pmInputCount').innerText = count + "+";
             
             document.getElementById('modalProfilMini').style.display = 'flex';
@@ -640,7 +718,9 @@
             document.getElementById('grupPassword').style.display = 'block'; document.getElementById('u_username').readOnly = false;
             document.getElementById('u_username').style.opacity = "1"; document.getElementById('u_nama').parentElement.style.display = 'block';
             document.getElementById('grupGender').style.display = 'block'; document.getElementById('u_wa').parentElement.style.display = 'block';
-            document.getElementById('grupStatus').style.display = 'none'; document.getElementById('modalUser').style.display = 'flex';
+            document.getElementById('grupStatus').style.display = 'none'; 
+            document.getElementById('u_password').required = true;
+            document.getElementById('modalUser').style.display = 'flex';
         }
 
         function bukaModalEditRole(uname, role, status) {
@@ -648,6 +728,7 @@
             document.getElementById('u_username').readOnly = true; document.getElementById('u_username').style.opacity = "0.6";
             document.getElementById('u_role').value = role; document.getElementById('u_status').value = status;
             document.getElementById('grupStatus').style.display = 'block'; document.getElementById('grupPassword').style.display = 'none';
+            document.getElementById('u_password').required = false;
             document.getElementById('u_nama').parentElement.style.display = 'none'; document.getElementById('grupGender').style.display = 'none';
             document.getElementById('u_wa').parentElement.style.display = 'none'; document.getElementById('modalUser').style.display = 'flex';
         }
@@ -703,7 +784,7 @@
             } catch (err) {}
         });
 
-        // --- CCTV AUDIT LENGKAP ---
+        // --- CCTV AUDIT (XSS PROTECTED) ---
         function muatCCTVRealtime() {
             database.ref('audit_trail').limitToLast(500).on('value', snap => {
                 cctvDataRaw = [];
@@ -719,17 +800,25 @@
             let count = 0; let html = '';
 
             cctvDataRaw.forEach(d => {
-                if(filterText === "" || d.Eksekutor.toLowerCase().includes(filterText) || d.Menu.toLowerCase().includes(filterText) || d.Aksi.toLowerCase().includes(filterText)) {
+                // XSS Cleanup
+                let eksekutor = escapeHTML(d.Eksekutor);
+                let role = escapeHTML(d.Role);
+                let waktu = escapeHTML(d.Waktu);
+                let menu = escapeHTML(d.Menu);
+                let aksi = escapeHTML(d.Aksi);
+                let detail = escapeHTML(d.Detail);
+
+                if(filterText === "" || eksekutor.toLowerCase().includes(filterText) || menu.toLowerCase().includes(filterText) || aksi.toLowerCase().includes(filterText)) {
                     count++;
                     html += `
                     <div class="cctv-item">
                         <div class="cctv-head">
-                            <span class="cctv-user"><i class="fa-solid fa-user-shield" style="color:var(--text-muted); font-size:10px; margin-right:4px;"></i> ${d.Eksekutor} <span style="font-weight:500; font-size:10px;">(${d.Role})</span></span>
-                            <span class="cctv-time">${d.Waktu}</span>
+                            <span class="cctv-user"><i class="fa-solid fa-user-shield" style="color:var(--text-muted); font-size:10px; margin-right:4px;"></i> ${eksekutor} <span style="font-weight:500; font-size:10px;">(${role})</span></span>
+                            <span class="cctv-time">${waktu}</span>
                         </div>
                         <div class="cctv-body">
-                            <span class="cctv-menu">${d.Menu}</span> - ${d.Aksi}<br>
-                            <span style="font-size:11px; margin-top:3px; display:inline-block;">${d.Detail}</span>
+                            <span class="cctv-menu">${menu}</span> - ${aksi}<br>
+                            <span style="font-size:11px; margin-top:3px; display:inline-block;">${detail}</span>
                         </div>
                     </div>`;
                 }
@@ -746,10 +835,10 @@
             
             cctvDataRaw.slice(0, 100).forEach(d => { 
                 tbody.innerHTML += `<tr>
-                    <td style="border:1px solid #000; padding:5px;">${d.Waktu}</td>
-                    <td style="border:1px solid #000; padding:5px;"><b>${d.Eksekutor}</b> (${d.Role})</td>
-                    <td style="border:1px solid #000; padding:5px;">${d.Menu}</td>
-                    <td style="border:1px solid #000; padding:5px;"><b>${d.Aksi}</b>: ${d.Detail}</td>
+                    <td style="border:1px solid #000; padding:5px;">${escapeHTML(d.Waktu)}</td>
+                    <td style="border:1px solid #000; padding:5px;"><b>${escapeHTML(d.Eksekutor)}</b> (${escapeHTML(d.Role)})</td>
+                    <td style="border:1px solid #000; padding:5px;">${escapeHTML(d.Menu)}</td>
+                    <td style="border:1px solid #000; padding:5px;"><b>${escapeHTML(d.Aksi)}</b>: ${escapeHTML(d.Detail)}</td>
                 </tr>`;
             });
 
