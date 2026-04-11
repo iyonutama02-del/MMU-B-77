@@ -478,7 +478,7 @@
             document.getElementById('totSaldo').innerText = 'Rp ' + formatRp(totIn - totOut);
         }
 
-        // FUNGSI EXPORT PDF (PERBAIKAN TUNTAS ANTI-TERPOTONG)
+        // FUNGSI EXPORT PDF (MODE TURBO / FAST RENDER)
         function exportPDF() {
             vibrateClick();
             const fThn = document.getElementById('fTahun').value || 'Semua Tahun';
@@ -488,27 +488,48 @@
             document.getElementById('wktCetak').innerText = new Date().toLocaleString('id-ID');
             
             catatAuditTrail('Export', `Mengunduh Laporan PDF Buku Kas (Periode: ${fBln} ${fThn})`);
-            showToast("Mempersiapkan PDF (Mohon jangan tutup layar)...");
+            
+            // Beri tahu Pimpinan bahwa sistem sedang merender
+            showToast("Merender PDF... Makin banyak data, makin butuh waktu.");
+            let btnPdf = document.querySelector('.btn-pdf');
+            let txtAsli = btnPdf.innerHTML;
+            btnPdf.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+            btnPdf.disabled = true;
 
             const wrapper = document.getElementById('print-wrapper');
             const element = document.getElementById('print-area');
             
-            // Tampakkan sementara ke html2canvas (tapi tak terlihat user berkat opacity/z-index)
             wrapper.style.visibility = 'visible'; 
 
+            // OPTIMASI MESIN: Turunkan skala & matikan fitur berat
             let opt = { 
                 margin: 0.4, 
                 filename: `Jurnal_Kas_MMUB77_${fBln}_${new Date().getTime()}.pdf`, 
-                image: { type: 'jpeg', quality: 1 }, 
-                // KUNCI ANTI POTONG: scrollX dan scrollY dikunci ke 0
-                html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 }, 
+                image: { type: 'jpeg', quality: 0.8 }, // Kualitas dikompres agar cepat
+                html2canvas: { 
+                    scale: 1.5, // 1.5 sudah sangat tajam & jauh lebih cepat dari 2
+                    useCORS: true, 
+                    scrollX: 0, 
+                    scrollY: 0,
+                    logging: false // Matikan pencatatan log background
+                }, 
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } 
             };
             
-            html2pdf().set(opt).from(element).save().then(() => { 
-                wrapper.style.visibility = 'hidden'; // Sembunyikan lagi
-                showToast("PDF Berhasil diunduh!"); 
-            });
+            // Jeda 500ms agar animasi loading muter dulu sebelum browser terkunci untuk render
+            setTimeout(() => {
+                html2pdf().set(opt).from(element).save().then(() => { 
+                    wrapper.style.visibility = 'hidden';
+                    btnPdf.innerHTML = txtAsli;
+                    btnPdf.disabled = false;
+                    showToast("PDF Berhasil diunduh dengan cepat!"); 
+                }).catch(err => {
+                    wrapper.style.visibility = 'hidden';
+                    btnPdf.innerHTML = txtAsli;
+                    btnPdf.disabled = false;
+                    showToast("Gagal mengunduh: " + err.message);
+                });
+            }, 500);
         }
 
         // FUNGSI EXPORT EXCEL (LOGIKA BARU - RAPI DAN TERSTRUKTUR)
