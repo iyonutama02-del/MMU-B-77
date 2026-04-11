@@ -127,18 +127,18 @@
         .nav-item.active { color: #00d26a; }
 
         /* LOADER */
-        .sync-loader { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--bg-main); padding: 10px 20px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #00d26a; box-shadow: 5px 5px 15px var(--shadow-dark), -5px -5px 15px var(--shadow-light); display: flex; align-items: center; gap: 10px; z-index: 4000; transition: 0.3s; opacity: 0; pointer-events: none; }
+        .sync-loader { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--bg-main); padding: 10px 20px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #00d26a; box-shadow: 5px 5px 15px var(--shadow-dark), -5px -5px 15px var(--shadow-light); display: flex; align-items: center; gap: 10px; z-index: 5000; transition: 0.3s; opacity: 0; pointer-events: none; }
         .sync-loader.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
 
         /* ========================================== */
         /* PRINT MODE (ANTI KERTAS KOSONG)            */
         /* ========================================== */
         #pdf-template { 
-            visibility: hidden; /* Sembunyi dari layar tapi BISA dibaca kamera PDF */
+            display: none; /* Sengaja kita hilangkan saat normal */
             background: white; 
             color: black; 
             font-family: Arial, sans-serif; 
-            width: 800px; /* Dikunci agar format tabel tidak hancur di HP */
+            width: 800px; /* WAJIB 800px agar A4 presisi */
             margin: 0; 
             position: absolute; 
             top: 0; 
@@ -148,7 +148,6 @@
         
         .pdf-page { padding: 40px; background: white; page-break-after: always; position: relative;}
         .pdf-page:last-child { page-break-after: auto; }
-        
         .pdf-header { border-bottom: 3px solid #1e293b; padding-bottom: 15px; margin-bottom: 25px; display: flex; align-items: center; gap: 20px; }
         .pdf-header img { width: 70px; }
         .pdf-title-box { flex: 1; }
@@ -178,7 +177,7 @@
 
     <div id="toast"><i class="fa-solid fa-circle-info"></i> <span id="toastMsg">Pesan Notifikasi</span></div>
 
-    <div class="sync-loader" id="syncLoader"><i class="fa-solid fa-arrows-rotate fa-spin"></i> <span>Menarik Data Cloud Firebase...</span></div>
+    <div class="sync-loader" id="syncLoader"><i class="fa-solid fa-arrows-rotate fa-spin"></i> <span id="loaderText">Menarik Data Cloud...</span></div>
 
     <div class="app-container" id="dashboardView">
         <div class="nav-top">
@@ -251,11 +250,11 @@
 
         <div class="chart-grid">
             <div class="panel">
-                <h3 class="panel-title">Distribusi Pengeluaran <span style="font-size:9px; color:var(--text-muted); text-transform:none; font-weight:500;">(Klik Grafik untuk Rincian)</span></h3>
+                <h3 class="panel-title">Distribusi Pengeluaran <span style="font-size:9px; color:var(--text-muted); text-transform:none; font-weight:500;">(Klik Grafik)</span></h3>
                 <div class="chart-wrapper" style="height: 200px;"><canvas id="expenseChart"></canvas></div>
             </div>
             <div class="panel-inset">
-                <h3 class="panel-title" style="color:#ef4444;">Top 5 Tunggakan Kelas</h3>
+                <h3 class="panel-title" style="color:#ef4444;">Top 5 Tunggakan</h3>
                 <div id="listTunggakan"></div>
             </div>
         </div>
@@ -308,9 +307,7 @@
                 <div class="pdf-kpi"><div style="font-size:11px; color:#64748b;">Pengeluaran Bulan Ini</div><div class="pdf-kpi-val" id="pdfKeluar" style="color:#ef4444;">Rp 0</div><div style="font-size:10px; color:#64748b; margin-top:5px;" id="pdfKeluarYoY"></div></div>
             </div>
             
-            <div style="position:absolute; bottom:40px; left:40px; right:40px; font-size:10px; color:#94a3b8; text-align:center; border-top:1px solid #e2e8f0; padding-top:10px;">
-                Dokumen ini dicetak secara otomatis dari Sistem Informasi MMU B-77. Hal. 1
-            </div>
+            <div style="position:absolute; bottom:40px; left:40px; right:40px; font-size:10px; color:#94a3b8; text-align:center; border-top:1px solid #e2e8f0; padding-top:10px;">Hal. 1</div>
         </div>
 
         <div class="pdf-page" id="pdf-page-2">
@@ -370,15 +367,11 @@
         }
         document.onmousemove = resetTimerLogout; document.onkeypress = resetTimerLogout; document.ontouchstart = resetTimerLogout;
 
-        // --- FITUR 5: CATAT CCTV SAAT BUKA DASHBOARD ---
         async function catatAuditTrail(aksi, detail) {
             try {
                 await database.ref('audit_trail').push({
-                    Waktu: new Date().toLocaleString('id-ID'),
-                    Eksekutor: localStorage.getItem('namaPengguna') || 'Unknown',
-                    Role: localStorage.getItem('hakAkses') || 'Unknown',
-                    Menu: 'Analitik Dashboard',
-                    Aksi: aksi, Detail: detail
+                    Waktu: new Date().toLocaleString('id-ID'), Eksekutor: localStorage.getItem('namaPengguna') || 'Unknown',
+                    Role: localStorage.getItem('hakAkses') || 'Unknown', Menu: 'Analitik Dashboard', Aksi: aksi, Detail: detail
                 });
             } catch(e) {}
         }
@@ -421,7 +414,6 @@
         let dbBukuKas = []; let dbTagihan = []; let dbStatusKunci = {};
         let chartCF = null; let chartRatio = null; let chartExp = null;
 
-        // VARIABEL GLOBAL UNTUK PDF
         let pdfDataMapIn = {}; let pdfDataMapOut = {}; let pdfTopTunggakan = [];
 
         window.onload = function() {
@@ -436,7 +428,6 @@
                 sel.innerHTML += `<option value="${y}-${m}">${hijriMonths[m]} ${y} H</option>`;
             }
 
-            // --- FITUR 7: CACHE SEDERHANA ---
             let cachedKas = sessionStorage.getItem('cacheBukuKas');
             let cachedTag = sessionStorage.getItem('cacheTagihan');
             if(cachedKas && cachedTag) {
@@ -446,7 +437,6 @@
                 document.getElementById('syncLoader').classList.add('show');
             }
 
-            // Tarik Data Realtime
             database.ref('buku_kas').on('value', snap => {
                 dbBukuKas = []; snap.forEach(c => dbBukuKas.push(c.val()));
                 sessionStorage.setItem('cacheBukuKas', JSON.stringify(dbBukuKas));
@@ -459,7 +449,6 @@
                 populateClassFilter(); prosesDashboard();
             });
 
-            // Tarik Status Kunci Buku
             database.ref('tutup_buku').on('value', snap => {
                 dbStatusKunci = snap.val() || {};
                 updateStatusGembok();
@@ -477,7 +466,6 @@
             if(Array.from(klsSet).includes(cur)) sel.value = cur;
         }
 
-        // --- FITUR 4: STATUS TUTUP BUKU ---
         function updateStatusGembok() {
             let filterVal = document.getElementById('monthFilter').value.split('-');
             let fYear = parseInt(filterVal[0]); let fMonth = parseInt(filterVal[1]);
@@ -553,7 +541,6 @@
                     }
                 }
 
-                // YoY
                 if(hDate.year === (fYear - 1) && hDate.month === fMonth) {
                     if(isMasuk) inBulanLalu += nom; else outBulanLalu += nom;
                 }
@@ -615,7 +602,7 @@
                     <div class="li-val">${formatRp(t.sisaReal)}</div>
                 </div>`;
             });
-            document.getElementById('listTunggakan').innerHTML = htmlTunggakan || '<p style="text-align:center; font-size:11px; font-weight:600; opacity:0.6; padding:20px;">Lancar, tidak ada tunggakan di kelas ini.</p>';
+            document.getElementById('listTunggakan').innerHTML = htmlTunggakan || '<p style="text-align:center; font-size:11px; font-weight:600; opacity:0.6; padding:20px;">Lancar, tidak ada tunggakan.</p>';
 
             drawCashflowChart(labels6Bulan, hist6In, hist6Out, hist6Bulan);
             
@@ -726,12 +713,11 @@
         }
 
         // ================================================================
-        // PERBAIKAN BUG #10: CETAK PDF ULTRA PROFESSIONAL (KERTAS KOSONG)
+        // PERBAIKAN BUG ANTI-KERTAS KOSONG SAAT CETAK PDF
         // ================================================================
         function eksporPDFProfesional() {
             if(navigator.vibrate) navigator.vibrate(30);
             
-            // Siapkan Data ke Template PDF
             let selMonth = document.getElementById('monthFilter');
             let bulanText = selMonth.options[selMonth.selectedIndex].text;
             let kelasText = document.getElementById('classFilter').value;
@@ -748,7 +734,6 @@
             document.getElementById('pdfKeluar').innerText = document.getElementById('valKeluar').innerText;
             document.getElementById('pdfKeluarYoY').innerHTML = document.getElementById('yoyKeluar').innerHTML;
 
-            // Render Tabel Arus Kas (Halaman 2)
             let tbIn = ''; let noIn = 1; let sumIn = 0;
             Object.keys(pdfDataMapIn).forEach(k => {
                 tbIn += `<tr><td>${noIn++}</td><td>${k}</td><td style="text-align:right;">${formatRp(pdfDataMapIn[k])}</td></tr>`;
@@ -763,7 +748,6 @@
             });
             document.getElementById('pdfTbodyOut').innerHTML = tbOut + `<tr class="pdf-table-total"><td colspan="2">TOTAL PENGELUARAN</td><td style="text-align:right; color:#ef4444;">${formatRp(sumOut)}</td></tr>`;
 
-            // Render Tabel Tunggakan (Halaman 3)
             document.getElementById('pdfKelasFilter').innerText = kelasText === 'SEMUA' ? "(Semua Kelas)" : `(Khusus Kelas ${kelasText})`;
             let tbP = ''; let noP = 1;
             if(pdfTopTunggakan.length === 0) tbP = `<tr><td colspan="4" style="text-align:center;">Alhamdulillah, tidak ada data tunggakan.</td></tr>`;
@@ -775,29 +759,46 @@
             document.getElementById('pdfAdminName').innerText = localStorage.getItem('namaPengguna') || 'Administrator';
             document.getElementById('pdfPrintDate').innerText = new Date().toLocaleString('id-ID');
 
-            showToast("Membangun Dokumen PDF Profesional...");
             catatAuditTrail('Export Laporan Eksekutif', `Cetak Laporan Multi-Halaman Periode ${bulanText}`);
 
-            let el = document.getElementById('pdf-template');
-            
-            // KUNCI SOLUSI ANTI KERTAS KOSONG: visibility: visible alih-alih display: block
-            el.style.visibility = 'visible';
+            // 1. Tampilkan Layar Loading Penuh
+            let loader = document.getElementById('syncLoader');
+            document.getElementById('loaderText').innerText = "Menggambar Tinta PDF... Mohon Tunggu.";
+            loader.classList.add('show');
 
+            // 2. Tarik Elemen PDF dan Paksa Render di Browser
+            let el = document.getElementById('pdf-template');
+            el.style.display = 'block';
+
+            // 3. Konfigurasi Ekstra Ketat html2canvas
             let opt = { 
                 margin: 0, 
                 filename: `Executive_Report_${bulanText.replace(/ /g,'_')}.pdf`, 
                 image: { type: 'jpeg', quality: 1 }, 
-                html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 }, // Ditambahkan scroll kunci kordinat
+                html2canvas: { 
+                    scale: 2, 
+                    useCORS: true,
+                    allowTaint: true,
+                    scrollY: 0,
+                    scrollX: 0,
+                    windowWidth: 800 // KUNCI UTAMA: Paksa lensa kamera jadi 800px (Anti terpotong di HP)
+                }, 
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } 
             };
             
-            // Jeda 500ms (setengah detik) agar browser sempat menggambar tabelnya sebelum di-screenshot html2canvas
+            // 4. Jeda 1 Detik agar Font & Tabel 100% Tercetak sebelum difoto
             setTimeout(() => {
                 html2pdf().set(opt).from(el).save().then(() => {
-                    el.style.visibility = 'hidden';
-                    showToast("Laporan Berhasil Diunduh!");
+                    el.style.display = 'none'; // Sembunyikan lagi
+                    document.getElementById('loaderText').innerText = "Menarik Data Cloud...";
+                    loader.classList.remove('show');
+                    showToast("Laporan PDF Berhasil Diunduh!");
+                }).catch(err => {
+                    el.style.display = 'none';
+                    loader.classList.remove('show');
+                    showToast("Gagal membuat dokumen PDF.");
                 });
-            }, 500); 
+            }, 1000); 
         }
     </script>
 </body>
