@@ -245,6 +245,7 @@
         };
 
         function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
+        function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); }
         function showToast(msg) { 
             let toast = document.getElementById("toast"); 
             document.getElementById("toastMsg").innerText = msg;
@@ -267,7 +268,7 @@
 
         let rawData = [];
         let currentFilteredData = []; 
-        let limitTampil = 50; // Batas Pagination (Mencegah Lag)
+        let limitTampil = 50; 
         const formatRp = (n) => parseInt(n || 0).toLocaleString('id-ID');
 
         function getHijriDate(dateObj) {
@@ -275,7 +276,7 @@
             catch (e) { return "-"; }
         }
 
-        // PEMBACA WAKTU SUPER AKURAT (Fix Urutan Berantakan)
+        // MESIN WAKTU SUPER AKURAT
         function parseWaktuAbsolut(waktuStr) {
             if (!waktuStr) return 0;
             try {
@@ -322,13 +323,13 @@
                     document.getElementById('fTahun').innerHTML = optTahun;
                 }
                 
-                // Urutkan Paling Lama ke Baru (Untuk menghitung saldo dari 0)
+                // LANGKAH 1: SORTIR DATA DARI LAMA KE BARU (Ascending)
                 rawData.sort((a,b) => parseWaktuAbsolut(a.Waktu) - parseWaktuAbsolut(b.Waktu) || a.ID_Transaksi.localeCompare(b.ID_Transaksi));
+                
                 prosesData(true);
             });
         };
 
-        // FUNGSI PROSES UTAMA (Dilengkapi Sistem Anti-Error & Pagination)
         function prosesData(resetLimit = false) {
             if(resetLimit) limitTampil = 50;
 
@@ -336,8 +337,8 @@
             const fThn = document.getElementById('fTahun').value;
             const fBln = document.getElementById('fBulan').value;
             
-            let filtered = rawData.filter(d => {
-                // Konversi aman agar tidak error jika ada data kosong
+            // LANGKAH 2: FILTER DATA
+            let filteredAsc = rawData.filter(d => {
                 let valId = String(d.ID_Transaksi || '').toLowerCase();
                 let valKat = String(d.Kategori_Nama || '').toLowerCase();
                 let valSumber = String(d.Sumber || d.Penerima || d.Nama_Santri || '').toLowerCase();
@@ -348,14 +349,15 @@
                 let matchCari = valId.includes(cari) || valKat.includes(cari) || valSumber.includes(cari) || valAdmin.includes(cari) || valKet.includes(cari) || valNom.includes(cari);
                 let matchTahun = fThn ? (d.Tahun_Ajaran === fThn) : true;
                 let matchBulan = fBln ? (d.Bulan_Hijriyah === fBln) : true;
+                
                 return matchCari && matchTahun && matchBulan;
             });
 
             let saldoAkumulatif = 0; let totIn = 0; let totOut = 0;
             let rekapMasuk = {}; let rekapKeluar = {};
 
-            // Hitung Saldo dari transaksi paling lama (sudah di-sort di atas)
-            filtered.forEach(d => {
+            // LANGKAH 3: HITUNG SALDO DARI YANG PALING LAMA KE BARU
+            filteredAsc.forEach(d => {
                 let nom = parseInt(d.Nominal || 0);
                 if(d.Jenis === 'MASUK') { 
                     saldoAkumulatif += nom; totIn += nom; 
@@ -364,14 +366,14 @@
                     saldoAkumulatif -= nom; totOut += nom; 
                     rekapKeluar[d.Kategori_Nama] = (rekapKeluar[d.Kategori_Nama] || 0) + nom;
                 }
-                d.saldoBerjalan = saldoAkumulatif; // Simpan jejak saldo di dalam object
+                d.saldoBerjalan = saldoAkumulatif; 
             });
 
-            // Balik urutan agar Terbaru ada di atas
-            currentFilteredData = [...filtered].reverse(); 
+            // LANGKAH 4: BALIK ARRAY (REVERSE) AGAR DATA TERBARU MUNCUL PALING ATAS
+            currentFilteredData = [...filteredAsc].reverse(); 
             
+            // LANGKAH 5: RENDER UI DENGAN PAGINATION
             let htmlUI = '';
-            // Terapkan batas tampil (Pagination)
             let rowsToShow = currentFilteredData.slice(0, limitTampil);
 
             rowsToShow.forEach(d => {
@@ -389,7 +391,6 @@
 
                 let saldoWarna = d.saldoBerjalan < 0 ? 'var(--c-red)' : 'var(--text-muted)';
 
-                // TOMBOL HAPUS (Hanya untuk Non-Operator)
                 let btnHapus = '';
                 if(roleLokal !== 'Operator') {
                     btnHapus = `<button class="btn-delete" onclick="hapusTrx('${d.ID_Transaksi}', '${d.Jenis}', ${nom}, '${d.Kategori_Nama||''}')" title="Hapus Permanen"><i class="fa-solid fa-trash-can"></i></button>`;
@@ -424,7 +425,6 @@
                 htmlUI += `<button class="btn-action btn-load" onclick="muatLebihBanyak()">Buka Lebih Banyak (${currentFilteredData.length - limitTampil} tersisa) <i class="fa-solid fa-angle-down"></i></button>`;
             }
 
-            // RENDER REKAPITULASI (SUB-LEDGER)
             let htmlRekapM = ''; let htmlRekapK = '';
             Object.entries(rekapMasuk).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => { htmlRekapM += `<div class="sl-item"><span>${k}</span><span>${formatRp(v)}</span></div>`; });
             Object.entries(rekapKeluar).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => { htmlRekapK += `<div class="sl-item"><span>${k}</span><span>${formatRp(v)}</span></div>`; });
@@ -448,7 +448,6 @@
             prosesData(false);
         }
 
-        // FUNGSI HAPUS TRANSAKSI (Eksklusif Pimpinan)
         async function hapusTrx(id, jenis, nominal, kategori) {
             vibrateHeavy();
             if(!confirm(`⚠️ BAHAYA: Anda yakin ingin MENGHAPUS permanen transaksi ini?\n\nID: ${id}\nPos: ${kategori}\nNominal: Rp ${formatRp(nominal)}\n\nTindakan ini akan mengubah total Saldo Kas!`)) return;
@@ -481,9 +480,10 @@
             btnPdf.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyusun Tabel...';
             btnPdf.disabled = true;
 
-            // Render ulang tabel PDF dari SEMUA data yang terfilter (Bukan hanya 50 limit)
+            // Render PDF DARI DATA TERBARU (Sesuai currentFilteredData yang sudah di-reverse)
             let pdfHTML = '';
             let tIn = 0; let tOut = 0;
+            
             currentFilteredData.forEach(d => {
                 let isM = d.Jenis === 'MASUK';
                 let nom = parseInt(d.Nominal || 0);
@@ -502,6 +502,7 @@
                     <td ${sText}>${formatRp(d.saldoBerjalan)}</td>
                 </tr>`;
             });
+            
             pdfHTML += `<tr class="row-total">
                 <td colspan="3" style="text-align:center; font-size:13px;">TOTAL AKUMULASI PERIODE INI</td>
                 <td style="text-align:right; color:green; font-size:13px;">${formatRp(tIn)}</td>
