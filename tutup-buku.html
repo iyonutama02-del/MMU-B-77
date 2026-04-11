@@ -8,25 +8,23 @@
     
     <link rel="icon" type="image/png" href="Logo-Favicon.png">
     <link rel="apple-touch-icon" href="Logo-Favicon.png">
-    <link rel="manifest" href="manifest.json">
     
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="firebase-config.js"></script>
 
     <script>
-        // PERBAIKAN KEMANAN #1: BLOKIR AKSES TANPA LOGIN
-        if (!localStorage.getItem('usernameAsli')) {
-            window.location.replace('index.html');
-        }
-
+        if (!localStorage.getItem('usernameAsli')) window.location.replace('index.html');
         if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
         
-        // PENGAMANAN AKSES MUTLAK (HANYA ADMIN & DEV)
         const role = localStorage.getItem('hakAkses');
         if(role === 'Operator' || role === 'Supervisor' || role === 'Demo') {
             alert("🔒 AKSES DIBATASI: Area eksekutif ini khusus untuk Administrator (Pimpinan) dan Developer.");
@@ -51,7 +49,7 @@
 
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
         body { margin: 0; padding: 0; background-color: var(--bg-main); font-family: 'Poppins', sans-serif; color: var(--text-dark); transition: 0.3s; padding-bottom: 50px; }
-        .app-container { max-width: 700px; margin: 0 auto; padding: 25px 20px; animation: fadeIn 0.4s ease-out forwards; }
+        .app-container { max-width: 800px; margin: 0 auto; padding: 25px 20px; animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         #toast { visibility: hidden; min-width: 250px; background-color: #31344b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; width: 85%; }
@@ -65,51 +63,70 @@
         .btn-icon:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
         .header-title { font-family: 'Montserrat'; font-weight: 900; font-size: 18px; margin: 0; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dark);}
 
-        /* PANEL FILTER BULAN */
+        /* KARTU & PANEL */
         .panel-card { background: var(--bg-main); border-radius: 25px; padding: 25px; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); margin-bottom: 25px; }
         .grid-filter { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; margin-left: 5px;}
         .input-edit { width: 100%; padding: 15px 20px; border: none; border-radius: 15px; background: var(--bg-main); font-family: 'Poppins'; font-size: 13px; font-weight: 700; color: var(--text-dark); box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); outline: none; transition: 0.3s; cursor: pointer; appearance: none;}
-        .input-edit:focus { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light), 0 0 0 2px rgba(79, 172, 254, 0.3); }
 
-        /* KARTU NERACA (FLOATING) */
-        .grid-neraca { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; margin-top: 25px;}
-        .card-neraca { background: var(--bg-main); border-radius: 20px; padding: 20px; box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); text-align: center;}
-        .card-neraca p { margin: 0 0 5px 0; font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;}
-        .card-neraca h3 { margin: 0; font-family: 'Montserrat'; font-weight: 900; font-size: 16px; }
-        .text-in { color: var(--c-green); } .text-out { color: var(--c-red); }
+        /* NERACA & SALDO AWAL */
+        .grid-neraca { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 25px;}
+        @media(max-width: 600px) { .grid-neraca { grid-template-columns: 1fr 1fr; } .grid-neraca > div:first-child { grid-column: span 2; } }
+        
+        .card-neraca { background: var(--bg-main); border-radius: 20px; padding: 20px 10px; box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); text-align: center; display: flex; flex-direction: column; justify-content: center;}
+        .card-neraca p { margin: 0 0 5px 0; font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;}
+        .card-neraca h3 { margin: 0; font-family: 'Montserrat'; font-weight: 900; font-size: 15px; }
+        .text-in { color: var(--c-green); } .text-out { color: var(--c-red); } .text-awal { color: var(--text-dark); }
 
-        .card-total { background: var(--grad-blue); border-radius: 20px; padding: 25px; color: white; text-align: center; box-shadow: 6px 6px 15px rgba(79, 172, 254, 0.4); margin-bottom: 25px; position: relative; overflow: hidden;}
+        .card-total { background: var(--grad-blue); border-radius: 20px; padding: 25px; color: white; text-align: center; box-shadow: 6px 6px 15px rgba(79, 172, 254, 0.4); margin: 20px 0; position: relative; overflow: hidden;}
+        .card-total.defisit { background: var(--grad-red); box-shadow: 6px 6px 15px rgba(239, 68, 68, 0.4); }
         .card-total::after { content: ''; position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; }
         .card-total p { margin: 0 0 5px 0; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; opacity: 0.9;}
         .card-total h2 { margin: 0; font-family: 'Montserrat'; font-weight: 900; font-size: 28px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);}
 
-        /* MASTER SWITCH (KUNCI BULAN) */
-        .lock-panel { border-top: 2px dashed rgba(0,0,0,0.1); padding-top: 25px; text-align: center; }
-        .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 8px 15px; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 15px; }
-        .status-open { background: rgba(34, 197, 94, 0.15); color: var(--c-green); }
-        .status-locked { background: rgba(239, 68, 68, 0.15); color: var(--c-red); }
+        /* GRAFIK & KONTROL */
+        .flex-dashboard { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 25px; }
+        .chart-box { flex: 1; min-width: 250px; background: var(--bg-main); border-radius: 20px; padding: 20px; box-shadow: inset 6px 6px 12px var(--shadow-dark), inset -6px -6px 12px var(--shadow-light); display: flex; align-items: center; justify-content: center; position: relative;}
+        .control-box { flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 15px; justify-content: center; }
 
-        .btn-master { width: 100%; padding: 18px; border: none; border-radius: 15px; font-family: 'Montserrat'; font-weight: 900; font-size: 14px; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s; margin-bottom: 15px;}
+        /* BUTTONS */
+        .btn-master { width: 100%; padding: 18px; border: none; border-radius: 15px; font-family: 'Montserrat'; font-weight: 900; font-size: 14px; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s; }
         .btn-lock { background: var(--grad-dark); box-shadow: 6px 6px 15px rgba(30, 41, 59, 0.4); }
         .btn-unlock { background: var(--bg-main); color: var(--c-red); border: 2px solid var(--c-red); box-shadow: 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light); }
         .btn-master:active { transform: translateY(3px); box-shadow: inset 3px 3px 6px rgba(0,0,0,0.3); }
 
-        .btn-pdf { background: transparent; color: var(--c-blue); border: none; font-family: 'Poppins'; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 15px; border-radius: 15px; transition: 0.2s;}
-        .btn-pdf:active { background: rgba(0,0,0,0.05); }
+        .btn-action { padding: 14px; border: none; border-radius: 12px; font-family: 'Poppins'; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light); background: var(--bg-main);}
+        .btn-action:active { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); }
+        .tc-blue { color: var(--c-blue); } .tc-green { color: var(--c-green); } .tc-dark { color: var(--text-dark); }
 
-        .log-kunci { font-size: 10px; color: var(--text-muted); font-weight: 600; margin-top: 15px; display: none; }
+        .status-badge { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; text-align: center;}
+        .status-open { background: rgba(34, 197, 94, 0.15); color: var(--c-green); }
+        .status-locked { background: rgba(239, 68, 68, 0.15); color: var(--c-red); }
+
+        /* MODAL PRATINJAU JURNAL */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 4000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
+        .modal-content { background: var(--bg-main); width: 100%; max-width: 600px; max-height: 80vh; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; animation: fadeIn 0.3s; box-shadow: 0 20px 40px rgba(0,0,0,0.3);}
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px dashed rgba(0,0,0,0.1); padding-bottom: 10px;}
+        .modal-body { overflow-y: auto; flex: 1; font-size: 11px; }
+        .m-item { padding: 10px; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between;}
+        .m-in { color: var(--c-green); font-weight: bold; } .m-out { color: var(--c-red); font-weight: bold; }
 
         /* CETAK PDF HIDDEN */
-        #print-area { display: none; width: 800px; background: white; padding: 40px 50px; color: black; position: absolute; left: 0; top: 0; z-index: -2000; font-family: Arial, sans-serif; }
-        .pdf-kop { text-align: center; border-bottom: 4px double black; padding-bottom: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px; }
+        #print-wrapper { position: absolute; left: -9999px; top: 0; width: 800px; z-index: -9999; visibility: hidden; }
+        #print-area { width: 100%; background: white; padding: 40px 50px; color: black; font-family: Arial, sans-serif; display: block; position: relative; overflow: hidden; }
+        
+        .watermark { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 70px; font-weight: 900; color: red; opacity: 0.08; z-index: 1; pointer-events: none; white-space: nowrap; display: none;}
+        
+        .pdf-kop { text-align: center; border-bottom: 4px double black; padding-bottom: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px; position: relative; z-index: 2;}
         .pdf-kop img { width: 80px; }
-        .pdf-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 30px; }
-        .pdf-table td { padding: 12px; border-bottom: 1px solid #ddd; }
-        .td-label { font-weight: bold; width: 60%; }
-        .td-value { text-align: right; font-weight: bold; }
-        .row-total { background: #f2f2f2; font-size: 15px; border-top: 2px solid black; border-bottom: 2px solid black !important; }
-        .pdf-ttd { width: 100%; margin-top: 40px; display: flex; justify-content: space-between; text-align: center; font-size: 13px; }
+        
+        .pdf-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; position: relative; z-index: 2;}
+        .pdf-table th { background: #f2f2f2; border: 1px solid #000; padding: 8px; text-align: center;}
+        .pdf-table td { padding: 8px; border: 1px solid #000; }
+        .row-total td { font-weight: bold; background: #eef9f0; font-size: 13px; }
+        
+        .pdf-ttd { width: 100%; margin-top: 30px; display: flex; justify-content: space-between; text-align: center; font-size: 12px; position: relative; z-index: 2;}
+        #qrContainer { display: flex; justify-content: center; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -119,7 +136,7 @@
     <div class="app-container">
         <div class="nav-top">
             <button class="btn-icon" onclick="vibrateClick(); window.location.href='beranda.html'"><i class="fa-solid fa-angle-left"></i></button>
-            <h1 class="header-title">Laporan Tutup Buku</h1>
+            <h1 class="header-title">Dashboard Tutup Buku</h1>
             <div style="width:45px;"></div>
         </div>
 
@@ -127,124 +144,139 @@
             <div class="grid-filter">
                 <div class="input-group">
                     <label>Tahun Ajaran</label>
-                    <select class="input-edit" id="filterTA" onchange="kalkulasiNeraca()">
-                        <option value="">-- Memuat --</option>
-                    </select>
+                    <select class="input-edit" id="filterTA" onchange="kalkulasiNeraca()"><option value="">-- Memuat --</option></select>
                 </div>
                 <div class="input-group">
                     <label>Bulan Hijriyah</label>
                     <select class="input-edit" id="filterBulan" onchange="kalkulasiNeraca()">
-                        <option value="Muharram">Muharram</option>
-                        <option value="Safar">Safar</option>
-                        <option value="Rabiul Awal">Rabiul Awal</option>
-                        <option value="Rabiul Akhir">Rabiul Akhir</option>
-                        <option value="Jumadil Awal">Jumadil Awal</option>
-                        <option value="Jumadil Akhir">Jumadil Akhir</option>
-                        <option value="Rajab">Rajab</option>
-                        <option value="Sya'ban">Sya'ban</option>
-                        <option value="Ramadhan">Ramadhan</option>
-                        <option value="Syawal">Syawal</option>
-                        <option value="Dzulqa'dah">Dzulqa'dah</option>
-                        <option value="Dzulhijjah">Dzulhijjah</option>
+                        <option value="Muharram">Muharram</option> <option value="Safar">Safar</option>
+                        <option value="Rabiul Awal">Rabiul Awal</option> <option value="Rabiul Akhir">Rabiul Akhir</option>
+                        <option value="Jumadil Awal">Jumadil Awal</option> <option value="Jumadil Akhir">Jumadil Akhir</option>
+                        <option value="Rajab">Rajab</option> <option value="Sya'ban">Sya'ban</option>
+                        <option value="Ramadhan">Ramadhan</option> <option value="Syawal">Syawal</option>
+                        <option value="Dzulqa'dah">Dzulqa'dah</option> <option value="Dzulhijjah">Dzulhijjah</option>
                     </select>
                 </div>
             </div>
 
-            <div>
-                <div class="grid-neraca">
-                    <div class="card-neraca">
-                        <p>Penerimaan SPP & Tagihan</p>
-                        <h3 class="text-in" id="valSPP">Rp 0</h3>
-                    </div>
-                    <div class="card-neraca">
-                        <p>Kas Masuk Lainnya</p>
-                        <h3 class="text-in" id="valKasMasuk">Rp 0</h3>
-                    </div>
+            <div class="grid-neraca">
+                <div class="card-neraca">
+                    <p>Saldo Awal (Masa Lalu)</p>
+                    <h3 class="text-awal" id="valSaldoAwal">Rp 0</h3>
                 </div>
-                <div class="card-neraca" style="margin-bottom: 15px;">
-                    <p>Total Pengeluaran Kas</p>
+                <div class="card-neraca">
+                    <p>Total Pemasukan (In)</p>
+                    <h3 class="text-in" id="valKasMasuk">Rp 0</h3>
+                </div>
+                <div class="card-neraca">
+                    <p>Total Pengeluaran (Out)</p>
                     <h3 class="text-out" id="valKasKeluar">Rp 0</h3>
                 </div>
-                
-                <div class="card-total">
-                    <p>Saldo Bersih Bulan Ini</p>
-                    <h2 id="valSaldoBersih">Rp 0</h2>
-                </div>
+            </div>
+            
+            <div class="card-total" id="cardTotal">
+                <p>Saldo Akhir Aktual (Brankas)</p>
+                <h2 id="valSaldoAkhir">Rp 0</h2>
             </div>
 
-            <div class="lock-panel">
-                <div class="status-badge status-open" id="badgeStatus">
-                    <i class="fa-solid fa-lock-open"></i> Periode Terbuka
+            <div class="flex-dashboard">
+                <div class="chart-box">
+                    <canvas id="neracaChart"></canvas>
+                    <div style="position:absolute; font-size:10px; font-weight:bold; color:var(--text-muted); pointer-events:none;">ARUS KAS</div>
                 </div>
+                <div class="control-box">
+                    <div id="badgeStatus" class="status-badge status-open"><i class="fa-solid fa-lock-open"></i> Periode Terbuka</div>
+                    
+                    <button class="btn-master btn-lock" id="btnTutupBuku" onclick="eksekusiKunci()"><i class="fa-solid fa-lock"></i> KUNCI TUTUP BUKU</button>
+                    
+                    <p style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-align: center; margin:0; display:none;" id="logKunciTeks">
+                        Oleh: <b id="logAdmin">-</b> <br> <span id="logWaktu">-</span>
+                    </p>
 
-                <button class="btn-master btn-lock" id="btnTutupBuku" onclick="eksekusiKunci()"><i class="fa-solid fa-lock"></i> KUNCI & TUTUP BUKU PERIODE INI</button>
-                
-                <p class="log-kunci" id="logKunciTeks"><i class="fa-solid fa-user-shield"></i> Dikunci oleh: <span id="logAdmin">-</span> pada <span id="logWaktu">-</span></p>
-
-                <button class="btn-pdf" onclick="cetakLaporanPDF()"><i class="fa-solid fa-file-pdf"></i> Unduh Laporan Eksekutif (PDF)</button>
+                    <button class="btn-action tc-dark" onclick="bukaModalJurnal()"><i class="fa-solid fa-eye"></i> Pratinjau Transaksi</button>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-action tc-blue" style="flex:1;" onclick="cetakLaporanPDF()"><i class="fa-solid fa-file-pdf"></i> Ekspor PDF</button>
+                        <button class="btn-action tc-green" style="flex:1;" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> Ekspor Excel</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="print-area">
-        <div class="pdf-kop">
-            <img src="icon aplikasi.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3353/3353138.png'">
-            <div style="text-align: left;">
-                <h1 style="margin:0; font-family:Arial; font-size: 22px;">MADRASAH MIFTAHUL ULUM B-77</h1>
-                <p style="margin:5px 0 0; font-size:14px;">Laporan Neraca Keuangan Bulanan</p>
-                <p style="margin:5px 0 0; font-size:12px; font-weight:bold;" id="pdfBulan">Periode: -</p>
+    <div class="modal-overlay" id="modalJurnal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="margin:0; font-family:'Montserrat'; font-size:14px;"><i class="fa-solid fa-list"></i> Pratinjau Transaksi</h3>
+                <button style="background:transparent; border:none; font-size:16px; color:var(--c-red); cursor:pointer;" onclick="tutupModalJurnal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
+            <div class="modal-body" id="jurnalList"></div>
         </div>
+    </div>
 
-        <table class="pdf-table">
-            <tr>
-                <td class="td-label">A. Total Penerimaan Tagihan Santri (SPP, dll)</td>
-                <td class="td-value" style="color: green;" id="pdfSPP">Rp 0</td>
-            </tr>
-            <tr>
-                <td class="td-label">B. Total Pemasukan Kas Lainnya (Donatur, dll)</td>
-                <td class="td-value" style="color: green;" id="pdfKasIn">Rp 0</td>
-            </tr>
-            <tr style="background: #eef9f0;">
-                <td class="td-label" style="padding-left: 20px;">TOTAL DEBET (A + B)</td>
-                <td class="td-value" style="color: green;" id="pdfTotalIn">Rp 0</td>
-            </tr>
-            <tr>
-                <td class="td-label">C. Total Pengeluaran Kas (Operasional)</td>
-                <td class="td-value" style="color: red;" id="pdfKasOut">Rp 0</td>
-            </tr>
-            <tr class="row-total">
-                <td class="td-label">SALDO BERSIH BULAN INI (DEBET - KREDIT)</td>
-                <td class="td-value" id="pdfSaldo">Rp 0</td>
-            </tr>
-        </table>
-
-        <p style="font-size: 11px; margin-bottom: 5px;">Status Laporan: <b id="pdfStatusLaporan">TERKUNCI / TUTUP BUKU</b></p>
-        <p style="font-size: 11px; color: #555;">Dokumen ini dicetak otomatis pada: <span id="pdfWaktuCetak"></span></p>
-
-        <div class="pdf-ttd">
-            <div>
-                <p>Mengetahui,</p>
-                <p style="margin-top: 60px; font-weight: bold; text-decoration: underline;">Kepala Madrasah</p>
+    <div id="print-wrapper">
+        <div id="print-area">
+            <div class="watermark" id="pdfWatermark">DOKUMEN FINAL - TERKUNCI</div>
+            
+            <div class="pdf-kop">
+                <img src="Logo-Favicon.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3353/3353138.png'">
+                <div style="text-align: left;">
+                    <h1 style="margin:0; font-family:Arial; font-size: 22px;">MADRASAH MIFTAHUL ULUM B-77</h1>
+                    <p style="margin:5px 0 0; font-size:14px;">Laporan Neraca Keuangan & Tutup Buku</p>
+                    <p style="margin:5px 0 0; font-size:12px; font-weight:bold;" id="pdfBulan">Periode: -</p>
+                </div>
             </div>
-            <div>
-                <p>Dibuat Oleh,</p>
-                <p style="margin-top: 60px; font-weight: bold; text-decoration: underline;" id="pdfNamaPembuat">Administrator</p>
+
+            <table class="pdf-table">
+                <thead>
+                    <tr>
+                        <th style="width:5%;">No</th>
+                        <th style="width:45%;">Kategori / Pos Keuangan</th>
+                        <th style="width:25%;">Debet (Masuk)</th>
+                        <th style="width:25%;">Kredit (Keluar)</th>
+                    </tr>
+                </thead>
+                <tbody id="pdfTableBody"></tbody>
+                <tfoot>
+                    <tr class="row-total">
+                        <td colspan="2" style="text-align:center;">TOTAL MUTASI BULAN INI</td>
+                        <td id="pdfTotIn" style="text-align:right; color:green;">Rp 0</td>
+                        <td id="pdfTotOut" style="text-align:right; color:red;">Rp 0</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <table class="pdf-table" style="width: 50%; float: right; font-size:13px; margin-bottom:40px;">
+                <tr><td>Saldo Awal</td><td id="pdfSaldoAwal" style="text-align:right;">Rp 0</td></tr>
+                <tr><td>Mutasi Bersih</td><td id="pdfMutasi" style="text-align:right;">Rp 0</td></tr>
+                <tr class="row-total"><td>SALDO AKHIR</td><td id="pdfSaldoAkhir" style="text-align:right;">Rp 0</td></tr>
+            </table>
+            <div style="clear:both;"></div>
+
+            <p style="font-size: 11px; margin-bottom: 5px;">Status Laporan: <b id="pdfStatusLaporan">DRAF</b></p>
+            <p style="font-size: 11px; color: #555;">Dicetak otomatis pada: <span id="pdfWaktuCetak"></span></p>
+
+            <div class="pdf-ttd">
+                <div>
+                    <p>Mengetahui,</p>
+                    <p style="margin-top: 60px; font-weight: bold; text-decoration: underline;">Kepala Madrasah</p>
+                </div>
+                <div>
+                    <p>Dibuat Oleh,</p>
+                    <div id="qrContainer"></div>
+                    <p style="margin-top: 10px; font-weight: bold; text-decoration: underline;" id="pdfNamaPembuat">Administrator</p>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        document.addEventListener('contextmenu', event => event.preventDefault());
-        document.onkeydown = function(e) {
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.onkeydown = e => {
             if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) || (e.ctrlKey && e.keyCode == 85)) return false;
         };
 
         function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
         function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); }
-        function vibrateSuccess() { if (navigator.vibrate) navigator.vibrate([30, 50, 30]); }
-        
-        // PERBAIKAN BUG #4: FUNGSI TOAST YANG BENAR
         function showToast(msg) { 
             let toast = document.getElementById("toast"); 
             document.getElementById("toastMsg").innerText = msg;
@@ -253,117 +285,177 @@
         }
 
         async function catatAuditTrail(aksi, detail) {
-            try {
-                await database.ref('audit_trail').push({
-                    Waktu: new Date().toLocaleString('id-ID'),
-                    Eksekutor: localStorage.getItem('namaPengguna') || 'Unknown',
-                    Role: localStorage.getItem('hakAkses') || 'Unknown',
-                    Menu: 'Tutup Buku',
-                    Aksi: aksi,
-                    Detail: detail
-                });
-            } catch(e) { console.error("Gagal catat audit", e); }
+            try { await database.ref('audit_trail').push({ Waktu: new Date().toLocaleString('id-ID'), Eksekutor: localStorage.getItem('namaPengguna') || 'Unknown', Role: localStorage.getItem('hakAkses') || 'Unknown', Menu: 'Tutup Buku', Aksi: aksi, Detail: detail }); } catch(e) {}
         }
 
         const formatRp = (n) => 'Rp ' + parseInt(n || 0).toLocaleString('id-ID');
+        const blnMap = {"Muharram":1, "Safar":2, "Rabiul Awal":3, "Rabiul Akhir":4, "Jumadil Awal":5, "Jumadil Akhir":6, "Rajab":7, "Sya'ban":8, "Ramadhan":9, "Syawal":10, "Dzulqa'dah":11, "Dzulhijjah":12};
 
         let rawBukuKas = [];
         let rawStatusBulan = {};
-        let dataBulanIni = { spp: 0, kasIn: 0, kasOut: 0, bersih: 0, isLocked: false };
+        let dataBulanIni = { sAwal: 0, sIn: 0, sOut: 0, sAkhir: 0, isLocked: false, rincian: [], trxList: [] };
+        let myChart = null;
+
+        function animateValue(id, start, end, duration) {
+            let obj = document.getElementById(id);
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                let current = Math.floor(progress * (end - start) + start);
+                obj.innerHTML = formatRp(current);
+                if (progress < 1) window.requestAnimationFrame(step);
+            };
+            window.requestAnimationFrame(step);
+        }
 
         window.onload = function() {
-            // Set Default Bulan Hijriyah dari LocalStorage
             let blnAktif = localStorage.getItem('globalBulanAktif');
-            if(blnAktif && blnAktif !== "Belum Disetel") {
-                document.getElementById('filterBulan').value = blnAktif;
-            }
+            if(blnAktif && blnAktif !== "Belum Disetel") document.getElementById('filterBulan').value = blnAktif;
 
-            // Load Data Jurnal Umum & Set Tahun Ajaran Options
             database.ref('buku_kas').on('value', snap => {
                 rawBukuKas = [];
                 let taSet = new Set();
                 let taAktif = localStorage.getItem('globalTahunAjaran');
-                if(taAktif && taAktif !== "Belum Disetel") taSet.add(taAktif);
 
                 snap.forEach(c => { 
-                    let d = c.val();
+                    let d = c.val(); 
+                    
+                    // PENYELAMAT DATA LAMA: Jika data tidak punya Tahun/Bulan, anggap sebagai Data Lama
+                    if (!d.Tahun_Ajaran || d.Tahun_Ajaran === "Belum Disetel") d.Tahun_Ajaran = "Data Lama";
+                    if (!d.Bulan_Hijriyah || d.Bulan_Hijriyah === "Belum Disetel") d.Bulan_Hijriyah = "Data Lama";
+                    
                     rawBukuKas.push(d); 
-                    if(d.Tahun_Ajaran && d.Tahun_Ajaran !== "Belum Disetel" && d.Tahun_Ajaran !== "Umum") {
+                    
+                    if(d.Tahun_Ajaran !== "Data Lama" && d.Tahun_Ajaran !== "Umum") {
                         taSet.add(d.Tahun_Ajaran);
                     }
                 });
 
+                // Pastikan dropdown tidak kosong jika hanya ada data lama
+                if(taAktif && taAktif !== "Belum Disetel") taSet.add(taAktif);
+
                 let selTA = document.getElementById('filterTA');
                 let optHTML = '';
-                Array.from(taSet).sort().reverse().forEach(ta => {
-                    optHTML += `<option value="${ta}">${ta}</option>`;
-                });
+                Array.from(taSet).sort().reverse().forEach(ta => optHTML += `<option value="${ta}">${ta}</option>`);
                 selTA.innerHTML = optHTML || '<option value="">-- Kosong --</option>';
                 if(taAktif) selTA.value = taAktif;
 
                 kalkulasiNeraca();
             });
 
-            // Load Status Tutup Buku
             database.ref('tutup_buku').on('value', snap => {
                 rawStatusBulan = snap.val() || {};
                 kalkulasiNeraca();
             });
         };
 
-        function getPeriodeId() {
-            let ta = document.getElementById('filterTA').value;
-            let bln = document.getElementById('filterBulan').value;
-            if(!ta || !bln) return null;
-            let safeTA = ta.replace(/\//g, '-').replace(/ /g, '');
-            return `${safeTA}_${bln}`;
+        // FUNGSI CEK DATA LAMA / MASA LALU
+        function isBefore(ta1, bln1, ta2, bln2) {
+            if (ta1 === "Data Lama") return true; // Data lama otomatis masuk saldo awal
+            
+            let y1 = parseInt((ta1||"0").split('/')[0]) || 0; 
+            let y2 = parseInt((ta2||"0").split('/')[0]) || 0;
+            let m1 = blnMap[bln1] || 0; 
+            let m2 = blnMap[bln2] || 0;
+            
+            if (y1 < y2) return true;
+            if (y1 === y2 && m1 < m2) return true;
+            return false;
         }
 
         function kalkulasiNeraca() {
-            let filterTA = document.getElementById('filterTA').value;
-            let filterBulanH = document.getElementById('filterBulan').value;
-            if(!filterTA || !filterBulanH) return;
+            let fTA = document.getElementById('filterTA').value;
+            let fBln = document.getElementById('filterBulan').value;
+            if(!fTA || !fBln) return;
 
-            let spp = 0, kasIn = 0, kasOut = 0;
+            let sAwal = 0, sIn = 0, sOut = 0;
+            let mapIn = {}; let mapOut = {};
+            let trxBulanIni = [];
 
             rawBukuKas.forEach(d => {
-                if(d.Tahun_Ajaran === filterTA && d.Bulan_Hijriyah === filterBulanH) {
-                    let nom = parseInt(d.Nominal || 0);
+                let nom = parseInt(d.Nominal || 0);
+                
+                if(isBefore(d.Tahun_Ajaran, d.Bulan_Hijriyah, fTA, fBln)) {
+                    if(d.Jenis === 'MASUK') sAwal += nom; else sAwal -= nom;
+                }
+                else if(d.Tahun_Ajaran === fTA && d.Bulan_Hijriyah === fBln) {
+                    trxBulanIni.push(d);
+                    let kat = d.Kategori_Nama || 'Lainnya';
                     if(d.Jenis === 'MASUK') {
-                        if(d.ID_Transaksi.startsWith('PAY')) spp += nom;
-                        else kasIn += nom;
-                    } else if (d.Jenis === 'KELUAR') {
-                        kasOut += nom;
+                        sIn += nom;
+                        mapIn[kat] = (mapIn[kat] || 0) + nom;
+                    } else {
+                        sOut += nom;
+                        mapOut[kat] = (mapOut[kat] || 0) + nom;
                     }
                 }
             });
 
-            let bersih = (spp + kasIn) - kasOut;
-            dataBulanIni = { spp, kasIn, kasOut, bersih, isLocked: false };
+            let sAkhir = sAwal + sIn - sOut;
+            
+            let rincianGabungan = [];
+            Object.keys(mapIn).forEach(k => rincianGabungan.push({nama: k, masuk: mapIn[k], keluar: 0}));
+            Object.keys(mapOut).forEach(k => rincianGabungan.push({nama: k, masuk: 0, keluar: mapOut[k]}));
 
-            document.getElementById('valSPP').innerText = formatRp(spp);
-            document.getElementById('valKasMasuk').innerText = formatRp(kasIn);
-            document.getElementById('valKasKeluar').innerText = formatRp(kasOut);
-            document.getElementById('valSaldoBersih').innerText = formatRp(bersih);
+            dataBulanIni = { sAwal, sIn, sOut, sAkhir, isLocked: false, rincian: rincianGabungan, trxList: trxBulanIni.reverse() };
 
+            document.getElementById('valSaldoAwal').innerText = formatRp(sAwal);
+            animateValue('valKasMasuk', 0, sIn, 800);
+            animateValue('valKasKeluar', 0, sOut, 800);
+            animateValue('valSaldoAkhir', 0, sAkhir, 1000);
+            
+            let cTotal = document.getElementById('cardTotal');
+            if(sAkhir < 0) cTotal.className = "card-total defisit";
+            else cTotal.className = "card-total";
+
+            updateChart(sIn, sOut);
             cekStatusKunci();
+        }
+
+        function updateChart(masuk, keluar) {
+            let ctx = document.getElementById('neracaChart').getContext('2d');
+            if(myChart) myChart.destroy();
+            
+            if(masuk === 0 && keluar === 0) {
+                myChart = new Chart(ctx, { type: 'doughnut', data: { datasets: [{ data: [1], backgroundColor: ['#e2e8f0'] }] }, options: { responsive: true, cutout: '70%', plugins: { tooltip: {enabled: false} } }});
+                return;
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pemasukan', 'Pengeluaran'],
+                    datasets: [{
+                        data: [masuk, keluar],
+                        backgroundColor: ['#22c55e', '#ef4444'],
+                        borderWidth: 0, hoverOffset: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: {display: false} } }
+            });
+        }
+
+        function getPeriodeId() {
+            let ta = document.getElementById('filterTA').value;
+            let bln = document.getElementById('filterBulan').value;
+            if(!ta || !bln) return null;
+            return `${ta.replace(/\//g, '-').replace(/ /g, '')}_${bln}`;
         }
 
         function cekStatusKunci() {
             let periodeId = getPeriodeId();
-            if(!periodeId) return;
-
+            let status = rawStatusBulan[periodeId];
+            
             let badge = document.getElementById('badgeStatus');
             let btnLock = document.getElementById('btnTutupBuku');
             let logTeks = document.getElementById('logKunciTeks');
             let roleLokal = localStorage.getItem('hakAkses');
 
-            let status = rawStatusBulan[periodeId];
-
             if(status && status.Status === 'Terkunci') {
                 dataBulanIni.isLocked = true;
                 badge.className = "status-badge status-locked";
-                badge.innerHTML = '<i class="fa-solid fa-lock"></i> PERIODE INI TELAH DIKUNCI';
+                badge.innerHTML = '<i class="fa-solid fa-lock"></i> TERKUNCI (FINAL)';
                 
                 logTeks.style.display = 'block';
                 document.getElementById('logAdmin').innerText = status.Admin;
@@ -380,107 +472,163 @@
             } else {
                 dataBulanIni.isLocked = false;
                 badge.className = "status-badge status-open";
-                badge.innerHTML = '<i class="fa-solid fa-lock-open"></i> Periode Terbuka';
+                badge.innerHTML = '<i class="fa-solid fa-lock-open"></i> PERIODE TERBUKA';
                 logTeks.style.display = 'none';
                 
                 btnLock.style.display = 'flex';
                 btnLock.className = "btn-master btn-lock";
-                btnLock.innerHTML = '<i class="fa-solid fa-lock"></i> KUNCI & TUTUP BUKU PERIODE INI';
+                btnLock.innerHTML = '<i class="fa-solid fa-lock"></i> KUNCI TUTUP BUKU';
                 btnLock.onclick = eksekusiKunci;
             }
         }
 
         async function eksekusiKunci() {
             vibrateClick();
-            let periodeId = getPeriodeId();
-            let ta = document.getElementById('filterTA').value;
-            let bln = document.getElementById('filterBulan').value;
-            let namaBulanFilter = `${bln} ${ta}`;
-
-            let msg = `⚠️ PERINGATAN TUTUP BUKU ⚠️\n\nAnda akan mengunci seluruh data transaksi untuk periode [${namaBulanFilter}].\nJika sudah dikunci, transaksi pada periode ini menjadi permanen.\n\nLanjutkan eksekusi kunci?`;
             
-            if(!confirm(msg)) return;
+            if(dataBulanIni.sAkhir < 0) {
+                showToast("🚨 TUTUP BUKU DITOLAK! Terdapat defisit (Saldo Minus). Harap periksa Jurnal Kas!");
+                vibrateHeavy(); return;
+            }
 
-            let admin = localStorage.getItem('namaPengguna') || 'Admin';
-            let tgl = new Date().toLocaleString('id-ID');
+            let periodeId = getPeriodeId();
+            let namaBulan = `${document.getElementById('filterBulan').value} ${document.getElementById('filterTA').value}`;
+
+            if(!confirm(`⚠️ PERINGATAN FINAL ⚠️\nAnda akan MENGUNCI data transaksi untuk [${namaBulan}].\n\n- Data akan menjadi dokumen resmi.\n- Kasir tidak dapat lagi mengubah data di bulan ini (Gembok Global akan aktif).\n\nKunci sekarang?`)) return;
 
             try {
                 await database.ref(`tutup_buku/${periodeId}`).set({
                     Status: 'Terkunci',
-                    Admin: admin,
-                    Waktu: tgl,
-                    Total_Debet: dataBulanIni.spp + dataBulanIni.kasIn,
-                    Total_Kredit: dataBulanIni.kasOut,
-                    Saldo_Bersih: dataBulanIni.bersih
+                    Admin: localStorage.getItem('namaPengguna') || 'Admin',
+                    Waktu: new Date().toLocaleString('id-ID'),
+                    Saldo_Awal: dataBulanIni.sAwal,
+                    Total_In: dataBulanIni.sIn,
+                    Total_Out: dataBulanIni.sOut,
+                    Saldo_Akhir: dataBulanIni.sAkhir
                 });
                 
-                await catatAuditTrail('Lock Month', `Melakukan Tutup Buku untuk periode ${namaBulanFilter}`);
-                
-                showToast(`Periode ${namaBulanFilter} berhasil disegel!`);
-                vibrateSuccess();
-            } catch(e) {
-                showToast("Gagal mengunci periode. Periksa koneksi.");
-                vibrateHeavy();
-            }
+                await catatAuditTrail('Lock Month', `Menyegel Tutup Buku ${namaBulan}`);
+                showToast(`Periode ${namaBulan} berhasil disegel resmi!`); vibrateSuccess();
+            } catch(e) { showToast("Gagal mengunci periode."); vibrateHeavy(); }
         }
 
         async function eksekusiBukaKunci() {
             vibrateHeavy();
             let periodeId = getPeriodeId();
-            let ta = document.getElementById('filterTA').value;
-            let bln = document.getElementById('filterBulan').value;
-            
-            if(!confirm("⚠️ OTORISASI TINGKAT TINGGI ⚠️\n\nAnda yakin ingin MEMBUKA KUNCI periode ini?\nLanjutkan?")) return;
+            if(!confirm("⚠️ OTORISASI TINGKAT TINGGI ⚠️\n\nAnda yakin ingin MEMBUKA KUNCI periode ini?\nKasir akan dapat kembali mengubah data bulan ini.")) return;
 
             try {
                 await database.ref(`tutup_buku/${periodeId}`).remove();
-                await catatAuditTrail('Unlock Month', `Membuka Kunci Segel Tutup Buku untuk periode ${bln} ${ta}`);
-                showToast("Kunci berhasil dibuka!");
-                vibrateSuccess();
-            } catch(e) {
-                showToast("Gagal membuka kunci."); vibrateHeavy();
-            }
+                await catatAuditTrail('Unlock Month', `Membuka Kunci Segel Tutup Buku ID: ${periodeId}`);
+                showToast("Kunci berhasil dibuka!"); vibrateSuccess();
+            } catch(e) { showToast("Gagal membuka kunci."); }
         }
+
+        function bukaModalJurnal() {
+            vibrateClick();
+            let html = '';
+            if(dataBulanIni.trxList.length === 0) {
+                html = '<div style="text-align:center; color:gray; padding:30px;">Tidak ada transaksi di bulan ini.</div>';
+            } else {
+                dataBulanIni.trxList.forEach(t => {
+                    let isM = t.Jenis === 'MASUK';
+                    html += `<div class="m-item">
+                        <div>
+                            <b style="font-size:12px;">${t.Kategori_Nama || 'Transaksi'}</b><br>
+                            <span style="color:gray;">${(t.Waktu||'').split(',')[0]} • ${t.Sumber || t.Penerima || '-'}</span>
+                        </div>
+                        <div class="${isM ? 'm-in' : 'm-out'}">${isM ? '+' : '-'} ${formatRp(t.Nominal)}</div>
+                    </div>`;
+                });
+            }
+            document.getElementById('jurnalList').innerHTML = html;
+            document.getElementById('modalJurnal').style.display = 'flex';
+        }
+        function tutupModalJurnal() { document.getElementById('modalJurnal').style.display = 'none'; }
 
         function cetakLaporanPDF() {
             vibrateClick();
             let ta = document.getElementById('filterTA').value;
             let bln = document.getElementById('filterBulan').value;
-            if(!ta || !bln) { showToast("Pilih periode terlebih dahulu!"); return; }
-
             let namaBulanFilter = `${bln} ${ta}`;
 
             document.getElementById('pdfBulan').innerText = `Periode: ${namaBulanFilter}`;
-            document.getElementById('pdfSPP').innerText = formatRp(dataBulanIni.spp);
-            document.getElementById('pdfKasIn').innerText = formatRp(dataBulanIni.kasIn);
-            document.getElementById('pdfTotalIn').innerText = formatRp(dataBulanIni.spp + dataBulanIni.kasIn);
-            document.getElementById('pdfKasOut').innerText = formatRp(dataBulanIni.kasOut);
-            document.getElementById('pdfSaldo').innerText = formatRp(dataBulanIni.bersih);
+            document.getElementById('pdfTotIn').innerText = formatRp(dataBulanIni.sIn);
+            document.getElementById('pdfTotOut').innerText = formatRp(dataBulanIni.sOut);
+            document.getElementById('pdfSaldoAwal').innerText = formatRp(dataBulanIni.sAwal);
+            document.getElementById('pdfMutasi').innerText = formatRp(dataBulanIni.sIn - dataBulanIni.sOut);
+            document.getElementById('pdfSaldoAkhir').innerText = formatRp(dataBulanIni.sAkhir);
             
+            let rincHtml = ''; let no = 1;
+            dataBulanIni.rincian.forEach(r => {
+                rincHtml += `<tr>
+                    <td style="text-align:center;">${no++}</td>
+                    <td>${r.nama}</td>
+                    <td style="text-align:right;">${r.masuk > 0 ? formatRp(r.masuk) : '-'}</td>
+                    <td style="text-align:right;">${r.keluar > 0 ? formatRp(r.keluar) : '-'}</td>
+                </tr>`;
+            });
+            document.getElementById('pdfTableBody').innerHTML = rincHtml || `<tr><td colspan="4" style="text-align:center;">Nihil / Tidak ada mutasi</td></tr>`;
+
+            document.getElementById('pdfWatermark').style.display = dataBulanIni.isLocked ? 'block' : 'none';
             document.getElementById('pdfStatusLaporan').innerText = dataBulanIni.isLocked ? "TERKUNCI (TUTUP BUKU RESMI)" : "DRAF (BELUM TUTUP BUKU)";
             document.getElementById('pdfStatusLaporan').style.color = dataBulanIni.isLocked ? "green" : "red";
             
+            document.getElementById("qrContainer").innerHTML = "";
+            if(dataBulanIni.isLocked) {
+                new QRCode(document.getElementById("qrContainer"), { text: `LOCK-${getPeriodeId()}-${Date.now()}`, width: 60, height: 60 });
+            }
+
             document.getElementById('pdfWaktuCetak').innerText = new Date().toLocaleString('id-ID');
             document.getElementById('pdfNamaPembuat').innerText = localStorage.getItem('namaPengguna') || 'Administrator';
 
-            catatAuditTrail('Export PDF', `Mengunduh Laporan Neraca Bulanan (Periode: ${namaBulanFilter})`);
-            showToast("Mempersiapkan Laporan Neraca Eksekutif...");
+            showToast("Mempersiapkan PDF (Mode Resolusi Tinggi)...");
+            catatAuditTrail('Export', `Unduh PDF Tutup Buku ${namaBulanFilter}`);
 
+            const wrapper = document.getElementById('print-wrapper');
             const area = document.getElementById('print-area');
-            area.style.display = 'block'; 
+            wrapper.style.visibility = 'visible'; 
 
             const opt = { 
                 margin: 0.5, 
-                filename: `Neraca_Keuangan_MMU_B77_${bln}_${ta.replace(/\//g,'-')}.pdf`, 
-                image: { type: 'jpeg', quality: 0.98 }, 
-                html2canvas: { scale: 2, useCORS: true }, 
+                filename: `TutupBuku_MMUB77_${bln}_${ta.replace(/\//g,'-')}.pdf`, 
+                image: { type: 'jpeg', quality: 1 }, 
+                html2canvas: { scale: 2, useCORS: true, scrollX:0, scrollY:0, logging:false }, 
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } 
             };
             
-            html2pdf().set(opt).from(area).save().then(() => { 
-                area.style.display = 'none'; 
-                showToast("Laporan Berhasil Diunduh!");
-            });
+            setTimeout(() => {
+                html2pdf().set(opt).from(area).save().then(() => { 
+                    wrapper.style.visibility = 'hidden'; showToast("✅ PDF Berhasil Diunduh!");
+                });
+            }, 500);
+        }
+
+        function exportExcel() {
+            vibrateClick();
+            let namaBulan = `${document.getElementById('filterBulan').value} ${document.getElementById('filterTA').value}`;
+            showToast("Menyusun Laporan Excel...");
+            
+            let arrData = [
+                ["MADRASAH MIFTAHUL ULUM B-77"],
+                [`Laporan Neraca Eksekutif - ${namaBulan}`],
+                [`Status: ${dataBulanIni.isLocked ? 'TERKUNCI FINAL' : 'DRAF'}`], [],
+                ["KETERANGAN", "NOMINAL (Rp)"],
+                ["Saldo Awal (Bulan Lalu)", dataBulanIni.sAwal], [],
+                ["RINCIAN PEMASUKAN", ""],
+            ];
+
+            dataBulanIni.rincian.filter(r => r.masuk > 0).forEach(r => arrData.push(["- " + r.nama, r.masuk]));
+            arrData.push(["TOTAL PEMASUKAN", dataBulanIni.sIn], [], ["RINCIAN PENGELUARAN", ""]);
+            dataBulanIni.rincian.filter(r => r.keluar > 0).forEach(r => arrData.push(["- " + r.nama, r.keluar]));
+            
+            arrData.push(["TOTAL PENGELUARAN", dataBulanIni.sOut], [], ["SALDO AKHIR AKTUAL", dataBulanIni.sAkhir]);
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(arrData);
+            ws['!cols'] = [{wch: 40}, {wch: 20}];
+            XLSX.utils.book_append_sheet(wb, ws, "Neraca");
+            XLSX.writeFile(wb, `Neraca_Excel_${namaBulan.replace(/ /g,'_')}.xlsx`);
+            catatAuditTrail('Export', `Unduh Excel Tutup Buku ${namaBulan}`);
         }
     </script>
 </body>
