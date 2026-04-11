@@ -87,7 +87,6 @@
 
         .panel-card { background: var(--bg-main); border-radius: 25px; padding: 25px; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); margin-bottom: 25px; }
 
-        /* AREA PENCARIAN USER */
         .search-box { display: flex; align-items: center; border-radius: 15px; padding: 14px 20px; background: var(--bg-main); box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light); transition: 0.3s; margin-bottom: 20px; flex: 1;}
         .search-box i { color: var(--text-muted); font-size: 16px; }
         .search-box input { border: none; background: transparent; outline: none; width: 100%; font-family: 'Poppins', sans-serif; color: var(--text-dark); margin-left: 12px; font-size: 13px; }
@@ -96,11 +95,11 @@
         .btn-add-main { width: 100%; padding: 16px; background: var(--green-grad); color: white; border: none; border-radius: 16px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 5px 5px 15px rgba(6, 209, 111, 0.3); transition: 0.3s; margin-bottom: 25px; }
         .btn-add-main:active { box-shadow: inset 3px 3px 8px rgba(0,0,0,0.2); transform: translateY(2px); }
 
-        /* TABEL CONTAINER */
-        .table-container { background: var(--bg-main); border-radius: 20px; padding: 10px 15px 15px; box-shadow: 9px 9px 16px var(--shadow-dark), -9px -9px 16px var(--shadow-light); overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 12px; text-align: left; }
-        th { color: var(--text-muted); font-weight: 700; padding: 15px 12px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; border-bottom: 2px solid var(--border-line); }
-        td { padding: 15px 12px; border-bottom: 1px solid var(--border-line); color: var(--text-dark); vertical-align: middle; }
+        /* TABEL CONTAINER (DIPERBAIKI UNTUK SCROLL HP) */
+        .table-container { background: var(--bg-main); border-radius: 20px; box-shadow: 9px 9px 16px var(--shadow-dark), -9px -9px 16px var(--shadow-light); overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 25px;}
+        table { width: 100%; min-width: 650px; border-collapse: collapse; white-space: nowrap; font-size: 12px; text-align: left; }
+        th { color: var(--text-muted); font-weight: 700; padding: 16px 20px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; border-bottom: 2px solid var(--border-line); }
+        td { padding: 16px 20px; border-bottom: 1px solid var(--border-line); color: var(--text-dark); vertical-align: middle; }
         tr:last-child td { border-bottom: none; }
 
         .badge-role { padding: 5px 12px; border-radius: 8px; font-weight: 700; font-size: 10px; display: inline-block; text-align: center; }
@@ -564,7 +563,7 @@
             btn.innerHTML = txt; btn.disabled = false;
         });
 
-        // --- MANAJEMEN USER (FITUR 2 & 6: TENDANG & PROFIL MINI) ---
+        // --- MANAJEMEN USER ---
         function muatDataUsersRealtime() {
             database.ref('users').on('value', snapshot => {
                 let tbody = document.getElementById('tabel-users'); tbody.innerHTML = '';
@@ -584,7 +583,6 @@
                     if (roleLower === 'developer' && hakAksesLokal !== 'Developer') {
                         aksiHtml = `<button class="btn-aksi-tabel" style="opacity:0.3; cursor:not-allowed;"><i class="fa-solid fa-lock"></i></button>`;
                     } else {
-                        // FITUR 4: TENDANG PENGGUNA (Force Logout)
                         let kickBtn = (uname !== usernameAsliLokal) ? `<button class="btn-aksi-tabel btn-kick" onclick="tendangUser('${uname}', '${nama}')" title="Logout Paksa Kasir Ini"><i class="fa-solid fa-person-walking-arrow-right"></i></button>` : '';
                         
                         aksiHtml = `
@@ -594,7 +592,6 @@
                         `;
                     }
 
-                    // FITUR 6: PROFIL MINI (Nama bisa diklik)
                     tbody.innerHTML += `<tr class="baris-user">
                         <td class="kolom-username"><strong>${uname}</strong></td>
                         <td class="kolom-nama" style="font-weight:600; cursor:pointer; color:var(--c-blue);" onclick="bukaProfilMini('${uname}', '${nama}', '${lastLogin}')">
@@ -616,21 +613,18 @@
             });
         }
 
-        // FITUR 6: BUKA PROFIL MINI
         function bukaProfilMini(uname, nama, lastlog) {
             vibrateClick();
             document.getElementById('pmNama').innerText = nama;
             document.getElementById('pmUsername').innerText = "@" + uname;
             document.getElementById('pmLastLogin').innerHTML = `<i class="fa-regular fa-clock"></i> Terakhir Login: ${lastlog}`;
             
-            // Hitung aktivitas bulan ini dari CCTV
             let count = cctvDataRaw.filter(c => c.Eksekutor === nama && c.Waktu.includes(new Date().getFullYear().toString())).length;
             document.getElementById('pmInputCount').innerText = count + "+";
             
             document.getElementById('modalProfilMini').style.display = 'flex';
         }
 
-        // FITUR 4: TENDANG PENGGUNA (Force Logout via Database Flag)
         async function tendangUser(uname, nama) {
             vibrateHeavy();
             if(confirm(`⚠️ TENDANG PENGGUNA ⚠️\n\nAnda akan memutus paksa sesi akun [${nama}]. Jika dia sedang menginput data, ia akan langsung terlempar ke layar Login.\n\nLanjutkan?`)) {
@@ -641,7 +635,7 @@
             }
         }
 
-        function bukaModalUser() { /* Sama seperti sebelumnya, fungsi buka form */
+        function bukaModalUser() { 
             vibrateClick(); document.getElementById('formMode').value = 'tambah'; document.getElementById('formUser').reset();
             document.getElementById('grupPassword').style.display = 'block'; document.getElementById('u_username').readOnly = false;
             document.getElementById('u_username').style.opacity = "1"; document.getElementById('u_nama').parentElement.style.display = 'block';
@@ -668,7 +662,6 @@
             if(inp.type === "password") { inp.type = "text"; ic.classList.replace("fa-eye", "fa-eye-slash"); } else { inp.type = "password"; ic.classList.replace("fa-eye-slash", "fa-eye"); }
         }
 
-        // FITUR 5: GENERATE PIN ACAK
         function generatePIN() {
             vibrateClick();
             let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$';
@@ -705,12 +698,12 @@
             let pass = document.getElementById('new_reset_password').value;
             let hashPass = CryptoJS.SHA256(pass + uname).toString();
             try {
-                await database.ref('users/' + uname).update({ Password: hashPass, forceLogout: Date.now() }); // Paksa logout setelah ganti sandi
+                await database.ref('users/' + uname).update({ Password: hashPass, forceLogout: Date.now() }); 
                 showToast('Sandi dienkripsi & diganti!'); tutupModal('modalResetSandi');
             } catch (err) {}
         });
 
-        // --- FITUR 1, 2, 3: CCTV AUDIT LENGKAP ---
+        // --- CCTV AUDIT LENGKAP ---
         function muatCCTVRealtime() {
             database.ref('audit_trail').limitToLast(500).on('value', snap => {
                 cctvDataRaw = [];
@@ -751,7 +744,7 @@
             document.getElementById('pdfWaktu').innerText = new Date().toLocaleString('id-ID');
             let tbody = document.getElementById('pdfBody'); tbody.innerHTML = '';
             
-            cctvDataRaw.slice(0, 100).forEach(d => { // Limit 100 untuk PDF agar tak hang
+            cctvDataRaw.slice(0, 100).forEach(d => { 
                 tbody.innerHTML += `<tr>
                     <td style="border:1px solid #000; padding:5px;">${d.Waktu}</td>
                     <td style="border:1px solid #000; padding:5px;"><b>${d.Eksekutor}</b> (${d.Role})</td>
@@ -789,7 +782,7 @@
             }
         }
 
-        // --- FITUR 7 & 8: ZONA BAHAYA (MAINTENANCE & BACKUP) ---
+        // --- ZONA BAHAYA (MAINTENANCE & BACKUP) ---
         function cekMaintenanceStatus() {
             database.ref('pengaturan_global/maintenance').on('value', snap => {
                 isMaintenanceMode = snap.val() === true;
