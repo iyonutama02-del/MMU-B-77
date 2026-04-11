@@ -130,10 +130,25 @@
         .sync-loader { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--bg-main); padding: 10px 20px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #00d26a; box-shadow: 5px 5px 15px var(--shadow-dark), -5px -5px 15px var(--shadow-light); display: flex; align-items: center; gap: 10px; z-index: 4000; transition: 0.3s; opacity: 0; pointer-events: none; }
         .sync-loader.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
 
-        /* PRINT MODE (ULTRA PROFESSIONAL PDF) */
-        #pdf-template { display: none; background: white; color: black; font-family: Arial, sans-serif; width: 100%; max-width: 800px; margin: 0 auto; position: absolute; top:0; left:0; z-index:-9999; }
+        /* ========================================== */
+        /* PRINT MODE (ANTI KERTAS KOSONG)            */
+        /* ========================================== */
+        #pdf-template { 
+            visibility: hidden; /* Sembunyi dari layar tapi BISA dibaca kamera PDF */
+            background: white; 
+            color: black; 
+            font-family: Arial, sans-serif; 
+            width: 800px; /* Dikunci agar format tabel tidak hancur di HP */
+            margin: 0; 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            z-index: -9999; 
+        }
+        
         .pdf-page { padding: 40px; background: white; page-break-after: always; position: relative;}
         .pdf-page:last-child { page-break-after: auto; }
+        
         .pdf-header { border-bottom: 3px solid #1e293b; padding-bottom: 15px; margin-bottom: 25px; display: flex; align-items: center; gap: 20px; }
         .pdf-header img { width: 70px; }
         .pdf-title-box { flex: 1; }
@@ -467,13 +482,10 @@
             let filterVal = document.getElementById('monthFilter').value.split('-');
             let fYear = parseInt(filterVal[0]); let fMonth = parseInt(filterVal[1]);
             
-            // Konversi ke format tahun ajaran jika sistem Tutup Buku pakai TA
-            // Asumsi: Kita cocokkan berdasarkan String Bulan Hijriyah dan Tahun H
             let keyPencarian = false;
             let targetBln = hijriMonths[fMonth];
-            let targetThn = fYear; // Di Tutup Buku mungkin pakai "1447/1448 H". Cari yang stringnya cocok.
+            let targetThn = fYear;
             
-            // Pengecekan kasar di objek dbStatusKunci
             Object.keys(dbStatusKunci).forEach(k => {
                 if(k.includes(targetBln) && k.includes(targetThn.toString())) keyPencarian = true;
             });
@@ -506,12 +518,12 @@
             document.getElementById('lblKeluarBulan').innerText = `Keluar (${hijriMonths[fMonth]})`;
 
             let totalKas = 0; let inBulan = 0; let outBulan = 0;
-            let inBulanLalu = 0; let outBulanLalu = 0; // Untuk Fitur 2 YoY
+            let inBulanLalu = 0; let outBulanLalu = 0; 
 
             let hist6Bulan = [0,0,0,0,0,0]; let hist6In = [0,0,0,0,0,0]; let hist6Out = [0,0,0,0,0,0]; 
             let labels6Bulan = []; let past6MonthsObj = [];
             let kategoriPengeluaran = {};
-            pdfDataMapIn = {}; pdfDataMapOut = {}; // Reset untuk PDF
+            pdfDataMapIn = {}; pdfDataMapOut = {}; 
 
             for (let i = 5; i >= 0; i--) { 
                 let m = fMonth - i; let y = fYear;
@@ -541,7 +553,7 @@
                     }
                 }
 
-                // FITUR 2: YOY Hitung Tahun Lalu
+                // YoY
                 if(hDate.year === (fYear - 1) && hDate.month === fMonth) {
                     if(isMasuk) inBulanLalu += nom; else outBulanLalu += nom;
                 }
@@ -555,7 +567,6 @@
                 }
             });
 
-            // FITUR 2: Render YoY UI
             renderYoY('yoyMasuk', inBulan, inBulanLalu);
             renderYoY('yoyKeluar', outBulan, outBulanLalu);
 
@@ -563,7 +574,6 @@
             let listTunggakan = [];
 
             dbTagihan.forEach(t => {
-                // FITUR 1: Filter Kelas Khusus Piutang
                 if(fKelas !== 'SEMUA' && t.Kelas !== fKelas) return;
 
                 let nom = parseInt(t.Nominal || 0);
@@ -585,7 +595,6 @@
             document.getElementById('valMasuk').innerText = formatRp(inBulan);
             document.getElementById('valKeluar').innerText = formatRp(outBulan);
 
-            // FITUR 3: Estimasi Uang Masuk (Potensi Bar)
             let potensiAset = totalKas + totalPiutang;
             document.getElementById('valPotensi').innerText = `Aset Potensial: ${formatRp(potensiAset)}`;
             if(potensiAset > 0) {
@@ -597,7 +606,7 @@
             generateAIInsight(inBulan, outBulan, volLunas, volBelum, hijriMonths[fMonth]);
 
             listTunggakan.sort((a,b) => b.sisaReal - a.sisaReal);
-            pdfTopTunggakan = listTunggakan.slice(0, 15); // Simpan top 15 untuk PDF
+            pdfTopTunggakan = listTunggakan.slice(0, 15); 
 
             let htmlTunggakan = '';
             listTunggakan.slice(0, 5).forEach(t => {
@@ -671,7 +680,6 @@
             });
         }
 
-        // --- FITUR 6: DRILL DOWN GRAFIK PIE ---
         function drawExpenseChart(expObj, fMonth, fYear) {
             const ctx = document.getElementById('expenseChart').getContext('2d');
             if(chartExp) chartExp.destroy();
@@ -717,7 +725,9 @@
             document.getElementById('drilldownModal').style.display = 'flex';
         }
 
-        // --- FITUR 10: PDF ULTRA PROFESSIONAL (MULTI-PAGE) ---
+        // ================================================================
+        // PERBAIKAN BUG #10: CETAK PDF ULTRA PROFESSIONAL (KERTAS KOSONG)
+        // ================================================================
         function eksporPDFProfesional() {
             if(navigator.vibrate) navigator.vibrate(30);
             
@@ -769,20 +779,25 @@
             catatAuditTrail('Export Laporan Eksekutif', `Cetak Laporan Multi-Halaman Periode ${bulanText}`);
 
             let el = document.getElementById('pdf-template');
-            el.style.display = 'block';
+            
+            // KUNCI SOLUSI ANTI KERTAS KOSONG: visibility: visible alih-alih display: block
+            el.style.visibility = 'visible';
 
             let opt = { 
                 margin: 0, 
                 filename: `Executive_Report_${bulanText.replace(/ /g,'_')}.pdf`, 
                 image: { type: 'jpeg', quality: 1 }, 
-                html2canvas: { scale: 2, useCORS: true }, 
+                html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 }, // Ditambahkan scroll kunci kordinat
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } 
             };
             
-            html2pdf().set(opt).from(el).save().then(() => {
-                el.style.display = 'none';
-                showToast("Laporan Berhasil Diunduh!");
-            });
+            // Jeda 500ms (setengah detik) agar browser sempat menggambar tabelnya sebelum di-screenshot html2canvas
+            setTimeout(() => {
+                html2pdf().set(opt).from(el).save().then(() => {
+                    el.style.visibility = 'hidden';
+                    showToast("Laporan Berhasil Diunduh!");
+                });
+            }, 500); 
         }
     </script>
 </body>
