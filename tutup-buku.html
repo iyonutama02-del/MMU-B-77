@@ -22,13 +22,15 @@
     <script src="firebase-config.js"></script>
 
     <script>
-        if (!localStorage.getItem('usernameAsli')) window.location.replace('index.html');
-        if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-        
-        const role = localStorage.getItem('hakAkses');
-        if(role === 'Operator' || role === 'Supervisor' || role === 'Demo') {
-            alert("🔒 AKSES DIBATASI: Area eksekutif ini khusus untuk Administrator (Pimpinan) dan Developer.");
-            window.location.replace('beranda.html');
+        // --- CELAH #2: PENGAMANAN ANTI-FLICKER & OTORISASI SERVER ---
+        // Sembunyikan seluruh body sebelum mendapat restu dari Server Firebase
+        document.documentElement.style.display = 'none';
+
+        if (!localStorage.getItem('usernameAsli')) {
+            window.location.replace('index.html');
+        }
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
         }
     </script>
 
@@ -270,6 +272,9 @@
     </div>
 
     <script>
+        // --- KEAMANAN XSS & SERVER-SIDE AUTH ---
+        const escapeHTML = (str) => String(str).replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag));
+
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.onkeydown = e => {
             if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) || (e.ctrlKey && e.keyCode == 85)) return false;
@@ -287,6 +292,55 @@
         async function catatAuditTrail(aksi, detail) {
             try { await database.ref('audit_trail').push({ Waktu: new Date().toLocaleString('id-ID'), Eksekutor: localStorage.getItem('namaPengguna') || 'Unknown', Role: localStorage.getItem('hakAkses') || 'Unknown', Menu: 'Tutup Buku', Aksi: aksi, Detail: detail }); } catch(e) {}
         }
+
+        // =========================================================================
+        // PERBAIKAN CELAH #2: OTORISASI SERVER-SIDE EKSKLUSIF TUTUP BUKU
+        // =========================================================================
+        async function verifikasiOtorisasiServer() {
+            if (!navigator.onLine) {
+                alert("Sinyal Offline. Sistem keamanan membutuhkan koneksi internet.");
+                window.location.replace('beranda.html');
+                return;
+            }
+
+            const uid = localStorage.getItem('usernameAsli');
+            if(!uid) return window.location.replace('index.html');
+
+            try {
+                let snapshot = await database.ref('users/' + uid).once('value');
+                if (!snapshot.exists()) throw new Error("Akun tidak ditemukan");
+
+                let dataAkun = snapshot.val();
+                
+                if (String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif' || 
+                   (dataAkun.forceLogout && dataAkun.forceLogout > (Date.now() - 30000))) {
+                    localStorage.clear();
+                    window.location.replace('index.html');
+                    return;
+                }
+
+                const validRole = dataAkun.Role || 'Operator';
+                
+                // HANYA Administrator / Developer yang boleh lihat Tutup Buku
+                if (validRole === 'Operator' || validRole === 'Supervisor' || validRole === 'Demo') {
+                    alert("🔒 AKSES DITOLAK SERVER: Hanya Pimpinan dan Administrator yang berhak mengakses Laporan Tutup Buku.");
+                    window.location.replace('beranda.html');
+                    return;
+                }
+
+                // Lolos verifikasi server, buka tirai gaib
+                document.documentElement.style.display = '';
+                initTutupBuku(); 
+                
+            } catch(e) {
+                alert("Koneksi aman gagal. Silakan coba lagi.");
+                window.location.replace('beranda.html');
+            }
+        }
+
+        window.onload = function() {
+            verifikasiOtorisasiServer();
+        };
 
         const formatRp = (n) => 'Rp ' + parseInt(n || 0).toLocaleString('id-ID');
         const blnMap = {"Muharram":1, "Safar":2, "Rabiul Awal":3, "Rabiul Akhir":4, "Jumadil Awal":5, "Jumadil Akhir":6, "Rajab":7, "Sya'ban":8, "Ramadhan":9, "Syawal":10, "Dzulqa'dah":11, "Dzulhijjah":12};
@@ -309,7 +363,8 @@
             window.requestAnimationFrame(step);
         }
 
-        window.onload = function() {
+        // INIT DATA DIPINDAH KESINI AGAR JALAN SETELAH AUTENTIKASI SERVER BERHASIL
+        function initTutupBuku() {
             let blnAktif = localStorage.getItem('globalBulanAktif');
             if(blnAktif && blnAktif !== "Belum Disetel") document.getElementById('filterBulan').value = blnAktif;
 
@@ -320,8 +375,6 @@
 
                 snap.forEach(c => { 
                     let d = c.val(); 
-                    
-                    // PENYELAMAT DATA LAMA: Jika data tidak punya Tahun/Bulan, anggap sebagai Data Lama
                     if (!d.Tahun_Ajaran || d.Tahun_Ajaran === "Belum Disetel") d.Tahun_Ajaran = "Data Lama";
                     if (!d.Bulan_Hijriyah || d.Bulan_Hijriyah === "Belum Disetel") d.Bulan_Hijriyah = "Data Lama";
                     
@@ -332,7 +385,6 @@
                     }
                 });
 
-                // Pastikan dropdown tidak kosong jika hanya ada data lama
                 if(taAktif && taAktif !== "Belum Disetel") taSet.add(taAktif);
 
                 let selTA = document.getElementById('filterTA');
@@ -348,11 +400,10 @@
                 rawStatusBulan = snap.val() || {};
                 kalkulasiNeraca();
             });
-        };
+        }
 
-        // FUNGSI CEK DATA LAMA / MASA LALU
         function isBefore(ta1, bln1, ta2, bln2) {
-            if (ta1 === "Data Lama") return true; // Data lama otomatis masuk saldo awal
+            if (ta1 === "Data Lama") return true; 
             
             let y1 = parseInt((ta1||"0").split('/')[0]) || 0; 
             let y2 = parseInt((ta2||"0").split('/')[0]) || 0;
@@ -458,8 +509,8 @@
                 badge.innerHTML = '<i class="fa-solid fa-lock"></i> TERKUNCI (FINAL)';
                 
                 logTeks.style.display = 'block';
-                document.getElementById('logAdmin').innerText = status.Admin;
-                document.getElementById('logWaktu').innerText = status.Waktu;
+                document.getElementById('logAdmin').innerText = escapeHTML(status.Admin);
+                document.getElementById('logWaktu').innerText = escapeHTML(status.Waktu);
 
                 if(roleLokal === 'Developer' || roleLokal === 'Administrator') {
                     btnLock.className = "btn-master btn-unlock";
@@ -533,8 +584,8 @@
                     let isM = t.Jenis === 'MASUK';
                     html += `<div class="m-item">
                         <div>
-                            <b style="font-size:12px;">${t.Kategori_Nama || 'Transaksi'}</b><br>
-                            <span style="color:gray;">${(t.Waktu||'').split(',')[0]} • ${t.Sumber || t.Penerima || '-'}</span>
+                            <b style="font-size:12px;">${escapeHTML(t.Kategori_Nama || 'Transaksi')}</b><br>
+                            <span style="color:gray;">${escapeHTML((t.Waktu||'').split(',')[0])} • ${escapeHTML(t.Sumber || t.Penerima || '-')}</span>
                         </div>
                         <div class="${isM ? 'm-in' : 'm-out'}">${isM ? '+' : '-'} ${formatRp(t.Nominal)}</div>
                     </div>`;
@@ -562,7 +613,7 @@
             dataBulanIni.rincian.forEach(r => {
                 rincHtml += `<tr>
                     <td style="text-align:center;">${no++}</td>
-                    <td>${r.nama}</td>
+                    <td>${escapeHTML(r.nama)}</td>
                     <td style="text-align:right;">${r.masuk > 0 ? formatRp(r.masuk) : '-'}</td>
                     <td style="text-align:right;">${r.keluar > 0 ? formatRp(r.keluar) : '-'}</td>
                 </tr>`;
