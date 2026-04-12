@@ -18,15 +18,11 @@
     <script src="firebase-config.js"></script>
 
     <script>
-        // --- PENGAMANAN MUTLAK Cek Sesi Login di Atas ---
+        // --- CELAH #2: PENGAMANAN ANTI-FLICKER & SERVER-SIDE AUTH ---
+        document.documentElement.style.display = 'none'; // Tirai Gaib aktif
+
         if (!localStorage.getItem('usernameAsli')) {
             window.location.replace('index.html');
-        }
-
-        const role = localStorage.getItem('hakAkses');
-        if(role === 'Demo') {
-            alert("🔒 AKSES DIBATASI: Akun Demo tidak bisa mengakses Kasir.");
-            window.location.replace('beranda.html');
         }
         if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
     </script>
@@ -113,7 +109,7 @@
         .k-body { font-size: 12px; position: relative; z-index: 1;}
         .k-row { display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding: 12px 0; }
         .k-row span { color: #64748b; font-weight: 500;}
-        .k-row strong { color: #1e293b; font-weight: 700; text-align: right; max-width: 60%;}
+        .k-row strong { color: #1e293b; font-weight: 700; text-align: right; max-width: 60%; word-wrap: break-word;}
         
         .k-total { padding: 20px; border-radius: 15px; text-align: center; margin: 25px 0; position: relative; z-index: 1;}
         .k-total span { display: block; font-size: 11px; font-weight: 800; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;}
@@ -237,10 +233,13 @@
     </div>
 
     <script>
+        // --- CELAH #5: SARINGAN XSS (Cross-Site Scripting Sanitizer) ---
+        const escapeHTML = (str) => String(str).replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag));
+
         let dbTagihan = []; 
         let dbSantriUtama = []; 
         let idSantriAktif = null;
-        let roleAktif = localStorage.getItem('hakAkses'); 
+        let roleAktif = ''; 
         
         const formatRp = (n) => 'Rp ' + parseInt(n || 0).toLocaleString('id-ID');
         
@@ -253,11 +252,7 @@
 
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.onkeydown = function(e) {
-            if(e.keyCode == 123) return false;
-            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
-            if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false;
-            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
-            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+            if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 67 || e.keyCode == 74)) || (e.ctrlKey && e.keyCode == 85)) return false;
         };
 
         function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
@@ -288,13 +283,61 @@
                     Eksekutor: localStorage.getItem('namaPengguna') || 'Unknown',
                     Role: localStorage.getItem('hakAkses') || 'Unknown',
                     Menu: 'Pembayaran Kasir',
-                    Aksi: aksi,
-                    Detail: detail
+                    Aksi: aksi, Detail: detail
                 });
             } catch(e) { console.error("Gagal catat audit", e); }
         }
 
+        // =========================================================================
+        // PERBAIKAN CELAH #2: OTORISASI SERVER-SIDE EKSKLUSIF KASIR TRANSAKSI
+        // =========================================================================
+        async function verifikasiOtorisasiServer() {
+            if (!navigator.onLine) {
+                alert("Sinyal Offline. Sistem keamanan membutuhkan koneksi internet.");
+                window.location.replace('beranda.html');
+                return;
+            }
+
+            const uid = localStorage.getItem('usernameAsli');
+            if(!uid) return window.location.replace('index.html');
+
+            try {
+                let snapshot = await database.ref('users/' + uid).once('value');
+                if (!snapshot.exists()) throw new Error("Akun tidak ditemukan");
+
+                let dataAkun = snapshot.val();
+                
+                if (String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif' || 
+                   (dataAkun.forceLogout && dataAkun.forceLogout > (Date.now() - 30000))) {
+                    localStorage.clear();
+                    window.location.replace('index.html');
+                    return;
+                }
+
+                const validRole = dataAkun.Role || 'Operator';
+                
+                // Akun Demo diblokir dari area transaksi
+                if(validRole === 'Demo') {
+                    alert("🔒 AKSES DIBATASI: Akun Demo tidak bisa mengakses Kasir Transaksi.");
+                    window.location.replace('beranda.html');
+                    return;
+                }
+
+                document.documentElement.style.display = '';
+                roleAktif = validRole;
+                initKasirData(); 
+                
+            } catch(e) {
+                alert("Koneksi aman gagal. Silakan coba lagi.");
+                window.location.replace('beranda.html');
+            }
+        }
+
         window.onload = function() {
+            verifikasiOtorisasiServer();
+        };
+
+        function initKasirData() {
             resetTimerLogout(); 
             
             let user = localStorage.getItem('namaPengguna');
@@ -328,7 +371,7 @@
                 if(dbSantriUtama.length > 0) renderDaftarSantriBerhutang();
                 if(idSantriAktif) renderTagihan(idSantriAktif);
             });
-        };
+        }
 
         function getNamaMutlak(idMutlak, namaFallback) {
             let santri = dbSantriUtama.find(s => String(s.idSistemNode) === String(idMutlak) || String(s.ID_Murid) === String(idMutlak));
@@ -336,6 +379,7 @@
             return (namaFallback || "Hamba Allah");
         }
 
+        // --- PENERAPAN SANGKAR XSS PADA AREA RENDER ---
         function renderDaftarSantriBerhutang() {
             let tagihanAktif = dbTagihan.filter(t => t.Status === 'Belum Lunas' || t.Status === 'Cicilan');
             let rekap = {};
@@ -361,11 +405,16 @@
             wadah.innerHTML = `<h3 style="font-size:11px; color:var(--text-muted); margin-bottom:15px; text-transform:uppercase; letter-spacing:1px;">ANTREAN PEMBAYARAN (${arrRekap.length} SANTRI)</h3>`;
             
             arrRekap.forEach(r => {
+                // XSS Sanitizer pada render HTML
+                let safeId = escapeHTML(r.id);
+                let safeNama = escapeHTML(r.nama);
+                let safeKelas = escapeHTML(r.kelas);
+                
                 wadah.innerHTML += `
-                <div class="student-bill-card" onclick="bukaTagihanSantri('${r.id}', '${r.nama.replace(/'/g, "\\'")}')">
+                <div class="student-bill-card" onclick="bukaTagihanSantri('${safeId}', '${safeNama.replace(/'/g, "\\'")}')">
                     <div>
-                        <h4 class="sb-name">${r.nama}</h4>
-                        <p class="sb-info">Kelas: ${r.kelas} • ${r.count} Item Tagihan</p>
+                        <h4 class="sb-name">${safeNama}</h4>
+                        <p class="sb-info">Kelas: ${safeKelas} • ${r.count} Item Tagihan</p>
                     </div>
                     <div style="text-align:right;">
                         <span class="sb-total">${formatRp(r.total)}</span>
@@ -394,7 +443,12 @@
 
             hasilUnik.slice(0, 5).forEach(s => {
                 let div = document.createElement('div'); div.className = 'sug-item';
-                div.innerHTML = `<b>${s.Nama_Santri}</b> <span style="font-size:10px; color:var(--text-muted);">(${s.Kelas})</span>`;
+                
+                // XSS Sanitizer
+                let safeNama = escapeHTML(s.Nama_Santri);
+                let safeKelas = escapeHTML(s.Kelas);
+                
+                div.innerHTML = `<b>${safeNama}</b> <span style="font-size:10px; color:var(--text-muted);">(${safeKelas})</span>`;
                 div.onclick = () => { 
                     box.style.display = 'none'; 
                     bukaTagihanSantri(s.ID_Murid, s.Nama_Santri);
@@ -408,7 +462,7 @@
             idSantriAktif = idMurid;
             document.getElementById('areaDaftarSantri').style.display = 'none';
             document.getElementById('hasilTagihan').style.display = 'block';
-            document.getElementById('cariSantri').value = namaSantri;
+            document.getElementById('cariSantri').value = escapeHTML(namaSantri); // Tampilkan bersih
             renderTagihan(idMurid);
         }
 
@@ -454,34 +508,39 @@
                 let bln_global = localStorage.getItem('globalBulanAktif') || "Belum Disetel";
                 let disableBtn = (ta_global === "Belum Disetel" || bln_global === "Belum Disetel") ? 'disabled' : '';
                 
+                // XSS Sanitizer pada render HTML Detail Tagihan
+                let safeID = escapeHTML(t.ID_Tagihan);
+                let safePos = escapeHTML(t.Nama_Pos);
+                let safeKeterangan = escapeHTML(t.Keterangan);
+                
                 wadah.innerHTML += `
-                <div class="card-tagihan" id="card_${t.ID_Tagihan}">
+                <div class="card-tagihan" id="card_${safeID}">
                     <div class="ct-head">
                         <div>
-                            <h4 class="ct-title">${t.Nama_Pos}</h4>
-                            <p class="ct-info">Tagihan Awal: ${formatRp(t.Nominal)} <br> ${t.Status === 'Cicilan' ? `<span style="color:var(--c-red); font-weight:700; margin-top:3px; display:inline-block;">Sisa: ${formatRp(sisa)}</span>` : `<span style="color:var(--text-muted);">${t.Keterangan}</span>`}</p>
+                            <h4 class="ct-title">${safePos}</h4>
+                            <p class="ct-info">Tagihan Awal: ${formatRp(t.Nominal)} <br> ${t.Status === 'Cicilan' ? `<span style="color:var(--c-red); font-weight:700; margin-top:3px; display:inline-block;">Sisa: ${formatRp(sisa)}</span>` : `<span style="color:var(--text-muted);">${safeKeterangan}</span>`}</p>
                         </div>
                         <div class="ct-price">${formatRp(sisa)}</div>
                     </div>
                     <div class="ct-action" style="${formActionDisplay}">
                         <div class="ct-input-row">
                             <span class="ct-input-label">Bayar</span>
-                            <input type="number" id="input_${t.ID_Tagihan}" class="ct-input" placeholder="0" value="${sisa}" oninput="hitungKembalian('${t.ID_Tagihan}')">
+                            <input type="number" id="input_${safeID}" class="ct-input" placeholder="0" value="${sisa}" oninput="hitungKembalian('${safeID}')">
                         </div>
                         <div class="ct-input-row">
                             <span class="ct-input-label">Diterima</span>
-                            <input type="number" id="terima_${t.ID_Tagihan}" class="ct-input" placeholder="Isi jika butuh susuk" oninput="hitungKembalian('${t.ID_Tagihan}')">
+                            <input type="number" id="terima_${safeID}" class="ct-input" placeholder="Isi jika butuh susuk" oninput="hitungKembalian('${safeID}')">
                         </div>
                         <div class="ct-action-footer">
-                            <div id="kembalian_${t.ID_Tagihan}" class="ct-change-text" style="color:var(--text-muted); font-size:12px;">Kembalian: Rp 0</div>
-                            <button class="btn-bayar" id="btn_${t.ID_Tagihan}" onclick="eksekusiBayar('${t.ID_Tagihan}', ${sisa}, '${t.Tanggal_Buat}')" ${disableBtn}><i class="fa-solid fa-check-double"></i> PROSES</button>
+                            <div id="kembalian_${safeID}" class="ct-change-text" style="color:var(--text-muted); font-size:12px;">Kembalian: Rp 0</div>
+                            <button class="btn-bayar" id="btn_${safeID}" onclick="eksekusiBayar('${safeID}', ${sisa}, '${t.Tanggal_Buat}')" ${disableBtn}><i class="fa-solid fa-check-double"></i> PROSES</button>
                         </div>
                     </div>
                 </div>`;
             });
 
             let profil = dbSantriUtama.find(s => String(s.idSistemNode) === String(idMurid) || String(s.ID_Murid) === String(idMurid));
-            if(profil && profil.WA_Wali) document.getElementById('txtWA').value = profil.WA_Wali;
+            if(profil && profil.WA_Wali) document.getElementById('txtWA').value = escapeHTML(profil.WA_Wali);
         }
 
         // ========================================================
@@ -506,7 +565,6 @@
             let infaq = 0;
             let bayarPokok = inputBayar;
 
-            // DETEKSI UANG LEBIH / INFAQ
             if (inputBayar > tagihanHarusDibayar) {
                 infaq = inputBayar - tagihanHarusDibayar;
                 if (!confirm(`⚠️ NOMINAL LEBIH BESAR DARI TAGIHAN! ⚠️\n\nSisa Tagihan: ${formatRp(tagihanHarusDibayar)}\nNominal Diketik: ${formatRp(inputBayar)}\n\nKelebihan sebesar ${formatRp(infaq)} akan otomatis dicatat ke dalam sistem kas sebagai INFAQ/SEDEKAH.\n\nApakah Anda yakin ingin memproses ini?`)) {
@@ -551,7 +609,6 @@
                 let kLabelTotal = ''; let kSisaHTML = ''; let pesanDoa = ''; let qColor = '';
                 
                 if (inputBayar < tagihanHarusDibayar) {
-                    // TEMA ORANGE (Angsuran)
                     levelKuitansi = 'k-theme-orange';
                     kIcon = '<i class="fa-solid fa-clock-rotate-left"></i>';
                     kTitle = 'BUKTI ANGSURAN';
@@ -560,7 +617,6 @@
                     pesanDoa = "Terima kasih atas angsuran administrasi ananda. Semoga Allah senantiasa memberikan kelancaran dan kelapangan rezeki bagi keluarga Bapak/Ibu.";
                     qColor = '#f59e0b';
                 } else if (inputBayar === tagihanHarusDibayar) {
-                    // TEMA HIJAU (Pas/Lunas)
                     levelKuitansi = 'k-theme-green';
                     kIcon = '<i class="fa-solid fa-check-double"></i>';
                     kTitle = 'BUKTI LUNAS';
@@ -569,7 +625,6 @@
                     pesanDoa = "Alhamdulillah, kewajiban administrasi telah tertunaikan. Jazakumullah ahsanal jaza. Semoga ilmu yang didapat ananda menjadi barokah dan bermanfaat di dunia maupun akhirat.";
                     qColor = '#22c55e';
                 } else {
-                    // TEMA BIRU (Lunas + Infaq)
                     levelKuitansi = 'k-theme-blue';
                     kIcon = '<i class="fa-solid fa-hand-holding-heart"></i>';
                     kTitle = 'BUKTI LUNAS & INFAQ';
@@ -624,32 +679,38 @@
                 sisaTeks.innerHTML = kSisaHTML; 
                 sisaTeks.style.display = 'inline-block';
                 
-                document.getElementById('k_pesan_teks').innerText = pesanDoa;
+                // Murni menggunakan textContent agar sisa XSS tidak dieksekusi browser
+                document.getElementById('k_pesan_teks').textContent = pesanDoa;
                 document.getElementById('k_quote_left').style.color = qColor;
                 document.getElementById('k_quote_right').style.color = qColor;
 
-                document.getElementById('k_id').innerText = `ID: ${smartID}`;
-                document.getElementById('k_tgl').innerText = waktu.split(' ')[0];
-                document.getElementById('k_nama').innerText = namaAsli;
+                document.getElementById('k_id').textContent = `ID: ${smartID}`;
+                document.getElementById('k_tgl').textContent = waktu.split(' ')[0];
+                document.getElementById('k_nama').textContent = namaAsli;
                 
                 let profil = dbSantriUtama.find(s => String(s.idSistemNode) === String(tgh.ID_Murid) || String(s.ID_Murid) === String(tgh.ID_Murid));
                 let nisTampil = profil ? (profil.ID_Murid !== profil.idSistemNode ? profil.ID_Murid : profil.idSistemNode) : tgh.ID_Murid;
                 
-                document.getElementById('k_kelas').innerText = `${nisTampil} / ${tgh.Kelas}`;
-                document.getElementById('k_pos').innerText = tgh.Nama_Pos;
-                document.getElementById('k_kasir').innerText = kasir;
+                document.getElementById('k_kelas').textContent = `${nisTampil} / ${tgh.Kelas}`;
+                document.getElementById('k_pos').textContent = tgh.Nama_Pos;
+                document.getElementById('k_kasir').textContent = kasir;
                 
                 let kuitansiNominal = `Bayar: ${formatRp(inputBayar)}`;
                 if(inputTerima > inputBayar) {
                     kuitansiNominal = `Tunai: ${formatRp(inputTerima)} | Bayar: ${formatRp(inputBayar)} | Kembali: ${formatRp(inputTerima - inputBayar)}`;
                 }
-                document.getElementById('k_nominal').innerText = formatRp(inputBayar);
-                document.getElementById('k_nominal_detail').innerText = kuitansiNominal;
+                document.getElementById('k_nominal').textContent = formatRp(inputBayar);
+                document.getElementById('k_nominal_detail').textContent = kuitansiNominal;
                 
                 let riwayatHTML = '';
                 if(historiBaru.length > 1) {
                     riwayatHTML = '<div style="margin-top: 15px; border-top: 1px dashed #cbd5e1; padding-top: 12px; font-size: 10px;"><strong>Riwayat Angsuran Sebelumnya:</strong><br>';
-                    historiBaru.forEach((h, i) => { riwayatHTML += `<span style="display:flex; justify-content:space-between;"><span>Angsuran Ke-${i+1} (${h.Waktu.split(' ')[0]}):</span> <span>${formatRp(h.Nominal)}</span></span>`; });
+                    historiBaru.forEach((h, i) => { 
+                        // Sanitizer pada histori HTML
+                        let safeWaktu = escapeHTML(h.Waktu.split(' ')[0]);
+                        let safeNom = escapeHTML(formatRp(h.Nominal));
+                        riwayatHTML += `<span style="display:flex; justify-content:space-between;"><span>Angsuran Ke-${i+1} (${safeWaktu}):</span> <span>${safeNom}</span></span>`; 
+                    });
                     riwayatHTML += '</div>';
                 }
                 document.getElementById('k_riwayat_angsuran').innerHTML = riwayatHTML;
