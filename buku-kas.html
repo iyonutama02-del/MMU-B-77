@@ -21,14 +21,11 @@
     <script src="firebase-config.js"></script>
 
     <script>
+        // --- 🛡️ PENGAMANAN ANTI-FLICKER & AUTH SERVER-SIDE ---
+        document.documentElement.style.display = 'none'; // Tirai gaib
+
         if (!localStorage.getItem('usernameAsli')) window.location.replace('index.html');
         if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-        
-        const roleLokal = localStorage.getItem('hakAkses') || 'Operator';
-        if(roleLokal === 'Demo') {
-            alert("🔒 AKSES DIBATASI: Akun Demo tidak memiliki izin mengakses Buku Kas Utama.");
-            window.location.replace('beranda.html');
-        }
     </script>
 
     <style>
@@ -128,6 +125,9 @@
         .pdf-table th, .pdf-table td { border: 1px solid black; padding: 8px; vertical-align: top; }
         .pdf-table th { background: #e2e8f0; text-align: center; font-weight: bold; padding: 10px; font-size:12px; }
         .pdf-table .row-total td { font-weight: bold; background: #f8fafc; font-size: 12px; }
+        
+        /* Auto Scroll Loader Indicator */
+        .scroll-loader { text-align: center; padding: 15px; color: var(--c-green); font-size: 20px; display: none; }
     </style>
 </head>
 <body>
@@ -171,6 +171,16 @@
                 <label>Pencarian Riwayat</label>
                 <input type="text" class="input-edit" id="cariData" placeholder="Cari ID, Pos, Nominal, atau Keterangan..." onkeyup="prosesData(true)">
             </div>
+            
+            <div class="input-group">
+                <label>Dari Tanggal</label>
+                <input type="date" class="input-edit" id="fTglMulai" onchange="prosesData(true)">
+            </div>
+            <div class="input-group">
+                <label>Sampai Tanggal</label>
+                <input type="date" class="input-edit" id="fTglSelesai" onchange="prosesData(true)">
+            </div>
+
             <div class="input-group">
                 <label>Tahun Ajaran</label>
                 <select class="input-edit" id="fTahun" onchange="prosesData(true)">
@@ -209,6 +219,10 @@
                 <span>Menyinkronkan Jurnal Kas...</span>
             </div>
         </div>
+        
+        <div class="scroll-loader" id="scrollLoader">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+        </div>
     </div>
 
     <div id="print-wrapper">
@@ -239,6 +253,9 @@
     </div>
 
     <script>
+        // --- 🧹 SARINGAN XSS (Cross-Site Scripting Sanitizer) ---
+        const escapeHTML = (str) => String(str).replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag));
+
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.onkeydown = function(e) {
             if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) return false;
@@ -253,6 +270,49 @@
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000); 
         }
 
+        // --- 🛡️ OTORISASI SERVER-SIDE (Menggantikan LocalStorage) ---
+        let myUid = localStorage.getItem('usernameAsli');
+        let roleLokal = '';
+
+        async function verifikasiOtorisasiServer() {
+            if (!navigator.onLine) {
+                document.documentElement.style.display = 'block';
+                return;
+            }
+            if(!myUid) return window.location.replace('index.html');
+
+            try {
+                let snap = await database.ref('users/' + myUid).once('value');
+                if (!snap.exists()) throw new Error("Akun tidak ditemukan");
+                
+                let dataAkun = snap.val();
+                if (String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif' || 
+                   (dataAkun.forceLogout && dataAkun.forceLogout > (Date.now() - 30000))) {
+                    localStorage.clear(); window.location.replace('index.html'); return;
+                }
+
+                roleLokal = dataAkun.Role || 'Operator';
+                if(roleLokal === 'Demo') {
+                    alert("🔒 AKSES DIBATASI: Akun Demo tidak memiliki izin mengakses Buku Kas Utama.");
+                    window.location.replace('beranda.html'); return;
+                }
+
+                document.documentElement.style.display = 'block';
+                initBukuKas(); 
+            } catch(e) { window.location.replace('beranda.html'); }
+        }
+
+        // --- KEAMANAN AUTO-LOGOUT 15 MENIT ---
+        let waktuLogout;
+        function resetTimerLogout() {
+            clearTimeout(waktuLogout);
+            waktuLogout = setTimeout(() => {
+                vibrateHeavy(); showToast("Sesi habis (15 Menit). Anda dikeluarkan demi keamanan.");
+                setTimeout(() => { localStorage.removeItem('usernameAsli'); window.location.replace('index.html'); }, 2500);
+            }, 15 * 60 * 1000); 
+        }
+        document.onmousemove = resetTimerLogout; document.onkeypress = resetTimerLogout; document.ontouchstart = resetTimerLogout;
+
         async function catatAuditTrail(aksi, detail) {
             try {
                 await database.ref('audit_trail').push({
@@ -260,8 +320,7 @@
                     Eksekutor: localStorage.getItem('namaPengguna') || 'Unknown',
                     Role: roleLokal,
                     Menu: 'Buku Kas Harian',
-                    Aksi: aksi,
-                    Detail: detail
+                    Aksi: aksi, Detail: detail
                 });
             } catch(e) {}
         }
@@ -269,6 +328,7 @@
         let rawData = [];
         let currentFilteredData = []; 
         let limitTampil = 50; 
+        let isLoadingScroll = false;
         const formatRp = (n) => parseInt(n || 0).toLocaleString('id-ID');
 
         function getHijriDate(dateObj) {
@@ -297,11 +357,16 @@
         }
 
         window.onload = function() {
+            resetTimerLogout();
+            verifikasiOtorisasiServer();
+        };
+
+        function initBukuKas() {
             const globalTahun = localStorage.getItem('globalTahunAjaran') || '';
             const globalBulan = localStorage.getItem('globalBulanAktif') || '';
 
             if (roleLokal === 'Operator') {
-                document.getElementById('fTahun').innerHTML = `<option value="${globalTahun}">${globalTahun}</option>`;
+                document.getElementById('fTahun').innerHTML = `<option value="${escapeHTML(globalTahun)}">${escapeHTML(globalTahun)}</option>`;
                 document.getElementById('fBulan').value = globalBulan;
                 document.getElementById('fTahun').disabled = true;
                 document.getElementById('fBulan').disabled = true;
@@ -319,16 +384,25 @@
                 
                 if(roleLokal !== 'Operator') {
                     let optTahun = '<option value="">-- Semua Tahun --</option>';
-                    Array.from(setTahun).sort().reverse().forEach(t => { optTahun += `<option value="${t}">${t}</option>`; });
+                    Array.from(setTahun).sort().reverse().forEach(t => { optTahun += `<option value="${escapeHTML(t)}">${escapeHTML(t)}</option>`; });
                     document.getElementById('fTahun').innerHTML = optTahun;
                 }
                 
-                // LANGKAH 1: SORTIR DATA DARI LAMA KE BARU (Ascending)
+                // SORTIR DATA DARI LAMA KE BARU (Ascending) untuk Kalkulasi Saldo yang akurat
                 rawData.sort((a,b) => parseWaktuAbsolut(a.Waktu) - parseWaktuAbsolut(b.Waktu) || a.ID_Transaksi.localeCompare(b.ID_Transaksi));
                 
                 prosesData(true);
             });
-        };
+
+            // ✨ INFINITE SCROLL EVENT LISTENER
+            window.addEventListener('scroll', () => {
+                if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
+                    if (currentFilteredData.length > limitTampil && !isLoadingScroll) {
+                        muatLebihBanyak();
+                    }
+                }
+            });
+        }
 
         function prosesData(resetLimit = false) {
             if(resetLimit) limitTampil = 50;
@@ -337,7 +411,12 @@
             const fThn = document.getElementById('fTahun').value;
             const fBln = document.getElementById('fBulan').value;
             
-            // LANGKAH 2: FILTER DATA
+            // Rentang Tanggal
+            const tglMulai = document.getElementById('fTglMulai').value;
+            const tglSelesai = document.getElementById('fTglSelesai').value;
+            const tsMulai = tglMulai ? new Date(tglMulai + "T00:00:00").getTime() : 0;
+            const tsSelesai = tglSelesai ? new Date(tglSelesai + "T23:59:59").getTime() : Infinity;
+
             let filteredAsc = rawData.filter(d => {
                 let valId = String(d.ID_Transaksi || '').toLowerCase();
                 let valKat = String(d.Kategori_Nama || '').toLowerCase();
@@ -345,18 +424,19 @@
                 let valAdmin = String(d.Kasir || d.Admin_Penerima || d.Admin_Input || '').toLowerCase();
                 let valKet = String(d.Keterangan || '').toLowerCase();
                 let valNom = String(d.Nominal || '');
+                let tsData = parseWaktuAbsolut(d.Waktu);
                 
                 let matchCari = valId.includes(cari) || valKat.includes(cari) || valSumber.includes(cari) || valAdmin.includes(cari) || valKet.includes(cari) || valNom.includes(cari);
                 let matchTahun = fThn ? (d.Tahun_Ajaran === fThn) : true;
                 let matchBulan = fBln ? (d.Bulan_Hijriyah === fBln) : true;
+                let matchTanggal = (tsData >= tsMulai && tsData <= tsSelesai);
                 
-                return matchCari && matchTahun && matchBulan;
+                return matchCari && matchTahun && matchBulan && matchTanggal;
             });
 
             let saldoAkumulatif = 0; let totIn = 0; let totOut = 0;
             let rekapMasuk = {}; let rekapKeluar = {};
 
-            // LANGKAH 3: HITUNG SALDO DARI YANG PALING LAMA KE BARU
             filteredAsc.forEach(d => {
                 let nom = parseInt(d.Nominal || 0);
                 if(d.Jenis === 'MASUK') { 
@@ -369,31 +449,47 @@
                 d.saldoBerjalan = saldoAkumulatif; 
             });
 
-            // LANGKAH 4: BALIK ARRAY (REVERSE) AGAR DATA TERBARU MUNCUL PALING ATAS
             currentFilteredData = [...filteredAsc].reverse(); 
+            renderTabelUI(resetLimit);
+
+            let htmlRekapM = ''; let htmlRekapK = '';
+            Object.entries(rekapMasuk).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => { htmlRekapM += `<div class="sl-item"><span>${escapeHTML(k)}</span><span>${formatRp(v)}</span></div>`; });
+            Object.entries(rekapKeluar).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => { htmlRekapK += `<div class="sl-item"><span>${escapeHTML(k)}</span><span>${formatRp(v)}</span></div>`; });
             
-            // LANGKAH 5: RENDER UI DENGAN PAGINATION
+            document.getElementById('listRekapMasuk').innerHTML = htmlRekapM || '<div class="sl-item" style="color:var(--text-muted); font-weight:500;"><i>Tidak ada pemasukan</i></div>';
+            document.getElementById('listRekapKeluar').innerHTML = htmlRekapK || '<div class="sl-item" style="color:var(--text-muted); font-weight:500;"><i>Tidak ada pengeluaran</i></div>';
+
+            document.getElementById('totMasuk').innerText = 'Rp ' + formatRp(totIn);
+            document.getElementById('totKeluar').innerText = 'Rp ' + formatRp(totOut);
+            document.getElementById('totSaldo').innerText = 'Rp ' + formatRp(totIn - totOut);
+        }
+
+        function renderTabelUI(isReplace = true) {
             let htmlUI = '';
-            let rowsToShow = currentFilteredData.slice(0, limitTampil);
+            let startIndex = isReplace ? 0 : limitTampil - 50;
+            let rowsToShow = currentFilteredData.slice(startIndex, limitTampil);
 
             rowsToShow.forEach(d => {
                 let isMasuk = d.Jenis === 'MASUK';
                 let nom = parseInt(d.Nominal || 0);
                 let splitWaktu = (d.Waktu||'').split(', ');
-                let tglMasehiStr = splitWaktu[0] || '-';
-                let jamStr = splitWaktu[1] || '-';
+                let tglMasehiStr = escapeHTML(splitWaktu[0] || '-');
+                let jamStr = escapeHTML(splitWaktu[1] || '-');
                 
                 let timestampMs = parseWaktuAbsolut(d.Waktu);
-                let tglHijriyah = getHijriDate(new Date(timestampMs));
+                let tglHijriyah = escapeHTML(getHijriDate(new Date(timestampMs)));
                 
-                let adminAktor = d.Kasir || d.Admin_Penerima || d.Admin_Input || 'System Auto';
-                let entitasTerkait = d.Sumber || d.Penerima || d.Nama_Santri || 'Lain-lain';
+                // PENERAPAN XSS SANITIZER
+                let adminAktor = escapeHTML(d.Kasir || d.Admin_Penerima || d.Admin_Input || 'System Auto');
+                let entitasTerkait = escapeHTML(d.Sumber || d.Penerima || d.Nama_Santri || 'Lain-lain');
+                let namaKat = escapeHTML(d.Kategori_Nama || 'Transaksi');
+                let ketTrans = escapeHTML(d.Keterangan || '-');
 
                 let saldoWarna = d.saldoBerjalan < 0 ? 'var(--c-red)' : 'var(--text-muted)';
 
                 let btnHapus = '';
                 if(roleLokal !== 'Operator') {
-                    btnHapus = `<button class="btn-delete" onclick="hapusTrx('${d.ID_Transaksi}', '${d.Jenis}', ${nom}, '${d.Kategori_Nama||''}')" title="Hapus Permanen"><i class="fa-solid fa-trash-can"></i></button>`;
+                    btnHapus = `<button class="btn-delete" onclick="hapusTrx('${escapeHTML(d.ID_Transaksi)}', '${d.Jenis}', ${nom}, '${namaKat.replace(/'/g, "\\'")}')" title="Hapus Permanen"><i class="fa-solid fa-trash-can"></i></button>`;
                 }
 
                 htmlUI += `
@@ -412,40 +508,41 @@
                     </div>
                     <div class="m-body">
                         <div class="m-desc">
-                            <span style="font-weight:700;">Ref:</span> <span style="font-family:monospace;">${d.ID_Transaksi}</span><br>
-                            <span style="color:var(--text-muted);">${d.Keterangan || '-'}</span><br>
+                            <span style="font-weight:700;">Ref:</span> <span style="font-family:monospace;">${escapeHTML(d.ID_Transaksi)}</span><br>
+                            <span style="color:var(--text-muted);">${ketTrans}</span><br>
                             <span style="font-size:10px; color:var(--text-muted); margin-top:5px; display:inline-block;"><i class="fa-solid fa-user-check"></i> Petugas: ${adminAktor}</span>
                         </div>
-                        <div><span class="badge ${isMasuk ? 'badge-in' : 'badge-out'}">${d.Kategori_Nama || 'Transaksi'}</span></div>
+                        <div><span class="badge ${isMasuk ? 'badge-in' : 'badge-out'}">${namaKat}</span></div>
                     </div>
                 </div>`;
             });
 
-            if(currentFilteredData.length > limitTampil) {
-                htmlUI += `<button class="btn-action btn-load" onclick="muatLebihBanyak()">Buka Lebih Banyak (${currentFilteredData.length - limitTampil} tersisa) <i class="fa-solid fa-angle-down"></i></button>`;
+            let bodyKas = document.getElementById('bodyKas');
+            if(isReplace) {
+                bodyKas.innerHTML = htmlUI || `
+                    <div class="empty-state">
+                        <i class="fa-regular fa-folder-open" style="font-size:45px; margin-bottom:15px; opacity:0.5;"></i>
+                        <span>Tidak ada data pada periode/pencarian ini.</span>
+                    </div>`;
+            } else {
+                bodyKas.insertAdjacentHTML('beforeend', htmlUI);
             }
 
-            let htmlRekapM = ''; let htmlRekapK = '';
-            Object.entries(rekapMasuk).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => { htmlRekapM += `<div class="sl-item"><span>${k}</span><span>${formatRp(v)}</span></div>`; });
-            Object.entries(rekapKeluar).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => { htmlRekapK += `<div class="sl-item"><span>${k}</span><span>${formatRp(v)}</span></div>`; });
-            
-            document.getElementById('listRekapMasuk').innerHTML = htmlRekapM || '<div class="sl-item" style="color:var(--text-muted); font-weight:500;"><i>Tidak ada pemasukan</i></div>';
-            document.getElementById('listRekapKeluar').innerHTML = htmlRekapK || '<div class="sl-item" style="color:var(--text-muted); font-weight:500;"><i>Tidak ada pengeluaran</i></div>';
-
-            document.getElementById('bodyKas').innerHTML = htmlUI || `
-                <div class="empty-state">
-                    <i class="fa-regular fa-folder-open" style="font-size:45px; margin-bottom:15px; opacity:0.5;"></i>
-                    <span>Tidak ada data pada periode/pencarian ini.</span>
-                </div>`;
-            
-            document.getElementById('totMasuk').innerText = 'Rp ' + formatRp(totIn);
-            document.getElementById('totKeluar').innerText = 'Rp ' + formatRp(totOut);
-            document.getElementById('totSaldo').innerText = 'Rp ' + formatRp(totIn - totOut);
+            if(currentFilteredData.length > limitTampil) {
+                document.getElementById('scrollLoader').style.display = 'block';
+            } else {
+                document.getElementById('scrollLoader').style.display = 'none';
+            }
+            isLoadingScroll = false;
         }
 
         function muatLebihBanyak() {
-            limitTampil += 50;
-            prosesData(false);
+            isLoadingScroll = true;
+            document.getElementById('scrollLoader').style.display = 'block';
+            setTimeout(() => {
+                limitTampil += 50;
+                renderTabelUI(false);
+            }, 500); // Jeda sedikit agar tidak membuat UI lag
         }
 
         async function hapusTrx(id, jenis, nominal, kategori) {
@@ -461,9 +558,7 @@
                 await database.ref().update(updates);
                 await catatAuditTrail('Delete', `Menghapus Kas ${jenis} [${kategori}] senilai Rp ${formatRp(nominal)} (ID: ${id})`);
                 showToast("✅ Transaksi berhasil dihapus dan saldo diperbarui.");
-            } catch(e) {
-                showToast("❌ Gagal menghapus: " + e.message);
-            }
+            } catch(e) { showToast("❌ Gagal menghapus: " + e.message); }
         }
 
         function exportPDF() {
@@ -493,10 +588,16 @@
                 let tglH = getHijriDate(new Date(parseWaktuAbsolut(d.Waktu)));
                 let sText = d.saldoBerjalan < 0 ? `style="color:red; font-weight:bold; text-align:right;"` : `style="font-weight:bold; text-align:right;"`;
 
+                // XSS Untuk PDF
+                let safeKat = escapeHTML(d.Kategori_Nama || 'Transaksi');
+                let safeSumber = escapeHTML(d.Sumber || d.Penerima || '-');
+                let safeKet = escapeHTML(d.Keterangan || '-');
+                let safeAdmin = escapeHTML(d.Kasir || d.Admin_Penerima || 'Sistem');
+
                 pdfHTML += `<tr>
-                    <td><b>${w[0]||'-'}</b><br><span style="font-size:10px; color:#555;">${tglH}</span><br><span style="font-size:9px;">${w[1]||'-'} WIB</span></td>
-                    <td><b style="font-family:monospace;">${d.ID_Transaksi}</b><br><span style="font-size:10px;">Oleh: ${d.Kasir || d.Admin_Penerima || 'Sistem'}</span></td>
-                    <td><b>${d.Kategori_Nama || 'Transaksi'}</b><br>${d.Sumber || d.Penerima || '-'}<br><span style="font-size:10px; color:#555;">${d.Keterangan || '-'}</span></td>
+                    <td><b>${escapeHTML(w[0]||'-')}</b><br><span style="font-size:10px; color:#555;">${escapeHTML(tglH)}</span><br><span style="font-size:9px;">${escapeHTML(w[1]||'-')} WIB</span></td>
+                    <td><b style="font-family:monospace;">${escapeHTML(d.ID_Transaksi)}</b><br><span style="font-size:10px;">Oleh: ${safeAdmin}</span></td>
+                    <td><b>${safeKat}</b><br>${safeSumber}<br><span style="font-size:10px; color:#555;">${safeKet}</span></td>
                     <td style="text-align:right;">${isM ? formatRp(nom) : '-'}</td>
                     <td style="text-align:right; color:red;">${!isM ? formatRp(nom) : '-'}</td>
                     <td ${sText}>${formatRp(d.saldoBerjalan)}</td>
@@ -520,7 +621,8 @@
                 filename: `Jurnal_Kas_MMUB77_${fBln}_${new Date().getTime()}.pdf`, 
                 image: { type: 'jpeg', quality: 0.8 },
                 html2canvas: { scale: 1.5, useCORS: true, scrollX: 0, scrollY: 0, logging: false }, 
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } 
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
             };
             
             setTimeout(() => {
@@ -533,6 +635,13 @@
                     btnPdf.innerHTML = txtAsli; btnPdf.disabled = false;
                 });
             }, 500);
+        }
+
+        // --- ANTI CSV / FORMULA INJECTION (MENCEGAH VIRUS EXCEL) ---
+        function sanitizeExcel(text) {
+            if(typeof text !== 'string') text = String(text);
+            if (text.match(/^[=+\-@]/)) return "'" + text;
+            return text;
         }
 
         function exportExcel() {
@@ -552,9 +661,20 @@
             let dataExcelArr = currentFilteredData.map(d => {
                 let w = (d.Waktu||'').split(', ');
                 return [
-                    d.ID_Transaksi, w[0]||'-', w[1]||'-', getHijriDate(new Date(parseWaktuAbsolut(d.Waktu))), d.Tahun_Ajaran || '-', d.Bulan_Hijriyah || '-',
-                    d.Kategori_Nama || 'Transaksi', d.Jenis, d.Sumber || d.Penerima || '-', d.Keterangan || '-', d.Kasir || d.Admin_Penerima || 'Sistem',
-                    d.Jenis === 'MASUK' ? parseInt(d.Nominal||0) : 0, d.Jenis !== 'MASUK' ? parseInt(d.Nominal||0) : 0, d.saldoBerjalan
+                    sanitizeExcel(d.ID_Transaksi), 
+                    w[0]||'-', 
+                    w[1]||'-', 
+                    getHijriDate(new Date(parseWaktuAbsolut(d.Waktu))), 
+                    d.Tahun_Ajaran || '-', 
+                    d.Bulan_Hijriyah || '-',
+                    sanitizeExcel(d.Kategori_Nama || 'Transaksi'), 
+                    d.Jenis, 
+                    sanitizeExcel(d.Sumber || d.Penerima || '-'), 
+                    sanitizeExcel(d.Keterangan || '-'), 
+                    sanitizeExcel(d.Kasir || d.Admin_Penerima || 'Sistem'),
+                    d.Jenis === 'MASUK' ? parseInt(d.Nominal||0) : 0, 
+                    d.Jenis !== 'MASUK' ? parseInt(d.Nominal||0) : 0, 
+                    d.saldoBerjalan
                 ];
             });
 
