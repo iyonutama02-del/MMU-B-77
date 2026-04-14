@@ -21,7 +21,9 @@
     <script src="firebase-config.js"></script>
     
     <script>
-        // --- TEMUAN #1: PENGAMANAN MUTLAK Cek Sesi Login di Atas ---
+        // --- PENGAMANAN ANTI-FLICKER & SERVER-SIDE AUTH ---
+        document.documentElement.style.display = 'none'; // Tirai Gaib aktif
+        
         if (!localStorage.getItem('usernameAsli')) {
             window.location.replace('index.html');
         }
@@ -29,17 +31,10 @@
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark');
         }
-
-        // --- 1. GEMBOK MUTLAK (SATPAM GAIB) ---
-        let roleAkses = localStorage.getItem('hakAkses');
-        if(roleAkses === 'Operator' || roleAkses === 'Supervisor') {
-            alert("🔒 AKSES DITOLAK: Area Master Pos Keuangan hanya khusus untuk Administrator & Developer.");
-            window.location.replace('beranda.html');
-        }
     </script>
 
     <style>
-        /* --- TEMA SOFT UI ASLI (TIDAK DISENTUH SAMA SEKALI) --- */
+        /* --- TEMA SOFT UI ASLI --- */
         :root {
             --bg-main: #f0f4f8; 
             --text-dark: #2d3748;
@@ -66,7 +61,6 @@
         .app-container { max-width: 1000px; margin: 0 auto; min-height: 100vh; padding: 20px; animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* TEMUAN #4: Struktur Toast dipertahankan */
         #toast { visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
         @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
@@ -113,7 +107,7 @@
 
         .action-cell { display: flex; gap: 8px; }
         .btn-table { width: 34px; height: 34px; border-radius: 10px; background: var(--bg-main); border: none; box-shadow: 3px 3px 8px var(--shadow-dark), -3px -3px 8px var(--shadow-light); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; font-size: 13px; }
-        .btn-table:active { box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light); }
+        .btn-table:active { box-shadow: inset 2px 2px 5px var(--shadow-dark), -2px -2px 5px var(--shadow-light); }
         .btn-edit-row { color: #f59e0b; }
         .btn-delete-row { color: #ef4444; }
 
@@ -245,6 +239,9 @@
     </div>
 
     <script>
+        // --- SARINGAN XSS (Cross-Site Scripting Sanitizer) ---
+        const escapeHTML = (str) => String(str).replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag));
+
         function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
         function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); }
         function vibrateSuccess() { if (navigator.vibrate) navigator.vibrate([30, 50, 30]); }
@@ -254,7 +251,69 @@
             if (modKode && modKode.style.display === 'flex') modKode.style.display = 'none';
         });
 
-        let hakAksesLokal = localStorage.getItem('hakAkses') || 'Operator';
+        // --- FUNGSI TOAST ---
+        function showToast(msg) {
+            let toast = document.getElementById("toast"); 
+            document.getElementById("toastMsg").innerText = msg;
+            toast.className = "show"; 
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        // --- 🛡️ OTORISASI SERVER-SIDE (MENGGANTIKAN LOCALSTORAGE) ---
+        let myUid = localStorage.getItem('usernameAsli');
+        let hakAksesLokal = '';
+
+        async function verifikasiOtorisasiServer() {
+            if (!navigator.onLine) {
+                alert("Sinyal Offline. Sistem keamanan membutuhkan koneksi internet.");
+                window.location.replace('beranda.html');
+                return;
+            }
+            if(!myUid) return window.location.replace('index.html');
+
+            try {
+                let snap = await database.ref('users/' + myUid).once('value');
+                if (!snap.exists()) throw new Error("Akun tidak ditemukan");
+                
+                let dataAkun = snap.val();
+                if (String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif' || 
+                   (dataAkun.forceLogout && dataAkun.forceLogout > (Date.now() - 30000))) {
+                    localStorage.clear(); window.location.replace('index.html'); return;
+                }
+
+                hakAksesLokal = dataAkun.Role || 'Operator';
+                
+                // HANYA Administrator / Developer yang boleh merubah Master Data
+                if (hakAksesLokal === 'Operator' || hakAksesLokal === 'Supervisor') {
+                    alert("🔒 AKSES DITOLAK SERVER: Area Master Pos Keuangan hanya khusus untuk Administrator & Developer.");
+                    window.location.replace('beranda.html');
+                    return;
+                }
+
+                document.documentElement.style.display = 'block';
+                initMasterData(); 
+            } catch(e) { window.location.replace('beranda.html'); }
+        }
+
+        // --- KEAMANAN AUTO-LOGOUT 15 MENIT ---
+        let waktuLogout;
+        function resetTimerLogout() {
+            clearTimeout(waktuLogout);
+            waktuLogout = setTimeout(() => {
+                vibrateHeavy();
+                showToast("Sesi habis (15 Menit tidak aktif). Anda dikeluarkan demi keamanan.");
+                setTimeout(() => {
+                    localStorage.removeItem('usernameAsli');
+                    window.location.replace('index.html');
+                }, 2500);
+            }, 15 * 60 * 1000); 
+        }
+        document.onmousemove = resetTimerLogout; document.onkeypress = resetTimerLogout; document.ontouchstart = resetTimerLogout;
+
+        window.onload = function() {
+            resetTimerLogout();
+            verifikasiOtorisasiServer();
+        };
 
         const kodeStandar = [
             { Kode_Uang: "101", Nama_Pos: "SPP / Syahriyah Bulanan", Jenis: "Pemasukan", Nominal_Default: 0 },
@@ -285,30 +344,7 @@
             return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
         }
 
-        // --- TEMUAN #4: FUNGSI TOAST ---
-        function showToast(msg) {
-            let toast = document.getElementById("toast"); 
-            document.getElementById("toastMsg").innerText = msg;
-            toast.className = "show"; 
-            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
-        }
-
-        // --- TEMUAN #3: KEAMANAN AUTO-LOGOUT 15 MENIT ---
-        let waktuLogout;
-        function resetTimerLogout() {
-            clearTimeout(waktuLogout);
-            waktuLogout = setTimeout(() => {
-                vibrateHeavy();
-                showToast("Sesi habis (15 Menit tidak aktif). Anda dikeluarkan demi keamanan.");
-                setTimeout(() => {
-                    localStorage.removeItem('usernameAsli');
-                    window.location.replace('index.html');
-                }, 2500);
-            }, 15 * 60 * 1000); 
-        }
-        document.onmousemove = resetTimerLogout; document.onkeypress = resetTimerLogout; document.ontouchstart = resetTimerLogout;
-
-        // --- 2. FUNGSI AUDIT TRAIL (CCTV DIGITAL) ---
+        // --- FUNGSI AUDIT TRAIL (CCTV DIGITAL) ---
         async function catatAuditTrail(aksi, detail) {
             try {
                 await database.ref('audit_trail').push({
@@ -316,17 +352,15 @@
                     Eksekutor: localStorage.getItem('namaPengguna') || 'Unknown',
                     Role: localStorage.getItem('hakAkses') || 'Unknown',
                     Menu: 'Pos Keuangan',
-                    Aksi: aksi,
-                    Detail: detail
+                    Aksi: aksi, Detail: detail
                 });
-            } catch(e) { console.error("Gagal catat audit", e); }
+            } catch(e) {}
         }
 
-        window.onload = function() {
-            resetTimerLogout(); // Inisiasi Auto-Logout
+        function initMasterData() {
             if(hakAksesLokal === 'Demo') { document.getElementById('btnTambahPos').style.display = 'none'; }
             muatDataKodeRealtime();
-        };
+        }
 
         function muatDataKodeRealtime() {
             let tabelBody = document.getElementById('tabel-body');
@@ -378,17 +412,20 @@
                     }
 
                     let isStandard = (kodeInt >= 101 && kodeInt <= 503);
-                    let escapedNama = String(row.Nama_Pos || "").replace(/'/g, "\\'").replace(/"/g, '&quot;');
                     
-                    let btnHapus = !isStandard ? `<button class="btn-table btn-delete-row" title="Hapus Pos" onclick="hapusPos('${row.Kode_Uang}', '${escapedNama}')"><i class="fa-solid fa-trash-can"></i></button>` : '';
-                    let btnEdit = `<button class="btn-table btn-edit-row" title="Edit Pos" onclick="bukaModal('edit', '${row.Kode_Uang}', '${escapedNama}', '${row.Jenis}', '${row.Nominal_Default}', '${row.Status}', ${isStandard})"><i class="fa-solid fa-pen"></i></button>`;
+                    // PENERAPAN XSS SANITIZER PADA NAMA POS
+                    let safeNamaPos = escapeHTML(row.Nama_Pos || "");
+                    let escapedNamaUntukFungsi = safeNamaPos.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    
+                    let btnHapus = !isStandard ? `<button class="btn-table btn-delete-row" title="Hapus Pos" onclick="hapusPos('${row.Kode_Uang}', '${escapedNamaUntukFungsi}')"><i class="fa-solid fa-trash-can"></i></button>` : '';
+                    let btnEdit = `<button class="btn-table btn-edit-row" title="Edit Pos" onclick="bukaModal('edit', '${row.Kode_Uang}', '${escapedNamaUntukFungsi}', '${row.Jenis}', '${row.Nominal_Default}', '${row.Status}', ${isStandard})"><i class="fa-solid fa-pen"></i></button>`;
 
                     let rowClass = "baris-data" + (row.Status === 'Nonaktif' ? " row-nonaktif" : "");
                     let tr = document.createElement('tr');
                     tr.className = rowClass;
                     tr.innerHTML = `
                         <td><strong>${row.Kode_Uang}</strong></td>
-                        <td style="font-weight:600;"><span class="nama-pos-teks">${row.Nama_Pos}</span> ${row.Status === 'Nonaktif' ? '<span class="badge-status" style="color:#ef4444;">Nonaktif</span>' : ''}</td>
+                        <td style="font-weight:600;"><span class="nama-pos-teks">${safeNamaPos}</span> ${row.Status === 'Nonaktif' ? '<span class="badge-status" style="color:#ef4444;">Nonaktif</span>' : ''}</td>
                         <td><span class="badge ${badgeClass}">${icon} ${row.Jenis}</span></td>
                         <td style="font-family:monospace; font-weight:600;">${formatRupiah(row.Nominal_Default)}</td>
                         <td><div class="action-cell">${btnEdit}${btnHapus}</div></td>
@@ -398,7 +435,7 @@
             });
         }
 
-        // --- 3. PENDETEKSI INTEGRITAS DATA PADA PENGHAPUSAN ---
+        // --- PENDETEKSI INTEGRITAS DATA PADA PENGHAPUSAN ---
         async function hapusPos(kode, nama) {
             vibrateHeavy();
             if(!confirm(`⚠️ PERINGATAN! ⚠️\n\nAnda akan menghapus Pos Keuangan: [${kode}] ${nama}.\n\nSistem akan mendeteksi apakah pos ini sedang digunakan atau tidak.\nLanjutkan?`)) return;
@@ -452,7 +489,7 @@
                 btn.innerHTML = '<i class="fa-solid fa-check-double"></i> Simpan Perubahan';
                 inputKode.value = parseInt(kode);
                 inputKode.classList.add('readonly-locked'); inputKode.readOnly = true; 
-                document.getElementById('nama_pos').value = nama;
+                document.getElementById('nama_pos').value = escapeHTML(nama);
                 document.getElementById('nominal').value = nom == 0 ? '' : nom;
                 document.getElementById('status_pos').value = status;
                 inputJenis.value = jenis;
@@ -505,8 +542,10 @@
                 }
                 
                 let isStandard = document.getElementById('isStandardCode').value === 'true';
+                
+                // Mencegah XSS langsung dari input (menangkal serangan via database push)
                 let dataSimpan = {
-                    Nama_Pos: document.getElementById('nama_pos').value.trim(),
+                    Nama_Pos: escapeHTML(document.getElementById('nama_pos').value.trim()),
                     Nominal_Default: document.getElementById('nominal').value || 0,
                     Status: document.getElementById('status_pos').value
                 };
@@ -522,7 +561,7 @@
                 vibrateSuccess();
                 tutupModal(); 
             } catch (err) {
-                showToast('Gagal menyimpan.');
+                showToast('Gagal menyimpan. Periksa koneksi/izin database.');
                 vibrateHeavy();
             }
             btnSimpan.innerHTML = txtAsli; btnSimpan.disabled = false;
