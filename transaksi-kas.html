@@ -17,17 +17,13 @@
     <script src="firebase-config.js"></script>
 
     <script>
-        // --- TEMUAN #1: PENGAMANAN MUTLAK Cek Sesi Login di Atas ---
+        // --- 🛡️ PENGAMANAN ANTI-FLICKER & SERVER-SIDE AUTH ---
+        document.documentElement.style.display = 'none';
+
         if (!localStorage.getItem('usernameAsli')) {
             window.location.replace('index.html');
         }
-
         if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-        const role = localStorage.getItem('hakAkses');
-        if(role === 'Demo') {
-            alert("🔒 AKSES DIBATASI: Akun Demo tidak memiliki izin mengakses Transaksi Kas.");
-            window.location.replace('beranda.html');
-        }
     </script>
 
     <style>
@@ -50,7 +46,7 @@
         .app-container { max-width: 600px; margin: 0 auto; min-height: 100vh; padding: 25px 20px; animation: fadeIn 0.4s ease-out forwards;}
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* TEMUAN #4: STRUKTUR TOAST YANG AMAN DAN RAPI */
+        /* STRUKTUR TOAST YANG AMAN DAN RAPI */
         #toast { visibility: hidden; min-width: 280px; background-color: #31344b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;}
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
         @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
@@ -86,6 +82,12 @@
         .input-edit:focus { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light), 0 0 0 2px rgba(79, 172, 254, 0.3); }
         .input-readonly { background: transparent; color: var(--text-muted); pointer-events: none; box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);}
         .select-icon { position: absolute; right: 18px; top: 40px; color: var(--text-muted); font-size: 12px; pointer-events: none; }
+
+        /* ✨ FITUR BARU: TOMBOL NOMINAL CEPAT */
+        .quick-btn-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .quick-btn { background: var(--bg-main); border: none; box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light); color: var(--text-dark); border-radius: 8px; padding: 8px 10px; font-size: 10px; font-family: 'Poppins'; font-weight: 700; cursor: pointer; transition: 0.2s; flex: 1; min-width: 60px; text-align: center; }
+        .quick-btn:active { box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light); color: var(--c-blue); }
+        .quick-btn.clear { color: var(--c-red); }
 
         .btn-submit { width: 100%; padding: 16px; color: white; border: none; border-radius: 15px; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 14px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; transition: 0.3s;}
         .btn-submit.masuk { background: var(--green-grad); box-shadow: 5px 5px 15px rgba(0, 210, 106, 0.4); }
@@ -148,6 +150,13 @@
                     <div class="input-group">
                         <label>Nominal Pemasukan (Rp)</label>
                         <input type="number" class="input-edit" id="inNominal" placeholder="0" required>
+                        <div class="quick-btn-container">
+                            <button type="button" class="quick-btn" onclick="tambahNominal('inNominal', 50000)">+50 Ribu</button>
+                            <button type="button" class="quick-btn" onclick="tambahNominal('inNominal', 100000)">+100 Ribu</button>
+                            <button type="button" class="quick-btn" onclick="tambahNominal('inNominal', 500000)">+500 Ribu</button>
+                            <button type="button" class="quick-btn" onclick="tambahNominal('inNominal', 1000000)">+1 Juta</button>
+                            <button type="button" class="quick-btn clear" onclick="resetNominal('inNominal')">Reset</button>
+                        </div>
                     </div>
                     <div class="input-group">
                         <label>Diterima Dari / Sumber Dana</label>
@@ -181,6 +190,13 @@
                     <div class="input-group">
                         <label>Nominal Pengeluaran (Rp)</label>
                         <input type="number" class="input-edit" id="outNominal" placeholder="0" required oninput="validasiSaldo()">
+                        <div class="quick-btn-container">
+                            <button type="button" class="quick-btn" onclick="tambahNominal('outNominal', 50000)">+50 Ribu</button>
+                            <button type="button" class="quick-btn" onclick="tambahNominal('outNominal', 100000)">+100 Ribu</button>
+                            <button type="button" class="quick-btn" onclick="tambahNominal('outNominal', 500000)">+500 Ribu</button>
+                            <button type="button" class="quick-btn" onclick="tambahNominal('outNominal', 1000000)">+1 Juta</button>
+                            <button type="button" class="quick-btn clear" onclick="resetNominal('outNominal')">Reset</button>
+                        </div>
                         <p id="msgError" style="font-size:10px; color:var(--c-red); margin:8px 0 0 5px; display:none; font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Saldo Kas Tidak Mencukupi!</p>
                     </div>
                     <div class="input-group">
@@ -216,6 +232,9 @@
     </div>
 
     <script>
+        // --- 🧹 SARINGAN XSS (Cross-Site Scripting Sanitizer) ---
+        const escapeHTML = (str) => String(str).replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag));
+
         // --- LEVEL DEWA: ANTI-SNOOPING & HAPTIC FEEDBACK ---
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.onkeydown = function(e) {
@@ -239,7 +258,37 @@
         window.addEventListener('online', () => { showToast("Sinyal Internet Kembali Normal."); vibrateSuccess(); });
         window.addEventListener('offline', () => { showToast("Sinyal Terputus. Sebagian fitur diblokir."); vibrateHeavy(); });
 
-        // --- TEMUAN #3: KEAMANAN AUTO-LOGOUT 15 MENIT ---
+        // --- 🛡️ OTORISASI SERVER-SIDE (Menggantikan LocalStorage Lemah) ---
+        async function verifikasiOtorisasiServer() {
+            if (!navigator.onLine) {
+                document.documentElement.style.display = 'block';
+                return;
+            }
+            let myUid = localStorage.getItem('usernameAsli');
+            if(!myUid) return window.location.replace('index.html');
+
+            try {
+                let snap = await database.ref('users/' + myUid).once('value');
+                if (!snap.exists()) throw new Error("Akun tidak ditemukan");
+                
+                let dataAkun = snap.val();
+                if (String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif' || 
+                   (dataAkun.forceLogout && dataAkun.forceLogout > (Date.now() - 30000))) {
+                    localStorage.clear(); window.location.replace('index.html'); return;
+                }
+
+                if (dataAkun.Role === 'Demo') {
+                    alert("🔒 AKSES DIBATASI: Akun Demo tidak memiliki izin mengakses Transaksi Kas.");
+                    window.location.replace('beranda.html');
+                    return;
+                }
+
+                document.documentElement.style.display = 'block';
+                initTransaksiData(); 
+            } catch(e) { window.location.replace('beranda.html'); }
+        }
+
+        // --- KEAMANAN AUTO-LOGOUT 15 MENIT ---
         let waktuLogout;
         function resetTimerLogout() {
             clearTimeout(waktuLogout);
@@ -255,16 +304,16 @@
         document.onmousemove = resetTimerLogout; document.onkeypress = resetTimerLogout; document.ontouchstart = resetTimerLogout;
 
         let saldoTersedia = 0; 
-        let globalHistMasuk = []; // Variabel untuk misahkan riwayat
-        let globalHistKeluar = []; // Variabel untuk misahkan riwayat
-        let tabAktif = 'masuk'; // Status tab saat ini
+        let globalHistMasuk = []; 
+        let globalHistKeluar = []; 
+        let tabAktif = 'masuk'; 
 
         function formatRupiah(n) { return 'Rp ' + parseInt(n || 0).toLocaleString('id-ID'); }
 
         // FUNGSI PINDAH TAB & RIWAYAT OTOMATIS BERUBAH
         function switchTab(jenis, el) {
             vibrateClick();
-            tabAktif = jenis; // Update status tab
+            tabAktif = jenis; 
             
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'masuk', 'keluar'));
             document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
@@ -272,7 +321,23 @@
             el.classList.add('active', jenis);
             document.getElementById('sec-' + jenis).classList.add('active');
             
-            renderRiwayatTerpisah(); // Panggil fungsi perbarui riwayat
+            renderRiwayatTerpisah(); 
+        }
+
+        // ✨ FUNGSI TOMBOL NOMINAL CEPAT
+        function tambahNominal(idInput, nilai) {
+            vibrateClick();
+            let el = document.getElementById(idInput);
+            let currentVal = parseInt(el.value) || 0;
+            el.value = currentVal + nilai;
+            if (idInput === 'outNominal') validasiSaldo();
+        }
+
+        function resetNominal(idInput) {
+            vibrateClick();
+            let el = document.getElementById(idInput);
+            el.value = '';
+            if (idInput === 'outNominal') validasiSaldo();
         }
 
         // --- SISTEM AUDIT TRAIL (CCTV DIGITAL) ---
@@ -286,12 +351,15 @@
                     Aksi: aksi,
                     Detail: detail
                 });
-            } catch(e) { console.error("Gagal catat audit", e); }
+            } catch(e) {}
         }
 
         window.onload = function() {
-            resetTimerLogout(); // Inisiasi Auto-Logout
-            
+            resetTimerLogout();
+            verifikasiOtorisasiServer();
+        };
+
+        function initTransaksiData() {
             let namaAdmin = localStorage.getItem('namaPengguna') || 'Admin Keuangan';
             document.getElementById('inKasir').value = namaAdmin;
             document.getElementById('outKasir').value = namaAdmin;
@@ -316,11 +384,10 @@
                     let jenisPos = String(k.Jenis || '').toLowerCase();
                     
                     if(statusPos !== 'nonaktif') {
-                        // Deteksi berdasarkan Jenis ATAU Awalan Kode (1 & 2 Masuk, 3-5 Keluar)
                         if(jenisPos.includes('masuk') || jenisPos.includes('pemasukan') || key.startsWith('1') || key.startsWith('2')) {
-                            optMasuk += `<option value="${key}">${key} - ${k.Nama_Pos}</option>`;
+                            optMasuk += `<option value="${escapeHTML(key)}">${escapeHTML(key)} - ${escapeHTML(k.Nama_Pos)}</option>`;
                         } else if(jenisPos.includes('keluar') || jenisPos.includes('pengeluaran') || key.startsWith('3') || key.startsWith('4') || key.startsWith('5')) {
-                            optKeluar += `<option value="${key}">${key} - ${k.Nama_Pos}</option>`;
+                            optKeluar += `<option value="${escapeHTML(key)}">${escapeHTML(key)} - ${escapeHTML(k.Nama_Pos)}</option>`;
                         }
                     }
                 });
@@ -332,40 +399,38 @@
             // SINKRONISASI SALDO & RIWAYAT TERPADU
             database.ref('buku_kas').on('value', snap => {
                 let totalMasuk = 0; let totalKeluar = 0;
-                globalHistMasuk = []; globalHistKeluar = []; // Kosongkan wadah
+                globalHistMasuk = []; globalHistKeluar = [];
 
                 snap.forEach(c => {
                     let d = c.val();
                     let nom = parseInt(d.Nominal || 0);
                     if(d.Jenis === 'MASUK') { 
                         totalMasuk += nom; 
-                        globalHistMasuk.push(d); // Pisahkan data masuk
+                        globalHistMasuk.push(d); 
                     } 
                     else if(d.Jenis === 'KELUAR') { 
                         totalKeluar += nom; 
-                        globalHistKeluar.push(d); // Pisahkan data keluar
+                        globalHistKeluar.push(d); 
                     }
                 });
 
                 saldoTersedia = totalMasuk - totalKeluar;
                 document.getElementById('txtSaldoMutlak').innerText = formatRupiah(saldoTersedia);
 
-                // Urutkan kedua wadah dari yang terbaru
                 let sortFn = (a,b) => new Date(b.Waktu.split(',')[0].split('/').reverse().join('-')) - new Date(a.Waktu.split(',')[0].split('/').reverse().join('-')) || b.ID_Transaksi.localeCompare(a.ID_Transaksi);
                 globalHistMasuk.sort(sortFn);
                 globalHistKeluar.sort(sortFn);
 
-                renderRiwayatTerpisah(); // Render ulang riwayat saat data dari Firebase masuk
+                renderRiwayatTerpisah(); 
             });
-        };
+        }
 
-        // FUNGSI CETAK RIWAYAT YANG FOKUS PADA TAB AKTIF
+        // FUNGSI CETAK RIWAYAT YANG FOKUS PADA TAB AKTIF (DENGAN XSS FILTER)
         function renderRiwayatTerpisah() {
             let html = '';
             let dataTarget = tabAktif === 'masuk' ? globalHistMasuk : globalHistKeluar;
             let pesanKosong = tabAktif === 'masuk' ? 'Belum ada riwayat Kas Masuk.' : 'Belum ada riwayat Kas Keluar.';
 
-            // Tampilkan maksimal 15 transaksi sesuai tab yang aktif
             dataTarget.slice(0, 15).forEach(d => {
                 let isMasuk = d.Jenis === 'MASUK';
                 let borderCls = isMasuk ? 'border-in' : 'border-out';
@@ -373,9 +438,13 @@
                 let sign = isMasuk ? '+' : '-';
                 let subName = isMasuk ? (d.Sumber || 'Pemasukan') : (d.Penerima || 'Pengeluaran');
 
+                // PENERAPAN XSS FILTER
+                let safeSubName = escapeHTML(subName);
+                let safeKategori = escapeHTML(d.Kategori_Nama);
+
                 html += `
                 <div class="history-item ${borderCls}">
-                    <div><h4>${subName}</h4><p>${d.Kategori_Nama} • ${d.Waktu.split(' ')[0]}</p></div>
+                    <div><h4>${safeSubName}</h4><p>${safeKategori} • ${d.Waktu.split(' ')[0]}</p></div>
                     <div class="h-price ${priceCls}">${sign} ${formatRupiah(d.Nominal)}</div>
                 </div>`;
             });
@@ -407,7 +476,6 @@
             const btn = document.getElementById('btnSimpanMasuk');
             btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MEMPOSTING...';
 
-            // --- PERBAIKAN CELAH: VALIDASI WAKTU GLOBAL (DEFISIT GAIB) ---
             let ta_global = localStorage.getItem('globalTahunAjaran');
             let bln_global = localStorage.getItem('globalBulanAktif');
 
@@ -423,8 +491,11 @@
                 let waktu = new Date().toLocaleString('id-ID');
                 let idTX = "KSM-" + ts;
                 let nominal = parseInt(document.getElementById('inNominal').value);
-                let sumber = document.getElementById('inSumber').value;
-                let ket = document.getElementById('inKet').value || "-";
+                
+                // XSS Filter untuk Input
+                let sumber = escapeHTML(document.getElementById('inSumber').value);
+                let ket = escapeHTML(document.getElementById('inKet').value || "-");
+                
                 let admin = document.getElementById('inKasir').value;
                 let sel = document.getElementById('inKode');
                 let katNama = sel.options[sel.selectedIndex].text.split(' - ')[1];
@@ -464,7 +535,6 @@
             const btn = document.getElementById('btnSimpanKeluar');
             btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MEMPOSTING...';
 
-            // --- PERBAIKAN CELAH: VALIDASI WAKTU GLOBAL (DEFISIT GAIB) ---
             let ta_global = localStorage.getItem('globalTahunAjaran');
             let bln_global = localStorage.getItem('globalBulanAktif');
 
@@ -480,8 +550,11 @@
                 let waktu = new Date().toLocaleString('id-ID');
                 let idTX = "KSK-" + ts;
                 let nominal = parseInt(document.getElementById('outNominal').value);
-                let penerima = document.getElementById('outPenerima').value;
-                let ket = document.getElementById('outKet').value || "-";
+                
+                // XSS Filter untuk Input
+                let penerima = escapeHTML(document.getElementById('outPenerima').value);
+                let ket = escapeHTML(document.getElementById('outKet').value || "-");
+                
                 let admin = document.getElementById('outKasir').value;
                 let sel = document.getElementById('outKode');
                 let katNama = sel.options[sel.selectedIndex].text.split(' - ')[1];
