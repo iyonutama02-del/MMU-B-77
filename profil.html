@@ -22,7 +22,9 @@
     <script src="firebase-config.js"></script>
 
     <script>
-        // --- TEMUAN #1: PENGAMANAN MUTLAK CEK SESI LOGIN ---
+        // --- 🛡️ PENGAMANAN ANTI-FLICKER & AUTH SERVER-SIDE ---
+        document.documentElement.style.display = 'none';
+        
         if (!localStorage.getItem('usernameAsli')) {
             window.location.replace('index.html');
         }
@@ -207,6 +209,20 @@
             </div>
             
             <button class="btn-edit-profil" onclick="bukaModalEdit()"><i class="fa-solid fa-user-pen"></i> EDIT IDENTITAS</button>
+        </div>
+
+        <div class="menu-section">
+            <div class="section-title" style="color: #ef4444;"><i class="fa-solid fa-shield-halved"></i> Kontrol Sesi Keamanan</div>
+            <div class="menu-item" onclick="logoutPerangkatLain()">
+                <div class="menu-info">
+                    <div class="menu-icon" style="color: #ef4444;"><i class="fa-solid fa-mobile-screen"></i></div>
+                    <div class="menu-text">
+                        <h4>Logout Paksa Perangkat Lain</h4>
+                        <p>Keluarkan akun ini dari HP/Laptop lain</p>
+                    </div>
+                </div>
+                <div class="menu-action"><i class="fa-solid fa-angle-right"></i></div>
+            </div>
         </div>
 
         <div class="menu-section">
@@ -417,6 +433,9 @@
     </div>
 
     <script>
+        // --- 🧹 SARINGAN XSS (Cross-Site Scripting Sanitizer) ---
+        const escapeHTML = (str) => String(str).replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag));
+
         // --- 0. PENGAMANAN DASAR ANTARMUKA (Anti-Snooping) ---
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.onkeydown = function(e) {
@@ -441,7 +460,7 @@
             });
         });
 
-        // DETEKSI PERANGKAT CANGGIH
+        // DETEKSI PERANGKAT
         function deteksiPerangkat() {
             let userAgent = navigator.userAgent;
             let device = "PC / Desktop";
@@ -458,7 +477,7 @@
         document.getElementById('txtDevice').innerText = deteksiPerangkat();
 
         let userAsliFirebase = localStorage.getItem('usernameAsli'); 
-        let namaPribadi = ""; // Untuk Mini Dashboard
+        let namaPribadi = ""; 
         
         function setIndicatorPosition() {
             const activeItem = document.querySelector('.nav-item.active');
@@ -481,7 +500,6 @@
             setTimeout(() => { window.location.href = url; }, 300);
         }
 
-        // --- TEMUAN #4: BUG FIX TOAST AMAN ---
         function showToast(msg) {
             let toast = document.getElementById("toast"); 
             document.getElementById("toastMsg").innerText = msg;
@@ -495,7 +513,7 @@
             window.history.pushState({ modalOpen: true }, "", window.location.href);
         }
 
-        // --- TEMUAN #3: KEAMANAN AUTO-LOGOUT 15 MENIT ---
+        // --- KEAMANAN AUTO-LOGOUT 15 MENIT ---
         let waktuLogout;
         function resetTimerLogout() {
             clearTimeout(waktuLogout);
@@ -541,7 +559,6 @@
             if(localStorage.getItem('themePref') === 'auto_sys') terapkanTemaUI();
         });
 
-        // --- BIOMETRIK FAKE/LOCAL SAVE ---
         function bukaModalBiometrik() { bukaModalDenganHistory('modalBiometrik'); }
         function toggleBiometrik(tipe) {
             vibrateClick();
@@ -555,10 +572,15 @@
             }
         }
 
-        // --- 1. FIREBASE REAL-TIME SYNC UTAMA ---
+        // --- 🛡️ FIREBASE REAL-TIME SYNC & SERVER AUTH ---
         window.onload = function() {
             resetTimerLogout();
             setIndicatorPosition();
+            
+            if (!navigator.onLine) {
+                document.documentElement.style.display = 'block';
+                return;
+            }
             if(!userAsliFirebase) { window.location.href = 'index.html'; return; }
 
             document.getElementById('pilihanTema').value = localStorage.getItem('themePref') || 'light';
@@ -567,17 +589,25 @@
             if(localStorage.getItem('useFingerprint') === 'true') document.getElementById('toggleFingerprint').checked = true;
 
             let lastLogin = localStorage.getItem('lastLoginTime');
-            if(lastLogin) { document.getElementById('txtLastLogin').innerText = lastLogin; } 
+            if(lastLogin) { document.getElementById('txtLastLogin').innerText = escapeHTML(lastLogin); } 
 
-            document.getElementById('txtUsername').innerText = '@' + userAsliFirebase;
+            document.getElementById('txtUsername').innerText = '@' + escapeHTML(userAsliFirebase);
 
             database.ref('users/' + userAsliFirebase).on('value', snapshot => {
                 if (!snapshot.exists()) { keluarSistemPaksa("AKUN TERHAPUS: Data Anda tidak ditemukan di server."); return; }
 
                 let data = snapshot.val();
+                
+                // MULTI-DEVICE LOGOUT CHECK
+                if(data.forceLogout && data.forceLogout > (Date.now() - 60000)) {
+                    keluarSistemPaksa("Sesi Anda telah diakhiri dari perangkat lain."); return;
+                }
+                
                 if(String(data.Status || data.status).toLowerCase() === 'nonaktif') {
                     keluarSistemPaksa("AKUN DIBEKUKAN: Hubungi Administrator Madrasah."); return;
                 }
+
+                document.documentElement.style.display = 'block'; // Lulus Auth Server
 
                 let roleSaatIni = data.Role || data.role || 'Operator';
                 if(localStorage.getItem('hakAkses') !== roleSaatIni) {
@@ -585,16 +615,17 @@
                     showToast("Hak Akses Anda baru saja diperbarui oleh Administrator Server!"); vibrateHeavy();
                 }
 
-                let namaAsliDb = data.NamaLengkap || data.Nama_Lengkap || data.nama_lengkap || 'Pengguna Tanpa Nama';
-                namaPribadi = namaAsliDb; // Set Global untuk Mini Dashboard
+                // XSS Sanitizer pada Data Profil
+                let namaAsliDb = escapeHTML(data.NamaLengkap || data.Nama_Lengkap || data.nama_lengkap || 'Pengguna Tanpa Nama');
+                namaPribadi = namaAsliDb; 
                 document.getElementById('namaTampil').innerText = namaAsliDb.toUpperCase();
-                document.getElementById('txtWA').innerText = data.NomorWA || data.nomor_wa || 'Belum diatur';
+                document.getElementById('txtWA').innerText = escapeHTML(data.NomorWA || data.nomor_wa || 'Belum diatur');
                 
-                let jabatan = localStorage.getItem('jabatanPengguna_' + userAsliFirebase) || '-';
+                let jabatan = escapeHTML(localStorage.getItem('jabatanPengguna_' + userAsliFirebase) || '-');
                 document.getElementById('jabatanTampil').innerText = jabatan;
 
                 // LOGIKA AVATAR DINAMIS
-                let cloudFoto = data.FotoProfil;
+                let cloudFoto = data.FotoProfil; // Base64 aman
                 let imgEl = document.getElementById('imgProfil');
                 let initialEl = document.getElementById('initialAvatar');
                 let ikonEl = document.getElementById('ikonDefault');
@@ -610,14 +641,14 @@
 
                 let roleLower = roleSaatIni.toLowerCase();
                 let badgeEl = document.getElementById('txtStatusRole');
-                badgeEl.innerText = roleSaatIni.toUpperCase();
+                badgeEl.innerText = escapeHTML(roleSaatIni.toUpperCase());
+                
                 if(roleLower === 'developer') badgeEl.style.color = 'var(--role-dev)';
                 else if(roleLower === 'administrator') badgeEl.style.color = 'var(--role-admin)';
                 else if(roleLower === 'supervisor') badgeEl.style.color = 'var(--role-supervisor)';
                 else if(roleLower === 'demo') badgeEl.style.color = 'var(--role-demo)';
                 else badgeEl.style.color = 'var(--role-operator)';
 
-                // Panggil Kalkulasi Mini Dashboard
                 muatStatistikPribadi();
             });
         };
@@ -628,12 +659,28 @@
             window.location.href = 'index.html'; 
         }
 
+        // --- ✨ FITUR BARU: MULTI-DEVICE LOGOUT ---
+        async function logoutPerangkatLain() {
+            vibrateHeavy();
+            if(!navigator.onLine) { showToast("Anda harus terhubung ke internet."); return; }
+            if(!confirm("Yakin ingin mengeluarkan akun Anda dari semua HP dan Komputer lain? (Anda harus login ulang di perangkat ini juga)")) return;
+            
+            try {
+                // Menambahkan flag forceLogout dengan timestamp saat ini
+                await database.ref('users/' + userAsliFirebase).update({
+                    forceLogout: firebase.database.ServerValue.TIMESTAMP
+                });
+                showToast("Berhasil! Semua perangkat lain akan segera keluar otomatis.");
+                setTimeout(() => { keluarSistemManual(); }, 2000);
+            } catch(e) { showToast("Gagal mengirim perintah ke server."); }
+        }
+
         // --- MINI DASHBOARD LOGIC (STATISTIK KASIR) ---
         function muatStatistikPribadi() {
             if(!namaPribadi) return;
             
             let globalBulan = localStorage.getItem('globalBulanAktif') || "Belum Disetel";
-            let tglHariIni = new Date().toLocaleDateString('id-ID'); // Format DD/MM/YYYY
+            let tglHariIni = new Date().toLocaleDateString('id-ID');
 
             database.ref('buku_kas').once('value').then(snap => {
                 let txHariIni = 0;
@@ -643,12 +690,10 @@
                     let d = c.val();
                     let petugas = d.Admin_Penerima || d.Kasir || d.Admin_Input || '';
                     
-                    // Filter: Hanya transaksi yang dilakukan oleh User ini
                     if(petugas === namaPribadi) {
-                        let tglTx = d.Waktu.split(', ')[0];
+                        let tglTx = (d.Waktu||'').split(', ')[0];
                         if(tglTx === tglHariIni) { txHariIni++; }
 
-                        // Hitung Pemasukan (SPP/KSM) di Bulan Aktif
                         if(d.Bulan_Hijriyah === globalBulan && d.Jenis === 'MASUK') {
                             totalUangBulanIni += parseInt(d.Nominal || 0);
                         }
@@ -697,9 +742,10 @@
             vibrateClick();
             if (!navigator.onLine) { showToast("Sinyal Terputus!"); vibrateHeavy(); return; }
 
-            let namaBaru = document.getElementById('inputEditNama').value.trim();
-            let jabatanBaru = document.getElementById('inputEditJabatan').value.trim() || '-';
-            let waBaru = document.getElementById('inputEditWA').value.trim();
+            // Sanitasi Input sebelum masuk DB
+            let namaBaru = escapeHTML(document.getElementById('inputEditNama').value.trim());
+            let jabatanBaru = escapeHTML(document.getElementById('inputEditJabatan').value.trim() || '-');
+            let waBaru = escapeHTML(document.getElementById('inputEditWA').value.trim());
             
             if(!namaBaru || !waBaru) { showToast("Sistem menolak: Nama dan No. WA tidak boleh kosong!"); vibrateHeavy(); return; }
 
@@ -717,7 +763,7 @@
             btn.innerHTML = "Simpan Profil"; btn.disabled = false;
         }
 
-        // --- 4. UBAH PASSWORD DENGAN ENKRIPSI (LEVEL DEWA) ---
+        // --- 4. 🛡️ UBAH PASSWORD DENGAN VALIDASI SERVER ---
         function bukaModalSandi() { 
             document.getElementById('inputSandiLama').value = ''; document.getElementById('inputSandiBaru').value = ''; document.getElementById('inputSandiKonfirm').value = '';
             bukaModalDenganHistory('modalUbahSandi'); 
@@ -739,6 +785,7 @@
             btn.innerHTML = "Verifikasi Server..."; btn.disabled = true;
 
             try {
+                // Cek langsung dari Firebase untuk mencegah bypass LocalStorage
                 let snapshot = await database.ref('users/' + userAsliFirebase).once('value');
                 let data = snapshot.val();
                 let dbPass = String(data.Password || data.password);
