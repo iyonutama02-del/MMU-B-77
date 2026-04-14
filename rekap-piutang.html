@@ -18,22 +18,14 @@
     <script src="firebase-config.js"></script>
 
     <script>
-        // --- TEMUAN #1: PENGAMANAN MUTLAK Cek Sesi Login di Atas ---
-        if (!localStorage.getItem('usernameAsli')) {
-            window.location.replace('index.html');
-        }
+        // --- 🛡️ PENGAMANAN ANTI-FLICKER & AUTH SERVER-SIDE ---
+        document.documentElement.style.display = 'none';
 
+        if (!localStorage.getItem('usernameAsli')) { window.location.replace('index.html'); }
         if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-        
-        // PENGAMANAN AKSES DEMO
-        if(localStorage.getItem('hakAkses') === 'Demo') {
-            alert("🔒 AKSES DIBATASI: Akun Demo dilarang mengakses data piutang.");
-            window.location.replace('beranda.html');
-        }
     </script>
 
     <style>
-        /* --- TEMA SOFT UI (NEUMORPHISM) ASLI --- */
         :root {
             --bg-main: #f0f4f8; --text-dark: #2d3748; --text-muted: #718096;
             --shadow-light: #ffffff; --shadow-dark: #d1d9e6;
@@ -47,21 +39,18 @@
 
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
         body { margin: 0; padding: 0; background-color: var(--bg-main); font-family: 'Poppins', sans-serif; color: var(--text-dark); transition: 0.3s; padding-bottom: 50px; }
-        .app-container { max-width: 900px; margin: 0 auto; padding: 20px; animation: fadeIn 0.4s ease-out forwards; }
+        .app-container { max-width: 1000px; margin: 0 auto; padding: 20px; animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* TEMUAN #4: STRUKTUR TOAST YANG AMAN DAN RAPI */
-        #toast { visibility: hidden; min-width: 250px; background-color: #31344b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; width: 85%; display: flex; align-items: center; justify-content: center; gap: 8px;}
+        #toast { visibility: hidden; min-width: 250px; background-color: #31344b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 12px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-weight: 600; width: 85%; max-width:400px; display: flex; align-items: center; justify-content: center; gap: 8px;}
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
         @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
         @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
 
-        /* HEADER */
         .nav-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
         .btn-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--bg-main); display: flex; justify-content: center; align-items: center; color: var(--text-dark); box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light); cursor: pointer; border: none; transition: 0.2s;}
         .btn-icon:active { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); }
 
-        /* SUMMARY & TABS */
         .summary-card { background: var(--grad-wa); border-radius: 20px; padding: 25px; color: white; margin-bottom: 20px; box-shadow: 6px 6px 15px rgba(37, 211, 102, 0.3); display: flex; justify-content: space-between; align-items: center; }
         .sum-text p { margin: 0 0 5px 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;}
         .sum-text h2 { margin: 0; font-family: 'Montserrat'; font-weight: 900; font-size: 26px; }
@@ -75,23 +64,33 @@
         .form-section { display: none; animation: fadeIn 0.4s ease; }
         .form-section.active { display: block; }
 
-        /* TABEL PIUTANG */
         .panel-card { background: var(--bg-main); border-radius: 20px; padding: 20px; box-shadow: 6px 6px 15px var(--shadow-dark), -6px -6px 15px var(--shadow-light); margin-bottom: 20px; }
-        .input-group { position: relative; margin-bottom: 15px; }
-        .input-edit { width: 100%; padding: 12px 15px; border: none; border-radius: 12px; background: var(--bg-main); font-family: 'Poppins'; font-size: 12px; box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); outline: none; transition: 0.3s; appearance: none;}
+        
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .input-group { position: relative; }
+        .input-group label { display: block; font-size: 10px; font-weight: 700; color: var(--text-muted); margin-bottom: 5px; margin-left: 5px; text-transform: uppercase;}
+        .input-edit { width: 100%; padding: 12px 15px; border: none; border-radius: 12px; background: var(--bg-main); font-family: 'Poppins'; font-size: 12px; font-weight: 600; color: var(--text-dark); box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); outline: none; transition: 0.3s; appearance: none;}
         .input-edit:focus { box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light), 0 0 0 2px rgba(37, 211, 102, 0.3); }
+        .select-icon { position: absolute; right: 15px; top: 32px; color: var(--text-muted); font-size: 10px; pointer-events: none; }
 
         .table-wrapper { overflow-x: auto; border-radius: 15px; max-height: 60vh; }
         table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 12px; text-align: left; }
-        th { color: var(--text-muted); font-weight: 700; padding: 15px; font-family: 'Montserrat'; text-transform: uppercase; font-size: 11px; position: sticky; top: 0; background-color: var(--bg-main); z-index: 10; border-bottom: 2px solid rgba(0,0,0,0.05);}
-        td { padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.03); color: var(--text-dark); vertical-align: middle; }
+        th { color: var(--text-muted); font-weight: 700; padding: 15px; font-family: 'Montserrat'; text-transform: uppercase; font-size: 10px; position: sticky; top: 0; background-color: var(--bg-main); z-index: 10; border-bottom: 2px solid rgba(0,0,0,0.05);}
+        td { padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.03); color: var(--text-dark); vertical-align: top; }
         
-        /* PISAU BEDAH (WA INDIVIDU) */
+        .chk-santri { width: 18px; height: 18px; accent-color: var(--c-green); cursor: pointer; }
+
+        .rincian-toggle { color: var(--c-blue); font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; transition: 0.2s;}
+        .rincian-toggle:active { transform: scale(0.95); }
+        .rincian-content { display: none; margin-top: 8px; font-size: 10px; line-height: 1.6; color: var(--text-muted); background: rgba(0,0,0,0.02); padding: 8px 12px; border-radius: 8px; border-left: 3px solid var(--c-blue);}
+
+        .aksi-flex { display: flex; gap: 8px; align-items: center; justify-content: center; }
         .btn-wa-ind { background: rgba(37, 211, 102, 0.1); color: var(--c-wa); font-family: 'Poppins'; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; border: none; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; cursor: pointer; }
         .btn-wa-ind:active { background: rgba(37, 211, 102, 0.2); transform: scale(0.95); }
         .btn-wa-ind.disabled { background: rgba(113, 128, 150, 0.1); color: var(--text-muted); cursor: not-allowed; }
+        .btn-pay { background: rgba(59, 130, 246, 0.1); color: var(--c-blue); font-family: 'Poppins'; font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 8px; border: none; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; cursor: pointer; }
+        .btn-pay:active { background: rgba(59, 130, 246, 0.2); transform: scale(0.95); }
 
-        /* EDITOR TEMPLATE WA */
         .editor-box { display: flex; flex-direction: column; gap: 15px; }
         @media (min-width: 768px) { .editor-box { flex-direction: row; } }
         .editor-area { flex: 1; display: flex; flex-direction: column; gap: 10px; }
@@ -103,14 +102,14 @@
         .btn-var { background: var(--bg-main); border: 1px solid var(--shadow-dark); color: var(--text-dark); font-size: 10px; font-family: 'Poppins'; font-weight: 600; padding: 5px 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
         .btn-var:active { background: var(--shadow-dark); }
 
-        /* BOM NUKLIR (WA MASSAL) */
         .btn-nuklir { width: 100%; padding: 18px; background: var(--grad-wa); color: white; border: none; border-radius: 15px; font-family: 'Montserrat'; font-weight: 900; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 6px 6px 15px rgba(37, 211, 102, 0.4); transition: 0.2s; margin-top: 20px;}
         .btn-nuklir:active { transform: translateY(3px); box-shadow: inset 3px 3px 8px rgba(0,0,0,0.2); }
-
-        .btn-excel { background: var(--bg-main); color: var(--c-green); padding: 10px 15px; border-radius: 10px; font-size: 12px; font-weight: 700; font-family: 'Poppins'; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light); }
+        .btn-excel { background: var(--bg-main); color: var(--c-green); padding: 12px 15px; border-radius: 12px; font-size: 12px; font-weight: 700; font-family: 'Poppins'; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light); height: 100%; width: 100%;}
         .btn-excel:active { box-shadow: inset 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light); }
         
         .empty-state { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; font-weight: 600; }
+        .status-badge { font-size: 9px; padding: 3px 6px; border-radius: 6px; background: rgba(0,0,0,0.05); color: var(--text-muted); font-weight: 700;}
+        .status-badge.sent { background: rgba(37, 211, 102, 0.1); color: var(--c-green); }
     </style>
 </head>
 <body>
@@ -138,13 +137,59 @@
         </div>
 
         <div class="form-section active" id="sec-rekap">
-            <div class="panel-card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; padding:15px 20px;">
-                <div class="input-group" style="margin:0; flex:1; min-width:150px;">
-                    <select class="input-edit" id="filterKelas" onchange="renderTabelTagihan()" style="cursor: pointer;">
-                        <option value="SEMUA">Semua Kelas</option>
-                    </select>
+            <div class="panel-card">
+                <div class="filter-grid">
+                    <div class="input-group" style="grid-column: span 2;">
+                        <label>Cari Nama Santri</label>
+                        <input type="text" class="input-edit" id="fCari" placeholder="Ketik nama..." onkeyup="renderTabelTagihan()">
+                    </div>
+                    <div class="input-group">
+                        <label>Filter Kelas</label>
+                        <select class="input-edit" id="fKelas" onchange="renderTabelTagihan()">
+                            <option value="SEMUA">Semua Kelas</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down select-icon"></i>
+                    </div>
+                    <div class="input-group">
+                        <label>Filter Status</label>
+                        <select class="input-edit" id="fStatus" onchange="renderTabelTagihan()" style="color:var(--c-red);">
+                            <option value="SEMUA" style="color:var(--text-dark);">Semua Tunggakan</option>
+                            <option value="EKSTREM_NOMINAL">> Rp 500.000</option>
+                            <option value="EKSTREM_WAKTU">> 3 Bulan / Item</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down select-icon"></i>
+                    </div>
+                    <div class="input-group">
+                        <label>Tahun Ajaran</label>
+                        <select class="input-edit" id="fTahun" onchange="prosesMentah()">
+                            <option value="SEMUA">Semua Tahun</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down select-icon"></i>
+                    </div>
+                    <div class="input-group">
+                        <label>Bulan Hijriyah</label>
+                        <select class="input-edit" id="fBulan" onchange="prosesMentah()">
+                            <option value="SEMUA">Semua Bulan</option>
+                            <option value="Muharram">Muharram</option>
+                            <option value="Safar">Safar</option>
+                            <option value="Rabiul Awal">Rabiul Awal</option>
+                            <option value="Rabiul Akhir">Rabiul Akhir</option>
+                            <option value="Jumadil Awal">Jumadil Awal</option>
+                            <option value="Jumadil Akhir">Jumadil Akhir</option>
+                            <option value="Rajab">Rajab</option>
+                            <option value="Sya'ban">Sya'ban</option>
+                            <option value="Ramadhan">Ramadhan</option>
+                            <option value="Syawal">Syawal</option>
+                            <option value="Dzulqa'dah">Dzulqa'dah</option>
+                            <option value="Dzulhijjah">Dzulhijjah</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down select-icon"></i>
+                    </div>
+                    <div class="input-group">
+                        <label>&nbsp;</label>
+                        <button class="btn-excel" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> Unduh Excel</button>
+                    </div>
                 </div>
-                <button class="btn-excel" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> Unduh Excel</button>
             </div>
 
             <div class="panel-card" style="padding:10px 15px;">
@@ -152,16 +197,18 @@
                     <table id="tabelTagihan">
                         <thead>
                             <tr>
+                                <th><input type="checkbox" class="chk-santri" id="chkAll" onchange="toggleAll(this)"></th>
                                 <th>No</th>
-                                <th>Nama Santri</th>
+                                <th>Santri & Wali</th>
                                 <th>Kelas</th>
                                 <th>Rincian Utang</th>
                                 <th>Total (Rp)</th>
-                                <th style="text-align:center;">Aksi</th>
+                                <th>Status Tagih</th>
+                                <th style="text-align:center;">Aksi Cepat</th>
                             </tr>
                         </thead>
                         <tbody id="tabel-body">
-                            <tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin"></i><br>Menghitung kalkulasi piutang...</div></td></tr>
+                            <tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-circle-notch fa-spin"></i><br>Menghitung kalkulasi piutang...</div></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -174,6 +221,7 @@
                 <div class="editor-box">
                     <div class="editor-area">
                         <div class="var-buttons">
+                            <button class="btn-var" onclick="sisip('[Nama_Wali]')">[Nama_Wali]</button>
                             <button class="btn-var" onclick="sisip('[Nama_Santri]')">[Nama_Santri]</button>
                             <button class="btn-var" onclick="sisip('[Kelas]')">[Kelas]</button>
                             <button class="btn-var" onclick="sisip('[Rincian_Tagihan]')">[Rincian_Tagihan]</button>
@@ -188,26 +236,25 @@
                     </div>
                 </div>
                 
-                <button class="btn-nuklir" onclick="eksekusiBomNuklir()"><i class="fa-solid fa-paper-plane"></i> KIRIM BROADCAST WA SEKARANG</button>
-                <p style="text-align:center; font-size:10px; color:var(--text-muted); margin-top:10px; font-weight:600;"><i class="fa-solid fa-circle-info"></i> Broadcast akan dikirim ke wali santri di kelas yang sedang difilter pada Tab Rekap.</p>
+                <button class="btn-nuklir" onclick="eksekusiBomNuklir()"><i class="fa-solid fa-paper-plane"></i> KIRIM BROADCAST WA KE SANTRI TERPILIH</button>
+                <p style="text-align:center; font-size:10px; color:var(--text-muted); margin-top:10px; font-weight:600;"><i class="fa-solid fa-circle-info"></i> Hanya akan terkirim kepada santri yang <b>dicentang (☑️)</b> di Tabel Rekap.</p>
             </div>
         </div>
 
     </div>
 
     <script>
+        // --- 🧹 SARINGAN XSS (Cross-Site Scripting Sanitizer) ---
+        const escapeHTML = (str) => String(str).replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag));
+
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.onkeydown = function(e) {
-            if(e.keyCode == 123) return false;
-            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
-            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
-            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+            if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) return false;
         };
 
         function vibrateClick() { if (navigator.vibrate) navigator.vibrate(30); }
         function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); }
         
-        // --- TEMUAN #4: FUNGSI TOAST YANG AMAN ---
         function showToast(msg) { 
             let toast = document.getElementById("toast"); 
             document.getElementById("toastMsg").innerText = msg;
@@ -215,32 +262,53 @@
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000); 
         }
 
-        // --- TEMUAN #3: KEAMANAN AUTO-LOGOUT 15 MENIT ---
+        // --- 🛡️ OTORISASI SERVER-SIDE (Menggantikan LocalStorage) ---
+        async function verifikasiOtorisasiServer() {
+            if (!navigator.onLine) {
+                document.documentElement.style.display = 'block';
+                return;
+            }
+            let myUid = localStorage.getItem('usernameAsli');
+            if(!myUid) return window.location.replace('index.html');
+
+            try {
+                let snap = await database.ref('users/' + myUid).once('value');
+                if (!snap.exists()) throw new Error("Akun tidak ditemukan");
+                
+                let dataAkun = snap.val();
+                if (String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif' || 
+                   (dataAkun.forceLogout && dataAkun.forceLogout > (Date.now() - 30000))) {
+                    localStorage.clear(); window.location.replace('index.html'); return;
+                }
+
+                if (dataAkun.Role === 'Demo') {
+                    alert("🔒 AKSES DIBATASI: Akun Demo dilarang mengakses data piutang.");
+                    window.location.replace('beranda.html'); return;
+                }
+
+                let hakAksesLokal = dataAkun.Role || 'Operator';
+                if(hakAksesLokal === 'Operator' || hakAksesLokal === 'Supervisor') {
+                    let tabBc = document.getElementById('tabBroadcast');
+                    if (tabBc) tabBc.style.display = 'none';
+                }
+
+                document.documentElement.style.display = 'block';
+                initRekapData(); 
+            } catch(e) { window.location.replace('beranda.html'); }
+        }
+
         let waktuLogout;
         function resetTimerLogout() {
             clearTimeout(waktuLogout);
             waktuLogout = setTimeout(() => {
-                vibrateHeavy();
-                showToast("Sesi habis (15 Menit tidak aktif). Anda dikeluarkan demi keamanan.");
-                setTimeout(() => {
-                    localStorage.removeItem('usernameAsli');
-                    window.location.replace('index.html');
-                }, 2500);
+                vibrateHeavy(); showToast("Sesi habis (15 Menit). Anda dikeluarkan demi keamanan.");
+                setTimeout(() => { localStorage.removeItem('usernameAsli'); window.location.replace('index.html'); }, 2500);
             }, 15 * 60 * 1000); 
         }
         document.onmousemove = resetTimerLogout; document.onkeypress = resetTimerLogout; document.ontouchstart = resetTimerLogout;
 
         async function catatAuditTrail(aksi, detail) {
-            try {
-                await database.ref('audit_trail').push({
-                    Waktu: new Date().toLocaleString('id-ID'),
-                    Eksekutor: localStorage.getItem('namaPengguna') || 'Unknown',
-                    Role: localStorage.getItem('hakAkses') || 'Unknown',
-                    Menu: 'Rekap Piutang & Penagihan',
-                    Aksi: aksi,
-                    Detail: detail
-                });
-            } catch(e) { console.error("Gagal catat audit", e); }
+            try { await database.ref('audit_trail').push({ Waktu: new Date().toLocaleString('id-ID'), Eksekutor: localStorage.getItem('namaPengguna') || 'Unknown', Role: localStorage.getItem('hakAkses') || 'Unknown', Menu: 'Rekap Piutang & Penagihan', Aksi: aksi, Detail: detail }); } catch(e) { }
         }
 
         function switchTab(jenis, el) {
@@ -251,119 +319,189 @@
             document.getElementById('sec-' + jenis).classList.add('active');
         }
 
-        // --- GEMBOK BOM NUKLIR (SATPAM GAIB) ---
-        const hakAksesLokal = localStorage.getItem('hakAkses');
-        if(hakAksesLokal === 'Operator' || hakAksesLokal === 'Supervisor') {
-            document.getElementById('tabBroadcast').style.display = 'none';
-        }
-
         const formatRp = (n) => 'Rp ' + parseInt(n || 0).toLocaleString('id-ID');
-        let dbSantri = {}; let rekapPiutang = [];
+        let dbSantri = {}; let dbLogPenagihan = {}; let mentahTagihan = []; let rekapPiutang = [];
 
-        // DEFAULT TEMPLATE
-        const defaultTemp = "Assalamu'alaikum Warahmatullahi Wabarakatuh,\n\nBapak/Ibu Wali dari santri:\nNama: *[Nama_Santri]*\nKelas: *[Kelas]*\n\nBersama pesan ini kami menginformasikan rincian administrasi madrasah yang belum terselesaikan:\n[Rincian_Tagihan]\n\nTotal Tagihan: *[Total_Tagihan]*\n\nMohon berkenan untuk segera menyelesaikannya melalui loket kasir Madrasah.\nJazakumullah Khairan atas perhatian dan kerjasamanya.\n\nWassalamu'alaikum Warahmatullahi Wabarakatuh.\n\n_Admin Keuangan MMU B-77_";
+        const defaultTemp = "Assalamu'alaikum Bapak/Ibu *[Nama_Wali]*,\n\nWali dari santri:\nNama: *[Nama_Santri]*\nKelas: *[Kelas]*\n\nBersama pesan ini kami menginformasikan rincian administrasi madrasah yang belum terselesaikan:\n[Rincian_Tagihan]\n\nTotal Tagihan: *[Total_Tagihan]*\n\nMohon berkenan untuk segera menyelesaikannya melalui loket kasir Madrasah.\nJazakumullah Khairan atas perhatian dan kerjasamanya.\n\n_Admin Keuangan MMU B-77_";
 
         window.onload = function() {
-            resetTimerLogout(); // Inisiasi Auto-Logout
+            resetTimerLogout(); 
             
             let savedTemp = localStorage.getItem('template_wa_advance');
             document.getElementById('templateText').value = savedTemp || defaultTemp;
             updatePreview();
 
-            // Tarik Profil Santri & WA Wali
-            database.ref('santri').on('value', snap => {
-                dbSantri = {}; let kelasSet = new Set();
-                snap.forEach(c => {
-                    let s = c.val();
-                    s.idSistemNode = c.key; 
+            verifikasiOtorisasiServer();
+        };
+
+        function initRekapData() {
+            // Tarik Semua Data Esensial Paralel
+            Promise.all([
+                database.ref('santri').once('value'),
+                database.ref('tagihan').once('value'),
+                database.ref('log_penagihan').once('value')
+            ]).then((snapshots) => {
+                // 1. Santri
+                let kelasSet = new Set();
+                snapshots[0].forEach(c => {
+                    let s = c.val(); s.idSistemNode = c.key; 
                     dbSantri[s.idSistemNode] = s;
                     if(s.ID_Murid && s.ID_Murid !== s.idSistemNode) dbSantri[s.ID_Murid] = s;
-                    
                     if(s.Status === 'Aktif' && s.Kelas) kelasSet.add(s.Kelas);
                 });
 
                 let optKelas = '<option value="SEMUA">Semua Kelas</option>';
-                Array.from(kelasSet).sort().forEach(k => optKelas += `<option value="${k}">${k}</option>`);
-                let selectKls = document.getElementById('filterKelas');
-                let curVal = selectKls.value;
-                selectKls.innerHTML = optKelas;
-                if(Array.from(kelasSet).includes(curVal)) selectKls.value = curVal;
-            });
+                Array.from(kelasSet).sort().forEach(k => optKelas += `<option value="${escapeHTML(k)}">${escapeHTML(k)}</option>`);
+                document.getElementById('fKelas').innerHTML = optKelas;
 
-            // Tarik Data Tagihan
-            database.ref('tagihan').on('value', snap => {
-                let mentah = [];
-                snap.forEach(c => {
+                // 2. Log Penagihan
+                snapshots[2].forEach(c => { dbLogPenagihan[c.key] = c.val().last_wa; });
+
+                // 3. Tagihan Mentah
+                let tahunSet = new Set();
+                snapshots[1].forEach(c => {
                     let d = c.val();
-                    if(d.Status === 'Belum Lunas' || d.Status === 'Cicilan') mentah.push(d);
-                });
-                
-                // Agregasi Per Anak
-                let agg = {};
-                mentah.forEach(t => {
-                    let idAnak = t.ID_Murid;
-                    if(!agg[idAnak]) {
-                        let dataProfil = dbSantri[idAnak] || {};
-                        agg[idAnak] = {
-                            id: idAnak,
-                            nama: dataProfil.Nama_Lengkap || dataProfil.Nama_Santri || t.Nama_Santri || "Tanpa Nama",
-                            kelas: t.Kelas || dataProfil.Kelas || "-",
-                            wa: dataProfil.WA_Wali || "-",
-                            rincianArr: [],
-                            total: 0
-                        };
+                    if(d.Status === 'Belum Lunas' || d.Status === 'Cicilan') {
+                        mentahTagihan.push(d);
+                        if(d.Tahun_Ajaran) tahunSet.add(d.Tahun_Ajaran);
                     }
-                    let sisa = t.Status === 'Cicilan' ? (t.Nominal - (t.Terbayar || 0)) : t.Nominal;
-                    agg[idAnak].total += sisa;
-                    agg[idAnak].rincianArr.push(`- ${t.Nama_Pos}: ${formatRp(sisa)}`);
                 });
 
-                rekapPiutang = Object.values(agg).sort((a,b) => a.kelas.localeCompare(b.kelas) || a.nama.localeCompare(b.nama));
-                renderTabelTagihan();
-            });
-        };
+                let optThn = '<option value="SEMUA">Semua Tahun</option>';
+                Array.from(tahunSet).sort().reverse().forEach(t => optThn += `<option value="${escapeHTML(t)}">${escapeHTML(t)}</option>`);
+                document.getElementById('fTahun').innerHTML = optThn;
 
+                prosesMentah(); // Eksekusi Agregasi awal
+
+                // Nyalakan Listener Realtime agar update langsung
+                database.ref('log_penagihan').on('value', snap => {
+                    snap.forEach(c => { dbLogPenagihan[c.key] = c.val().last_wa; });
+                    renderTabelTagihan(); // Rerender jika ada perubahan status WA
+                });
+            });
+        }
+
+        // FUNGSI AGREGASI & FILTER WAKTU
+        function prosesMentah() {
+            let fThn = document.getElementById('fTahun').value;
+            let fBln = document.getElementById('fBulan').value;
+            
+            let agg = {};
+            mentahTagihan.forEach(t => {
+                if(fThn !== 'SEMUA' && t.Tahun_Ajaran !== fThn) return;
+                if(fBln !== 'SEMUA' && t.Bulan_Hijriyah !== fBln) return;
+
+                let idAnak = t.ID_Murid;
+                if(!agg[idAnak]) {
+                    let dataProfil = dbSantri[idAnak] || {};
+                    agg[idAnak] = {
+                        id: idAnak,
+                        nama: dataProfil.Nama_Lengkap || dataProfil.Nama_Santri || t.Nama_Santri || "Tanpa Nama",
+                        namaWali: dataProfil.Nama_Wali || "Wali Santri",
+                        kelas: t.Kelas || dataProfil.Kelas || "-",
+                        wa: dataProfil.WA_Wali || "-",
+                        rincianArr: [], total: 0
+                    };
+                }
+                let sisa = t.Status === 'Cicilan' ? (t.Nominal - (t.Terbayar || 0)) : t.Nominal;
+                agg[idAnak].total += sisa;
+                agg[idAnak].rincianArr.push(`- ${t.Nama_Pos} (${t.Bulan_Hijriyah || ''}): ${formatRp(sisa)}`);
+            });
+
+            rekapPiutang = Object.values(agg).sort((a,b) => a.kelas.localeCompare(b.kelas) || a.nama.localeCompare(b.nama));
+            renderTabelTagihan();
+        }
+
+        // FUNGSI RENDER TABEL & FILTER PENCARIAN (XSS & EKSTREM FILTER AKTIF)
         function renderTabelTagihan() {
-            let filterKls = document.getElementById('filterKelas').value;
+            let fKls = document.getElementById('fKelas').value;
+            let fCari = document.getElementById('fCari').value.toLowerCase();
+            let fStatus = document.getElementById('fStatus').value; // Filter Baru
             let tbody = document.getElementById('tabel-body');
             tbody.innerHTML = '';
             
-            let dataTampil = rekapPiutang;
-            if(filterKls !== 'SEMUA') dataTampil = rekapPiutang.filter(r => r.kelas === filterKls);
+            let dataTampil = rekapPiutang.filter(r => {
+                let matchKls = fKls === 'SEMUA' ? true : r.kelas === fKls;
+                let matchCari = r.nama.toLowerCase().includes(fCari) || r.namaWali.toLowerCase().includes(fCari);
+                let matchStatus = true;
+                
+                // ✨ FILTER TUNGGAKAN EKSTREM
+                if (fStatus === 'EKSTREM_NOMINAL') matchStatus = r.total >= 500000;
+                if (fStatus === 'EKSTREM_WAKTU') matchStatus = r.rincianArr.length >= 3;
+
+                return matchKls && matchCari && matchStatus;
+            });
             
             if(dataTampil.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-check-double" style="font-size:40px; margin-bottom:10px; color:var(--c-green);"></i><br>Alhamdulillah, tidak ada tunggakan di kelas ini.</div></td></tr>`;
-                document.getElementById('totalPiutang').innerText = "Rp 0";
-                return;
+                tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-check-double" style="font-size:40px; margin-bottom:10px; color:var(--c-green);"></i><br>Alhamdulillah, tidak ada data tunggakan pada filter ini.</div></td></tr>`;
+                document.getElementById('totalPiutang').innerText = "Rp 0"; return;
             }
 
             let grandTotal = 0; let no = 1;
             dataTampil.forEach(r => {
                 grandTotal += r.total;
-                let btnHtml = '';
                 
-                if (r.wa === "-" || !r.wa) {
-                    btnHtml = `<button class="btn-wa-ind disabled" title="Nomor WA Kosong" disabled><i class="fa-brands fa-whatsapp"></i> No WA</button>`;
-                } else {
-                    let argStr = encodeURIComponent(JSON.stringify(r));
-                    btnHtml = `<button class="btn-wa-ind" onclick="kirimWAIndividu('${argStr}')"><i class="fa-brands fa-whatsapp"></i> Kirim</button>`;
-                }
+                // Cek Status Log
+                let lastWA = dbLogPenagihan[r.id];
+                let statusHtml = lastWA ? `<span class="status-badge sent" title="Terakhir: ${escapeHTML(lastWA)}"><i class="fa-solid fa-check"></i> ${escapeHTML(lastWA).split(',')[0]}</span>` : `<span class="status-badge">Belum</span>`;
 
-                let rincianHtml = r.rincianArr.join('<br>');
+                // Tombol WA & Bayar
+                let btnHtml = '';
+                if (r.wa === "-" || !r.wa) {
+                    btnHtml = `<button class="btn-wa-ind disabled" disabled><i class="fa-brands fa-whatsapp"></i> No WA</button>`;
+                } else {
+                    // Aman untuk dilempar sebagai argumen setelah di URI encode
+                    let argStr = encodeURIComponent(JSON.stringify(r));
+                    btnHtml = `<button class="btn-wa-ind" onclick="kirimWAIndividu('${argStr}')" title="Kirim Tagihan WA"><i class="fa-brands fa-whatsapp"></i> Kirim</button>`;
+                }
+                let btnBayar = `<button class="btn-pay" onclick="bukaBayar('${escapeHTML(r.id)}')" title="Bayar Sekarang"><i class="fa-solid fa-credit-card"></i> Bayar</button>`;
+
+                // PENERAPAN XSS SANITIZER PADA HTML RENDERING
+                let safeNama = escapeHTML(r.nama);
+                let safeWali = escapeHTML(r.namaWali);
+                let safeKelas = escapeHTML(r.kelas);
+                let safeRincianHtml = r.rincianArr.map(item => escapeHTML(item)).join('<br>');
+
+                // Akordion Rincian
+                let akordion = `<div class="rincian-toggle" onclick="toggleRinc('${escapeHTML(r.id)}')">${r.rincianArr.length} Item Tunggakan <i class="fa-solid fa-chevron-down"></i></div>
+                                <div class="rincian-content" id="rinc-${escapeHTML(r.id)}">${safeRincianHtml}</div>`;
                 
                 tbody.innerHTML += `
-                <tr>
+                <tr class="row-data">
+                    <td><input type="checkbox" class="chk-santri" value="${escapeHTML(r.id)}" checked></td>
                     <td style="color:var(--text-muted); font-weight:600;">${no++}</td>
-                    <td style="font-family:'Montserrat'; font-weight:700;">${r.nama}</td>
-                    <td style="font-size:10px; font-weight:600; color:var(--text-muted);">${r.kelas}</td>
-                    <td style="font-size:10px; line-height:1.4;">${rincianHtml}</td>
+                    <td>
+                        <div style="font-family:'Montserrat'; font-weight:700;">${safeNama}</div>
+                        <div style="font-size:9px; color:var(--text-muted);"><i class="fa-solid fa-user-tie"></i> Wali: ${safeWali}</div>
+                    </td>
+                    <td style="font-size:10px; font-weight:600; color:var(--text-muted);">${safeKelas}</td>
+                    <td>${akordion}</td>
                     <td style="color:var(--c-red); font-weight:800;">${formatRp(r.total)}</td>
-                    <td style="text-align:center;">${btnHtml}</td>
+                    <td>${statusHtml}</td>
+                    <td><div class="aksi-flex">${btnHtml} ${btnBayar}</div></td>
                 </tr>`;
             });
 
             document.getElementById('totalPiutang').innerText = formatRp(grandTotal);
-            document.getElementById('teksRingkasan').innerText = filterKls === "SEMUA" ? "Total Piutang Berjalan (Aktif)" : `Total Piutang - Kelas ${filterKls}`;
+            document.getElementById('teksRingkasan').innerText = "Total Tagihan Hasil Filter";
+            document.getElementById('chkAll').checked = true; // Auto check all shown
+        }
+
+        // --- FITUR KECIL UI ---
+        function toggleRinc(id) {
+            vibrateClick();
+            let div = document.getElementById('rinc-'+id);
+            div.style.display = div.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function toggleAll(source) {
+            let checkboxes = document.querySelectorAll('.chk-santri');
+            checkboxes.forEach(cb => cb.checked = source.checked);
+        }
+
+        function bukaBayar(idSantri) {
+            vibrateClick();
+            window.location.href = `pembayaran-santri.html?cari=${idSantri}`;
         }
 
         // --- EDITOR LOGIC ---
@@ -378,10 +516,13 @@
 
         function updatePreview() {
             let txt = document.getElementById('templateText').value;
-            localStorage.setItem('template_wa_advance', txt); // Auto Save
+            localStorage.setItem('template_wa_advance', txt); 
             
-            // Dummy Data
-            txt = txt.replace(/\[Nama_Santri\]/g, "Achmad Fulan")
+            // XSS Prevent pada preview
+            txt = escapeHTML(txt);
+            
+            txt = txt.replace(/\[Nama_Wali\]/g, "Bapak Fulan")
+                     .replace(/\[Nama_Santri\]/g, "Achmad Fulan")
                      .replace(/\[Kelas\]/g, "2 Ibtidaiyah")
                      .replace(/\[Rincian_Tagihan\]/g, "- SPP Maret: Rp 50.000\n- LKS Fiqih: Rp 25.000")
                      .replace(/\[Total_Tagihan\]/g, "Rp 75.000");
@@ -391,12 +532,13 @@
             document.getElementById('previewChat').innerHTML = txt;
         }
 
-        // --- FUNGSI KIRIM WA (PISAU BEDAH & BOM NUKLIR) ---
+        // --- FUNGSI KIRIM WA ---
         function generatePesan(dataSantri) {
             let txt = document.getElementById('templateText').value;
             let rincian = dataSantri.rincianArr.join('\n');
             
-            txt = txt.replace(/\[Nama_Santri\]/g, dataSantri.nama)
+            txt = txt.replace(/\[Nama_Wali\]/g, dataSantri.namaWali)
+                     .replace(/\[Nama_Santri\]/g, dataSantri.nama)
                      .replace(/\[Kelas\]/g, dataSantri.kelas)
                      .replace(/\[Rincian_Tagihan\]/g, rincian)
                      .replace(/\[Total_Tagihan\]/g, formatRp(dataSantri.total));
@@ -409,79 +551,108 @@
             return str;
         }
 
+        async function catatLogWA(idAnak) {
+            try {
+                let wkt = new Date().toLocaleString('id-ID', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+                await database.ref('log_penagihan/' + idAnak).set({ last_wa: wkt });
+            } catch(e) {}
+        }
+
         async function kirimWAIndividu(dataStr) {
             vibrateClick();
             let data = JSON.parse(decodeURIComponent(dataStr));
             let noWA = formatNoWA(data.wa);
             let pesan = generatePesan(data);
             
-            await catatAuditTrail('Penagihan WA', `Mengirim tagihan WA Individu ke ${data.nama} (${data.kelas}) - Total: ${formatRp(data.total)}`);
+            await catatLogWA(data.id);
+            await catatAuditTrail('Penagihan WA', `Kirim tagihan individu ke ${data.nama} (Wali: ${data.namaWali})`);
             window.open(`https://wa.me/${noWA}?text=${pesan}`, '_blank');
         }
 
-        // ====== BAGIAN YANG DIMODIFIKASI: PENCEGAHAN BLOKIR POP-UP ======
         async function eksekusiBomNuklir() {
             vibrateHeavy();
-            let filterKls = document.getElementById('filterKelas').value;
-            let dataTampil = rekapPiutang;
-            if(filterKls !== 'SEMUA') dataTampil = rekapPiutang.filter(r => r.kelas === filterKls);
             
-            let validTargets = dataTampil.filter(r => r.wa && r.wa !== "-");
-            
-            if(validTargets.length === 0) {
-                showToast("Tidak ada sasaran valid (Nomor WA kosong semua)!"); return;
+            // Mengambil ID santri yang dicentang saja
+            let checkedBoxes = Array.from(document.querySelectorAll('.chk-santri:checked')).map(cb => cb.value);
+            if(checkedBoxes.length === 0) {
+                showToast("Pilih minimal 1 santri dengan mencentang kotak di tabel!"); return;
             }
 
-            // Pesan peringatan pop-up yang diperjelas
-            let msg = `⚠️ PERHATIAN PENTING! ⚠️\n\nSistem akan membuka ${validTargets.length} tab WhatsApp beruntun.\n\nJIKA TAB TIDAK TERBUKA (DIBLOKIR BROWSER):\nLihat pojok kanan atas URL (address bar), klik ikon silang merah (Pop-up Blocked), dan pilih "Always Allow / Selalu Izinkan".\n\nApakah Anda siap mengeksekusi?`;
+            // Filter data rekap sesuai yang dicentang dan punya WA valid
+            let validTargets = rekapPiutang.filter(r => checkedBoxes.includes(r.id) && r.wa && r.wa !== "-");
             
+            if(validTargets.length === 0) {
+                showToast("Santri yang dipilih tidak memiliki nomor WA yang valid!"); return;
+            }
+
+            let msg = `⚠️ PERINGATAN BOM NUKLIR WA ⚠️\n\nSistem akan membuka ${validTargets.length} tab WhatsApp untuk santri yang Anda pilih.\n\nPastikan fitur "Pop-up Blocker" di browser Anda sudah dimatikan/diizinkan.\nSiap mengeksekusi?`;
             if(!confirm(msg)) return;
 
             showToast(`Mengeksekusi ${validTargets.length} pesan beruntun... Jangan tutup halaman ini!`);
-            
-            await catatAuditTrail('Penagihan Massal', `Broadcast WA ke ${validTargets.length} wali santri kelas [${filterKls}]`);
+            await catatAuditTrail('Penagihan Massal', `Broadcast WA Selektif ke ${validTargets.length} wali santri.`);
 
-            // Eksekusi beruntun (Jeda 2 detik per tab untuk menghindari blokir Anti-Spam Browser)
             validTargets.forEach((t, index) => {
-                setTimeout(() => {
+                setTimeout(async () => {
                     let noWA = formatNoWA(t.wa);
                     let pesan = generatePesan(t);
+                    await catatLogWA(t.id); // Catat log
                     window.open(`https://wa.me/${noWA}?text=${pesan}`, '_blank');
                     
                     if (index === validTargets.length - 1) {
-                        setTimeout(() => showToast("✅ Seluruh perintah pengiriman selesai!"), 2000);
+                        setTimeout(() => { showToast("✅ Seluruh perintah pengiriman selesai!"); renderTabelTagihan(); }, 2000);
                     }
                 }, index * 2000); 
             });
         }
-        // ================================================================
 
-        // --- EKSPOR EXCEL ---
+        // --- ANTI CSV / FORMULA INJECTION (MENCEGAH VIRUS EXCEL) ---
+        function sanitizeExcel(text) {
+            if(typeof text !== 'string') text = String(text);
+            // Jika teks berawalan =, +, -, atau @, maka tambahkan petik tunggal agar dibaca sebagai Teks Murni oleh Excel.
+            if (text.match(/^[=+\-@]/)) {
+                return "'" + text;
+            }
+            return text;
+        }
+
+        // --- EKSPOR EXCEL (MULTI-BARIS / WRAP TEXT + KEAMANAN INJEKSI) ---
         function exportExcel() {
             vibrateClick();
-            showToast("Mempersiapkan Laporan Piutang Excel...");
+            showToast("Mempersiapkan Excel...");
             
-            let filterKls = document.getElementById('filterKelas').value;
-            let dataTampil = rekapPiutang;
-            if(filterKls !== 'SEMUA') dataTampil = rekapPiutang.filter(r => r.kelas === filterKls);
+            // Hanya ekspor data yang tampil di tabel (Terfilter)
+            let dataTampil = [];
+            document.querySelectorAll('.row-data').forEach(tr => {
+                let idSantri = tr.querySelector('.chk-santri').value;
+                let data = rekapPiutang.find(r => r.id === idSantri);
+                if(data) dataTampil.push(data);
+            });
             
-            let excelData = [["No", "Nama Santri", "Kelas", "Rincian Tunggakan", "Total Tunggakan (Rp)"]];
+            let excelData = [["No", "Nama Santri", "Wali Santri", "Kelas", "Rincian Tunggakan", "Total Tunggakan (Rp)"]];
             
             dataTampil.forEach((r, idx) => {
-                let rincianTeks = r.rincianArr.join(' | ');
-                excelData.push([idx + 1, r.nama, r.kelas, rincianTeks, r.total]);
+                let rincianTeks = r.rincianArr.join('\n');
+                excelData.push([
+                    idx + 1, 
+                    sanitizeExcel(r.nama), 
+                    sanitizeExcel(r.namaWali), 
+                    sanitizeExcel(r.kelas), 
+                    sanitizeExcel(rincianTeks), 
+                    r.total
+                ]);
             });
 
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(excelData);
-            ws['!cols'] = [{wch: 5}, {wch: 35}, {wch: 15}, {wch: 50}, {wch: 20}];
+            
+            // Lebar Kolom
+            ws['!cols'] = [{wch: 5}, {wch: 30}, {wch: 25}, {wch: 15}, {wch: 50}, {wch: 20}];
             
             XLSX.utils.book_append_sheet(wb, ws, "Data_Tunggakan");
             
-            let namaFile = filterKls === "SEMUA" ? "Daftar_Tunggakan_Global.xlsx" : `Daftar_Tunggakan_Kelas_${filterKls}.xlsx`;
+            let namaFile = `Rekap_Tunggakan_MMUB77_${new Date().getTime()}.xlsx`;
             XLSX.writeFile(wb, namaFile);
-            
-            catatAuditTrail('Export', `Mengunduh Excel Rekap Piutang (Kelas: ${filterKls})`);
+            catatAuditTrail('Export', `Mengunduh Excel Rekap Piutang (${dataTampil.length} data)`);
         }
     </script>
 </body>
