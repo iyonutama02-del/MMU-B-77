@@ -271,7 +271,7 @@
 
         <div class="menu-section">
             <div style="padding: 0 20px; max-width: 500px; margin: 0 auto;">
-                <div class="section-title">Area Persiapan</div>
+                <div class="section-title">Master Data</div>
             </div>
             <div class="menu-grid">
                 <a onclick="cekAksesDanPindah('data-santri.html', 'menuDataSantri')" class="menu-item" id="menuDataSantri">
@@ -304,7 +304,7 @@
 
         <div class="menu-section">
             <div style="padding: 0 20px; max-width: 500px; margin: 0 auto;">
-                <div class="section-title">Area Transaksi</div>
+                <div class="section-title">Transaksi</div>
             </div>
             <div class="menu-grid">
                 <a onclick="cekAksesDanPindah('pembayaran-santri.html', 'menuPembayaran')" class="menu-item" id="menuPembayaran">
@@ -324,7 +324,7 @@
 
         <div class="menu-section">
             <div style="padding: 0 20px; max-width: 500px; margin: 0 auto;">
-                <div class="section-title">Area Pimpinan</div>
+                <div class="section-title">Lain-Lain</div>
             </div>
             <div class="menu-grid">
                 <a onclick="cekAksesDanPindah('rekap-piutang.html', 'menuRekapPiutang')" class="menu-item" id="menuRekapPiutang">
@@ -385,71 +385,108 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
 
     <script>
-// --- LOGIKA TOUR INTERAKTIF (PANDUAN DETAIL) ---
+
+// --- LOGIKA TOUR INTERAKTIF (PANDUAN KOMPREHENSIF ENTERPRISE) ---
         function mulaiTourInteraktif() {
             vibrateClick();
             toggleFAB(); // Tutup speed dial jika masih terbuka
             
-            // Konfigurasi Tour dengan Teks Detail & Mudah Dipahami
             introJs().setOptions({
                 steps: [
                     {
                         title: 'Ahlan Wa Sahlan! 👋',
-                        intro: 'Selamat datang di Sistem Keuangan MMU B-77!<br><br>Mari ikuti tur singkat ini untuk mengenal fitur-fitur canggih yang akan mempermudah tugas Anda sehari-hari. Klik tombol <b>Lanjut</b> untuk mulai menjelajah.'
+                        intro: 'Selamat datang di Sistem Keuangan MMU B-77!<br><br>Mari ikuti "Virtual Training" ini. Kami akan memandu Anda mengenali fungsi, kegunaan, dan cara pakai setiap tombol di aplikasi ini secara detail.<br><br>Klik tombol <b>Lanjut</b> untuk memulai.'
                     },
                     {
                         element: document.getElementById('tour-profil'),
                         title: 'Identitas & Hak Akses 👤',
-                        intro: 'Di sini terlihat siapa yang sedang aktif.<br><br><b>Cara Kerjanya:</b> Sistem ini pintar! Menu yang bisa dibuka akan menyesuaikan dengan jabatan Anda. Jika ada menu ber-gembok merah, berarti itu menu rahasia khusus untuk Pimpinan/Admin.',
+                        intro: 'Ini adalah profil Anda yang sedang aktif.<br><br>Sistem ini pintar! Jika jabatan Anda adalah <b>Operator/Kasir</b>, beberapa menu pimpinan akan tergembok. Jika Anda <b>Administrator</b>, semua menu akan terbuka otomatis.',
                         position: 'bottom'
                     },
                     {
                         element: document.getElementById('tour-chat'),
                         title: 'Pusat Komunikasi (Live Chat) 💬',
-                        intro: 'Butuh kordinasi cepat dengan kasir lain atau pimpinan? Klik ikon ini!<br><br><b>Fungsinya:</b> Mirip seperti grup WhatsApp. Kalau ada pesan masuk yang belum Anda baca, akan muncul titik merah kecil agar Anda tidak ketinggalan informasi penting.',
+                        intro: 'Butuh kordinasi dengan kasir lain atau laporan ke pimpinan? Gunakan fitur ini!<br><br><b>Cara Pakai:</b> Klik ikon ini untuk masuk ke ruang obrolan internal. Jika ada pesan masuk yang belum Anda baca, akan muncul titik merah kecil (Notifikasi) di sini.',
                         position: 'left'
                     },
                     {
                         element: document.getElementById('tour-astronomi'),
                         title: 'Jam & Kalender Akurat ⏰',
-                        intro: 'Bukan sekadar jam biasa!<br><br><b>Keunggulannya:</b> Widget ini otomatis menyinkronkan Kalender Hijriyah dan Jam Istiwa (Waktu Matahari) berdasarkan pelacak lokasi GPS madrasah kita. Waktu transaksi akan selalu dicatat dengan presisi tinggi.'
+                        intro: 'Bukan sekadar jam biasa!<br><br><b>Fungsinya:</b> Widget ini melacak lokasi GPS madrasah kita untuk menyinkronkan <b>Kalender Hijriyah</b> dan <b>Jam Istiwa\' (Waktu Matahari)</b>. Setiap transaksi kasir akan dicatat dengan waktu yang sangat akurat.'
                     },
                     {
                         element: document.getElementById('menuDataSantri'),
-                        title: 'Kelola Data & Mutasi Massal 📖',
-                        intro: 'Ini adalah buku induk digital kita.<br><br><b>Fitur Ajaib:</b> Saat menambah santri, ketik nama pakai huruf kecil semua tidak masalah, sistem otomatis merapikannya. Dan di akhir tahun ajaran, Anda bisa memakai fitur <b>Mutasi Massal</b> untuk menaikkan ratusan anak ke kelas baru hanya dalam 1 detik!'
+                        title: 'Data & Mutasi Santri 📖',
+                        intro: 'Buku Induk Digital Madrasah.<br><br><b>Cara Pakai:</b><br>• <b>Tambah Santri:</b> Ketik nama pakai huruf kecil tak masalah, sistem otomatis merapikannya jadi huruf Kapital.<br>• <b>Mutasi Massal:</b> Di akhir tahun, buka tab Mutasi. Filter kelas (Misal: 1 Ibtidaiyah), centang semua anak, lalu pilih "Naik Kelas". Ratusan anak pindah kelas dalam 1 detik!'
+                    },
+                    {
+                        element: document.getElementById('menuPosKeuangan'),
+                        title: 'Master Pos Keuangan 🔒',
+                        intro: '<i>(Menu Khusus Pimpinan)</i><br><br><b>Fungsinya:</b> Tempat untuk membuat jenis tagihan atau pos pengeluaran baru (Contoh: Buat pos "Uang Gedung", "SPP Bulanan", "Beli ATK", atau "Gaji Guru").'
+                    },
+                    {
+                        element: document.getElementById('menuManTagihan'),
+                        title: 'Manajemen Tagihan 🔒',
+                        intro: '<i>(Menu Khusus Pimpinan)</i><br><br><b>Cara Pakai:</b> Pimpinan menggunakan menu ini untuk menyebar tagihan. Bisa pilih "Tagih Per Kelas" (1x klik untuk sekelas) atau "Tagih Individu". Tagihan ini nanti akan muncul di layar Kasir.'
                     },
                     {
                         element: document.getElementById('menuPembayaran'),
-                        title: 'Kasir Cerdas & Infaq Otomatis 💰',
-                        intro: 'Pusat penerimaan uang! Cara pakainya mudah: cari nama santri, lalu masukkan nominal bayar.<br><br><b>Fitur Keren:</b> Jika wali santri membayar <i>lebih</i> dari tagihannya, sistem akan otomatis menawari sisa uangnya untuk dimasukkan ke pos Infaq/Sedekah. Kuitansinya juga bisa dikirim langsung ke WA wali santri!'
+                        title: 'Kasir Pembayaran 💰',
+                        intro: '<b>Medan Tempur Utama Anda!</b><br><br><b>Cara Pakai:</b><br>1. Ketik nama santri, tagihannya akan muncul.<br>2. Masukkan nominal uang yang dibayar.<br>3. <b>Fitur Ajaib:</b> Jika uangnya "lebih" dari tagihan, sistem otomatis mencatat sisa uang itu sebagai Infaq!<br>4. Setelah sukses, Anda bisa klik tombol "Kirim" untuk meneruskan Kuitansi Digital ke WA wali santri.'
+                    },
+                    {
+                        element: document.getElementById('menuTransKas'),
+                        title: 'Transaksi Kas (Bebas) 💸',
+                        intro: 'Bagaimana jika ada Pengeluaran (Beli Sapu/Listrik) atau Pemasukan dari Donatur (Bukan Santri)?<br><br><b>Cara Pakai:</b> Gunakan menu ini! Pilih jenis arus kas (Masuk/Keluar), pilih posnya, masukkan nominal, dan catat keterangannya.'
                     },
                     {
                         element: document.getElementById('menuBukuKas'),
-                        title: 'Buku Kas (Anti-Lemot) 📘',
-                        intro: 'Semua uang masuk & keluar tercatat rapi di sini.<br><br><b>Cara Pakainya:</b> Scroll (geser) layar terus ke bawah untuk melihat data lama. Sistem ini <i>Anti-Lemot</i> karena memuat data sedikit demi sedikit walau jumlahnya puluhan ribu. Laporan juga bisa diunduh ke PDF & Excel yang sudah kebal virus!'
+                        title: 'Buku Kas Harian 📘',
+                        intro: 'Semua uang masuk dan keluar dari Kasir maupun Transaksi Bebas bermuara di sini.<br><br><b>Fungsi Detail:</b><br>• <b>Anti-Lemot:</b> Scroll terus ke bawah untuk melihat ribuan data tanpa membuat HP hang.<br>• <b>Filter:</b> Cari transaksi berdasarkan rentang tanggal.<br>• <b>Download:</b> Cetak laporan ke PDF atau Excel.'
                     },
                     {
                         element: document.getElementById('menuRekapPiutang'),
-                        title: 'Broadcast Tagihan WA 🚀',
-                        intro: 'Menu andalan Pimpinan!<br><br><b>Cara Pakainya:</b> Buka menu ini, filter santri yang nunggak lebih dari 3 bulan (Ekstrem). Centang nama-nama mereka, lalu klik "Kirim Broadcast". Sistem akan otomatis mengetikkan rincian utang dan mengirimkannya ke WA wali santri masing-masing secara beruntun.'
+                        title: 'Bom Nuklir WA (Tagihan) 🚀',
+                        intro: 'Menu penagihan super cepat!<br><br><b>Cara Pakai:</b> Buka menu ini, gunakan filter "Tunggakan Ekstrem" (Misal: Cari yang nunggak lebih dari 3 bulan). Centang nama-nama tersebut, lalu klik tombol "Kirim Broadcast". Sistem akan otomatis menembakkan pesan rincian utang ke WA masing-masing wali santri secara beruntun!'
+                    },
+                    {
+                        element: document.getElementById('menuTutupBuku'),
+                        title: 'Laporan Tutup Buku 🔒',
+                        intro: '<i>(Menu Khusus Pimpinan)</i><br><br><b>Fungsinya:</b> Dilakukan setiap akhir bulan/tahun. Pimpinan akan mengunci (Lock) semua transaksi bulan tersebut agar kasir tidak bisa lagi mengubah atau menghapusnya. Ini menjaga laporan tetap valid.'
+                    },
+                    {
+                        element: document.getElementById('menuPengaturan'),
+                        title: 'Pengaturan Sistem 🔒',
+                        intro: '<i>(Menu Khusus Pimpinan)</i><br><br><b>Sangat Penting!</b> Pimpinan harus menyetel "Tahun Ajaran" dan "Bulan Hijriyah" yang sedang aktif di sini. Jika belum disetel, Kasir Pembayaran akan dikunci sementara oleh sistem.'
+                    },
+                    {
+                        element: document.getElementById('tour-nav-dash'),
+                        title: 'Cara Baca Dashboard 📊',
+                        intro: 'Menu navigasi di bawah ini membawa Anda ke Dashboard Analitik.<br><br><b>Isi Dashboard:</b> Di sana Anda bisa melihat grafik canggih! Ada "Diagram Donat" untuk melihat pos mana yang paling banyak menghasilkan uang, dan "Grafik Batang" untuk melihat tren naik-turunnya uang madrasah setiap bulan.'
+                    },
+                    {
+                        element: document.getElementById('tour-nav-profil'),
+                        title: 'Keamanan Profil Anda 🛡️',
+                        intro: 'Buka menu Profil di pojok kiri bawah untuk mengatur akun Anda.<br><br><b>Fungsi Hebat:</b><br>• <b>Biometrik:</b> Aktifkan login pakai Wajah (Face ID) atau Sidik Jari.<br>• <b>Logout Paksa:</b> Jika akun Anda dipakai orang lain atau Anda lupa keluar dari komputer kantor, tekan tombol "Logout Perangkat Lain" di menu profil ini!'
                     },
                     {
                         element: document.getElementById('fabMain'),
                         title: 'Tombol Akses Cepat ⚡',
-                        intro: 'Tombol melayang ini akan selalu setia menemani Anda.<br><br>Klik tanda plus (+) ini kapan saja jika Anda ingin memutar ulang panduan ini, atau jika Anda ingin Keluar (Logout) dari aplikasi dengan aman.<br><br><b>Selamat bertugas!</b>'
+                        intro: 'Terakhir, tombol melayang (+) ini akan selalu setia menemani Anda.<br><br>Klik kapan saja jika Anda ingin memutar ulang panduan ini, atau jika Anda ingin Keluar (Logout) dari aplikasi dengan aman.<br><br><b>Selamat bertugas, semoga lancar dan barokah!</b>'
                     }
                 ],
                 nextLabel: 'Lanjut',
                 prevLabel: 'Kembali',
                 doneLabel: 'Mulai Bekerja',
                 skipLabel: 'Lewati',
-                showStepNumbers: false,
+                showStepNumbers: true, // Menampilkan nomor langkah agar terstruktur
                 showBullets: true,
-                overlayOpacity: 0.8, // Sedikit lebih gelap agar fokus
-                exitOnOverlayClick: false // Mencegah tertutup jika tidak sengaja klik luar
+                overlayOpacity: 0.85, // Dibuat lebih gelap agar sangat fokus pada elemen
+                exitOnOverlayClick: false,
+                keyboardNavigation: true // Bisa pakai panah keyboard untuk lanjut
             }).start();
         }
+
         // --- PENGAMANAN UI ---
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.onkeydown = function(e) {
