@@ -56,18 +56,21 @@
             font-family: 'Poppins', sans-serif; overflow: hidden; position: relative;
             user-select: none; transition: background-color 0.3s ease;
         }
+
         #toast { visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; font-size: 13px; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; width: 85%; max-width: 350px; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s forwards; }
         @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
         @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+
         #splash-screen {
             position: absolute; width: 100%; height: 100%;
             background-color: var(--bg-main); display: flex; justify-content: center; align-items: center;
-            z-index: 999; transition: opacity 0.5s ease, visibility 0.5s ease;
+            z-index: 999; transition: opacity 0.6s ease, visibility 0.6s ease;
         }
         .splash-content { text-align: center; animation: fadeIn 1.2s ease-out forwards; }
         .splash-content .logo { width: 65vw; max-width: 200px; height: auto; }
         @keyframes fadeIn { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+        
         #login-screen {
             opacity: 0; visibility: hidden; transition: opacity 0.5s ease;
             width: 100%; display: flex; justify-content: center; z-index: 10;
@@ -77,42 +80,77 @@
             padding: 6vh 25px; border-radius: 28px; 
             box-shadow: 8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light);
             text-align: center; z-index: 10; transition: 0.3s;
+            opacity: 0; /* Untuk animasi awal */
         }
-        .logo-small { width: 35%; max-width: 130px; margin-bottom: 2vh; height: auto; }
-        h2 { font-family: 'Montserrat', sans-serif; color: var(--text-dark); font-size: clamp(20px, 6vw, 24px); font-weight: 800; margin: 0 0 5px 0; }
-        p.subtitle { color: var(--text-muted); font-size: clamp(11px, 3.5vw, 13px); margin-bottom: 4vh; }
+
+        /* ✨ ANIMASI BARU: Smooth Slide-Up & Breathing Logo */
+        @keyframes slideUpFadeIn {
+            0% { opacity: 0; transform: translateY(40px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .login-container.animate-slide-up {
+            animation: slideUpFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .logo-small { width: 35%; max-width: 130px; margin-bottom: 2vh; height: auto; transition: 0.3s; }
+        .logo-small.animate-breathe {
+            animation: breathe 3.5s ease-in-out infinite;
+        }
+
+        h2 { font-family: 'Montserrat', sans-serif; color: var(--text-dark); font-size: clamp(20px, 6vw, 24px); font-weight: 900; margin: 0 0 5px 0; letter-spacing: -0.5px;}
+        p.subtitle { color: var(--text-muted); font-size: clamp(11px, 3.5vw, 13px); margin-bottom: 4vh; font-weight: 500;}
+        
         .input-group { margin-bottom: 20px; text-align: left; }
-        .input-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; padding-left: 5px; }
+        .input-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; font-weight: 700; padding-left: 5px; }
         .input-wrapper { position: relative; width: 100%; }
         .input-wrapper input {
             width: 100%; padding: 16px 45px 16px 20px; border: none; background-color: var(--bg-main); border-radius: 16px; 
-            font-family: 'Poppins', sans-serif; font-size: 14px; color: var(--text-dark);
+            font-family: 'Poppins', sans-serif; font-size: 14px; color: var(--text-dark); font-weight: 500;
             box-shadow: inset 5px 5px 10px 0 var(--shadow-dark), inset -5px -5px 10px 0 var(--shadow-light);
             transition: all 0.3s ease; user-select: auto; 
         }
         .input-wrapper input:focus { outline: none; box-shadow: inset 3px 3px 6px 0 var(--shadow-dark), inset -3px -3px 6px 0 var(--shadow-light), 0 0 0 2px var(--input-focus); }
-        .eye-icon { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 5px; user-select: none; }
+        
+        /* ✨ ANIMASI MATA */
+        .eye-icon { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 5px; user-select: none; transition: color 0.3s, transform 0.2s; }
+        .eye-icon:active { transform: translateY(-50%) scale(0.85); color: #06d16f; }
+
         .btn-login {
             width: 100%; padding: 16px; background: linear-gradient(135deg, #37f08c 0%, #06d16f 100%); 
             color: white; border: none; border-radius: 30px; 
-            font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.5px;
+            font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 0.5px;
             cursor: pointer; transition: all 0.3s ease; margin-bottom: 3vh; margin-top: 2vh;
             box-shadow: 0 10px 20px rgba(6, 209, 111, 0.3); display: flex; justify-content: center; align-items: center; gap: 10px;
         }
-        .btn-login:active { transform: translateY(2px); box-shadow: 0 5px 10px rgba(6, 209, 111, 0.4); }
+        .btn-login:active { transform: translateY(3px); box-shadow: inset 3px 3px 8px rgba(0,0,0,0.2); }
         .btn-login:disabled { background: #CBD5E1; box-shadow: none; cursor: not-allowed; transform: none; opacity: 0.7; }
-        .divider { display: flex; align-items: center; text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 3vh; font-weight: 500; }
+        
+        /* ✨ VISUAL COOLDOWN MERAH (Anti-Hacker) */
+        .btn-login.locked {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+            box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3) !important;
+            cursor: not-allowed; opacity: 1;
+        }
+        .btn-login.locked:active { transform: none; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3) !important; }
+
+        .divider { display: flex; align-items: center; text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 3vh; font-weight: 600; }
         .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--divider-line); }
         .divider:not(:empty)::before { margin-right: 1em; }
         .divider:not(:empty)::after { margin-left: 1em; }
+        
         .biometric-login { display: flex; justify-content: center; gap: 20px; }
         .btn-bio {
             width: 60px; height: 60px; background-color: var(--bg-main); color: #06d16f; 
             border: none; border-radius: 16px; font-size: 24px; display: flex; justify-content: center; align-items: center;
             cursor: pointer; transition: all 0.3s; box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
         }
-        .btn-bio:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); color: #04b35e; }
-        .footer-text { position: absolute; bottom: 20px; left: 0; width: 100%; text-align: center; font-size: 10px; color: var(--text-muted); font-weight: 500; z-index: 1000; padding: 0 20px; }
+        .btn-bio:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); color: #04b35e; transform: scale(0.95); }
+        
+        .footer-text { position: absolute; bottom: 20px; left: 0; width: 100%; text-align: center; font-size: 10px; color: var(--text-muted); font-weight: 600; z-index: 1000; padding: 0 20px; }
     </style>
 </head>
 <body>
@@ -134,13 +172,13 @@
             <img src="Lambang-Keuangan.png" alt="Logo" class="logo-small" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3353/3353138.png'">
             
             <h2>Ahlan wa sahlan</h2>
-            <p class="subtitle">Silakan masuk untuk login</p>
+            <p class="subtitle">Silakan masuk untuk akses sistem</p>
 
             <form action="#" method="POST" id="formLogin">
                 <div class="input-group">
-                    <label for="username">Username</label>
+                    <label for="username">Username / ID</label>
                     <div class="input-wrapper">
-                        <input type="text" id="username" placeholder="Username" required autocomplete="off" oninput="vibrateLight()">
+                        <input type="text" id="username" placeholder="Ketik username..." required autocomplete="off" oninput="vibrateLight()">
                     </div>
                 </div>
                 
@@ -155,7 +193,7 @@
                 <button type="submit" class="btn-login" id="btnLogin">Masuk</button>
             </form>
 
-            <div class="divider">atau masuk dengan</div>
+            <div class="divider">atau akses cepat dengan</div>
 
             <div class="biometric-login">
                 <button class="btn-bio" type="button" title="Masuk dengan Wajah" onclick="loginBiometrikAsli()">
@@ -166,8 +204,8 @@
                 </button>
             </div>
             
-            <p style="font-size: 11px; color: var(--text-muted); margin-top: 3vh; font-weight: 500;">
-                (Login dengan Kata Sandi 1x untuk menautkan perangkat & biometrik)
+            <p style="font-size: 10px; color: var(--text-muted); margin-top: 3vh; font-weight: 600; padding: 0 10px;">
+                <i class="fa-solid fa-shield-halved" style="color: #06d16f;"></i> Login dengan sandi 1x untuk menautkan perangkat & keamanan biometrik Anda.
             </p>
         </div>
     </div>
@@ -183,14 +221,7 @@
             });
         }
 
-        // --- PENGAMANAN DASAR ---
-        document.addEventListener('contextmenu', event => event.preventDefault());
-        document.onkeydown = function(e) {
-            if(e.keyCode == 123 || 
-              (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 67 || e.keyCode == 74)) || 
-              (e.ctrlKey && e.keyCode == 85)) return false; 
-        }
-
+        // --- HAPTIC & UI UTILS ---
         function vibrateLight() { if (navigator.vibrate) navigator.vibrate(10); } 
         function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); } 
         function vibrateSuccess() { if (navigator.vibrate) navigator.vibrate([30, 50, 30]); } 
@@ -199,8 +230,11 @@
         function updateOnlineStatus() {
             const btn = document.getElementById('btnLogin');
             if (navigator.onLine) {
-                btn.disabled = false;
-                btn.innerHTML = "Masuk";
+                // Jangan reset tombol jika sedang terkunci cooldown
+                if(!btn.classList.contains('locked')) {
+                    btn.disabled = false;
+                    btn.innerHTML = "Masuk";
+                }
             } else {
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fa-solid fa-wifi-slash"></i> Offline';
@@ -211,19 +245,12 @@
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
 
-        // --- ANTI-SNOOPING (Tahan untuk melihat sandi) ---
+        // --- ANTI-SNOOPING (Animasi Mata Sandi) ---
         const pwdInput = document.getElementById("password");
         const eyeIcon = document.getElementById("togglePassword");
 
-        function showSandi() { 
-            pwdInput.type = "text"; 
-            eyeIcon.classList.replace("fa-eye", "fa-eye-slash"); 
-            vibrateClick(); 
-        }
-        function hideSandi() { 
-            pwdInput.type = "password"; 
-            eyeIcon.classList.replace("fa-eye-slash", "fa-eye"); 
-        }
+        function showSandi() { pwdInput.type = "text"; eyeIcon.classList.replace("fa-eye", "fa-eye-slash"); vibrateClick(); }
+        function hideSandi() { pwdInput.type = "password"; eyeIcon.classList.replace("fa-eye-slash", "fa-eye"); }
 
         eyeIcon.addEventListener("mousedown", showSandi);
         eyeIcon.addEventListener("mouseup", hideSandi);
@@ -231,52 +258,102 @@
         eyeIcon.addEventListener("touchstart", (e) => { e.preventDefault(); showSandi(); }, {passive: false});
         eyeIcon.addEventListener("touchend", (e) => { e.preventDefault(); hideSandi(); }, {passive: false});
 
-        // --- AUTO-LOCKOUT SYSTEM (Pengganti CAPTCHA) ---
-        function checkRateLimit() {
-            let lockoutTime = localStorage.getItem('lockoutTime');
-            if (lockoutTime && Date.now() < parseInt(lockoutTime)) {
-                let timeLeft = Math.ceil((parseInt(lockoutTime) - Date.now()) / 60000);
-                throw new Error(`Terlalu banyak percobaan. Akun terkunci sementara! Tunggu ${timeLeft} menit.`);
-            } else if (lockoutTime && Date.now() >= parseInt(lockoutTime)) {
-                resetLoginAttempts();
-            }
-        }
-
-        function incrementLoginAttempts() {
-            let attempts = parseInt(localStorage.getItem('loginAttempts') || '0') + 1;
-            localStorage.setItem('loginAttempts', attempts);
-            if (attempts >= 3) {
-                localStorage.setItem('lockoutTime', Date.now() + 15 * 60000); // Kunci 15 menit
-                showToast("3x Gagal! Sistem terkunci selama 15 Menit.");
-                vibrateHeavy();
-            }
-        }
-
-        function resetLoginAttempts() {
-            localStorage.removeItem('loginAttempts');
-            localStorage.removeItem('lockoutTime');
-        }
-
         // --- SESSION SANITIZATION ---
         function hardSessionCleanse() {
-            const webAuthnId = localStorage.getItem('webAuthnId');
-            const webAuthnUid = localStorage.getItem('webAuthnUid');
-            const localDeviceId = localStorage.getItem('localDeviceId'); 
             const themePref = localStorage.getItem('themePref');
+            const localDeviceId = localStorage.getItem('localDeviceId');
             
             localStorage.clear();
             
-            if (webAuthnId) localStorage.setItem('webAuthnId', webAuthnId);
-            if (webAuthnUid) localStorage.setItem('webAuthnUid', webAuthnUid);
-            if (localDeviceId) localStorage.setItem('localDeviceId', localDeviceId);
             if (themePref) localStorage.setItem('themePref', themePref);
+            if (localDeviceId) localStorage.setItem('localDeviceId', localDeviceId);
         }
 
         function showToast(msg) {
             let toast = document.getElementById("toast");
-            document.getElementById("toastMsg").innerText = msg; // Murni menggunakan innerText (Aman dari XSS)
+            document.getElementById("toastMsg").innerText = msg; 
             toast.className = "show";
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        // --- ✨ VISUAL COOLDOWN SYSTEM (ANTI BRUTE-FORCE) ---
+        let cooldownInterval;
+        function startCooldownTimer(unlockTimestamp) {
+            const btn = document.getElementById('btnLogin');
+            btn.classList.add('locked');
+            btn.disabled = true;
+            
+            clearInterval(cooldownInterval);
+            
+            cooldownInterval = setInterval(() => {
+                let now = Date.now();
+                let diffSecs = Math.ceil((unlockTimestamp - now) / 1000);
+                
+                if (diffSecs <= 0) {
+                    clearInterval(cooldownInterval);
+                    btn.classList.remove('locked');
+                    if(navigator.onLine) {
+                        btn.disabled = false;
+                        btn.innerHTML = "Masuk";
+                    } else {
+                        updateOnlineStatus();
+                    }
+                } else {
+                    let m = Math.floor(diffSecs / 60);
+                    let s = diffSecs % 60;
+                    let displayM = m > 0 ? `${m}m ` : '';
+                    let displayS = `${s}s`;
+                    btn.innerHTML = `<i class="fa-solid fa-lock"></i> Terkunci (${displayM}${displayS})`;
+                }
+            }, 1000);
+            
+            // Trigger pertama kali agar tidak menunggu 1 detik
+            let nowInit = Date.now();
+            let diffInit = Math.ceil((unlockTimestamp - nowInit) / 1000);
+            if(diffInit > 0) {
+                let m = Math.floor(diffInit / 60);
+                let s = diffInit % 60;
+                btn.innerHTML = `<i class="fa-solid fa-lock"></i> Terkunci (${m > 0 ? m+'m ' : ''}${s}s)`;
+            }
+        }
+
+        async function catatGagalLogin(usrInput) {
+            if(!usrInput) return;
+            try {
+                let userRef = database.ref('users/' + usrInput);
+                let snap = await userRef.once('value');
+                if(snap.exists()) {
+                    let data = snap.val();
+                    let attempts = (data.failedAttempts || 0) + 1;
+                    let updates = { failedAttempts: attempts };
+                    
+                    if(attempts >= 5) {
+                        let lockTime = Date.now() + (15 * 60 * 1000); // Kunci 15 Menit
+                        updates.lockedUntil = lockTime;
+                        await userRef.update(updates);
+                        startCooldownTimer(lockTime);
+                        showToast("Terlalu banyak percobaan. Akun terkunci keamanan!");
+                        vibrateHeavy();
+                    } else {
+                        await userRef.update(updates);
+                        showToast(`Kata Sandi salah! Peringatan: Percobaan gagal ${attempts}/5`);
+                        vibrateHeavy();
+                        
+                        // Kembalikan tombol jika belum terkunci
+                        const btn = document.getElementById('btnLogin');
+                        btn.innerHTML = "Masuk"; btn.disabled = false;
+                    }
+                } else {
+                    showToast("Username ID tidak ditemukan di sistem!");
+                    vibrateHeavy();
+                    const btn = document.getElementById('btnLogin');
+                    btn.innerHTML = "Masuk"; btn.disabled = false;
+                }
+            } catch(e) {
+                showToast("Kesalahan sistem saat memvalidasi.");
+                const btn = document.getElementById('btnLogin');
+                btn.innerHTML = "Masuk"; btn.disabled = false;
+            }
         }
 
         // --- WEBAUTHN (BIOMETRIK) ---
@@ -328,13 +405,11 @@
             vibrateClick();
             if (window.location.protocol === 'file:') {
                 showToast("Gagal: Fitur Biometrik Asli wajib dibuka lewat link Internet (https), bukan file lokal.");
-                vibrateHeavy();
-                return;
+                vibrateHeavy(); return;
             }
             if (!window.PublicKeyCredential) {
                 showToast("Gagal: Browser/HP Anda tidak mendukung sistem keamanan ini.");
-                vibrateHeavy();
-                return;
+                vibrateHeavy(); return;
             }
 
             const storedId = localStorage.getItem('webAuthnId');
@@ -342,13 +417,10 @@
 
             if (!storedId || !storedUid) {
                 showToast("Silakan Login menggunakan Kata Sandi 1x untuk menautkan perangkat & sensor.");
-                vibrateHeavy();
-                return;
+                vibrateHeavy(); return;
             }
 
             try {
-                checkRateLimit(); 
-                
                 const challenge = new Uint8Array(32); window.crypto.getRandomValues(challenge);
                 const assertion = await navigator.credentials.get({
                     publicKey: {
@@ -371,23 +443,36 @@
                     const snapshot = await database.ref('users/' + storedUid).once('value');
                     if (snapshot.exists()) {
                         let dataAkun = snapshot.val();
-                        if (String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif') {
-                            showToast("Akun Anda telah diblokir."); 
-                            vibrateHeavy();
-                            return;
+                        
+                        // CEK STATUS LOCKOUT DARI SERVER
+                        if (dataAkun.lockedUntil && Date.now() < dataAkun.lockedUntil) {
+                            let timeLeft = Math.ceil((dataAkun.lockedUntil - Date.now()) / 60000);
+                            showToast(`Akses Ditolak: Akun Anda sedang terkunci. Coba lagi dalam ${timeLeft} menit.`);
+                            vibrateHeavy(); return;
                         }
 
+                        if (String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif') {
+                            showToast("Akses Ditolak: Akun Anda telah diblokir Admin."); 
+                            vibrateHeavy(); return;
+                        }
+
+                        // CEK DEVICE BINDING KETAT
                         let localDeviceId = localStorage.getItem('localDeviceId');
                         const boundDevice = dataAkun.BoundDevice;
                         if (boundDevice && boundDevice !== localDeviceId && dataAkun.Role !== 'Developer') {
                              showToast("Akses Ditolak: Perangkat tidak dikenali. Silakan gunakan HP Kasir resmi.");
-                             vibrateHeavy();
-                             return;
+                             vibrateHeavy(); return;
                         }
                         
-                        resetLoginAttempts();
+                        // Lolos Semua, Bersihkan Sesi dan Reset Failed Attempts
+                        await database.ref('users/' + storedUid).update({ failedAttempts: 0, lockedUntil: null, LastLogin: new Date().toLocaleString('id-ID') });
+                        
                         hardSessionCleanse();
                         
+                        // DAFTARKAN ULANG BIOMETRIK SESSION AGAR BISA DIPAKAI LAGI
+                        localStorage.setItem('webAuthnId', storedId);
+                        localStorage.setItem('webAuthnUid', storedUid);
+
                         localStorage.setItem('uid', storedUid);
                         localStorage.setItem('namaPengguna', dataAkun.NamaLengkap);
                         localStorage.setItem('hakAkses', dataAkun.Role);
@@ -406,8 +491,8 @@
                 }
             } catch (e) {
                 console.error("Biometrik gagal:", e);
-                incrementLoginAttempts();
-                showToast(e.message.includes('terkunci') ? e.message : "Verifikasi sensor dibatalkan atau tidak cocok.");
+                await catatGagalLogin(storedUid); // Biometrik gagal juga masuk hitungan
+                showToast("Verifikasi sensor wajah/sidik jari gagal atau dibatalkan.");
                 vibrateHeavy();
             }
         }
@@ -432,11 +517,17 @@
                  if(window.location.hash === '#logout') window.history.replaceState(null, null, window.location.pathname);
             }
 
+            // ✨ ANIMASI SPLASH KE LOGIN
             setTimeout(function() {
                 document.getElementById('splash-screen').style.opacity = '0';
                 document.getElementById('splash-screen').style.visibility = 'hidden';
+                
                 document.getElementById('login-screen').style.opacity = '1';
                 document.getElementById('login-screen').style.visibility = 'visible';
+                
+                // Memicu class animasi melayang (Slide-Up) dan Breathing Logo
+                document.querySelector('.login-container').classList.add('animate-slide-up');
+                document.querySelector('.logo-small').classList.add('animate-breathe');
             }, 2500);
         };
 
@@ -444,16 +535,10 @@
         const btnLogin = document.getElementById('btnLogin');
 
         loginForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            vibrateClick();
-            
+            e.preventDefault(); vibrateClick();
             if (!navigator.onLine) {
                  showToast("Koneksi terputus. Mohon periksa internet Anda.");
                  vibrateHeavy(); return;
-            }
-
-            try { checkRateLimit(); } catch (err) {
-                showToast(err.message); vibrateHeavy(); return;
             }
             
             btnLogin.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Memeriksa...';
@@ -467,19 +552,23 @@
                 const snapshot = await database.ref('users/' + usrInput).once('value');
                 
                 if (!snapshot.exists()) {
-                    incrementLoginAttempts();
-                    showToast("Username atau password salah!");
+                    showToast("Username ID tidak dikenali!");
                     vibrateHeavy(); btnLogin.innerHTML = "Masuk"; btnLogin.disabled = false; return;
                 }
                 
                 const dataAkun = snapshot.val();
-                const dbPassword = String(dataAkun.Password); 
                 
-                // PELONGGARAN SEMENTARA UNTUK PEMULIHAN SANDI LAMA
-                if (dbPassword !== hashedPassword && dbPassword !== pwdInput) {
-                    incrementLoginAttempts();
-                    showToast("Username atau password salah!");
-                    vibrateHeavy(); btnLogin.innerHTML = "Masuk"; btnLogin.disabled = false; return;
+                // --- VISUAL COOLDOWN RATE LIMITING ---
+                if (dataAkun.lockedUntil && Date.now() < dataAkun.lockedUntil) {
+                    startCooldownTimer(dataAkun.lockedUntil);
+                    showToast("Akses ditolak. Akun Anda sedang dalam masa penangguhan.");
+                    vibrateHeavy(); return;
+                }
+
+                const dbPassword = String(dataAkun.Password); 
+                if (dbPassword !== hashedPassword && dbPassword !== pwdInput) { // Fallback db lama
+                    await catatGagalLogin(usrInput);
+                    return; // Tombol direstore oleh fungsi catatGagalLogin
                 }
                 
                 if (String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif') {
@@ -487,7 +576,7 @@
                     vibrateHeavy(); btnLogin.innerHTML = "Masuk"; btnLogin.disabled = false; return;
                 }
 
-                // EKSEKUSI DEVICE BINDING
+                // --- PENGECEKAN DEVICE BINDING KETAT ---
                 let localDeviceId = localStorage.getItem('localDeviceId');
                 if (!localDeviceId) {
                     localDeviceId = 'DEV-' + new Date().getTime() + Math.floor(Math.random() * 1000);
@@ -502,9 +591,9 @@
                      await database.ref('users/' + usrInput).update({ BoundDevice: localDeviceId });
                 }
 
-                resetLoginAttempts();
-                
+                // Lolos Semua Syarat, Reset Log Percobaan & Lakukan Eksekusi Login
                 await database.ref('users/' + usrInput).update({
+                    failedAttempts: 0, lockedUntil: null,
                     LastLogin: new Date().toLocaleString('id-ID'),
                     LastLoginIP: 'Mobile-Client' 
                 });
@@ -513,6 +602,13 @@
                 
                 hardSessionCleanse();
                 
+                // Daftarkan ulang biometrik jika sukses login password
+                let storedId = localStorage.getItem('webAuthnId');
+                if(storedId) {
+                    localStorage.setItem('webAuthnId', storedId);
+                    localStorage.setItem('webAuthnUid', usrInput);
+                }
+
                 localStorage.setItem('usernameAsli', usrInput);
                 localStorage.setItem('namaPengguna', dataAkun.NamaLengkap);
                 localStorage.setItem('hakAkses', dataAkun.Role);
