@@ -15,6 +15,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@400;500;600;700&family=Amiri:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.min.css">
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="firebase-config.js"></script>
@@ -187,7 +189,7 @@
         .btn-tutup-popup:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); color: #06d16f; }
 
         /* ======================================================= */
-        /* ✨ FITUR BARU: SPEED DIAL (PANDUAN & LOGOUT) ✨ */
+        /* ✨ FITUR BARU: SPEED DIAL (TOUR & LOGOUT) ✨ */
         /* ======================================================= */
         .fab-container { position: fixed; bottom: 100px; right: 20px; z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 15px; }
         .fab-menu { display: flex; flex-direction: column; gap: 15px; opacity: 0; pointer-events: none; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
@@ -196,30 +198,25 @@
         .fab-item { width: 45px; height: 45px; border-radius: 50%; background: var(--bg-main); border: none; font-size: 16px; box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light); cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; }
         .fab-item:active { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); }
         .fab-item.btn-logout-fab { color: #ef4444; }
+        .fab-item.btn-tour-fab { color: #4facfe; }
         
         .fab-main { width: 55px; height: 55px; border-radius: 50%; background: var(--green-grad); border: none; color: white; font-size: 20px; box-shadow: 0 8px 15px rgba(6, 209, 111, 0.4); cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; }
         .fab-main:active { transform: scale(0.9); }
         .fab-main i { transition: 0.3s; }
         .fab-main.active i { transform: rotate(135deg); }
 
-        /* Modal Panduan */
-        .modal-panduan { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
-        .panduan-content { background: var(--bg-main); width: 100%; max-width: 500px; max-height: 85vh; border-radius: 25px; box-shadow: 10px 10px 30px rgba(0,0,0,0.3); overflow: hidden; display: flex; flex-direction: column; animation: slideUp 0.4s ease-out; }
-        .p-header { padding: 20px 25px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; display: flex; justify-content: space-between; align-items: center; }
-        .p-header h2 { margin: 0; font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 10px;}
-        .p-close { background: rgba(255,255,255,0.2); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 14px; transition: 0.2s;}
-        .p-close:active { transform: scale(0.8); }
-        
-        .p-body { padding: 20px; overflow-y: auto; color: var(--text-dark); }
-        .p-acc-item { margin-bottom: 15px; border-radius: 15px; background: var(--bg-main); box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light); overflow: hidden; }
-        .p-acc-btn { width: 100%; text-align: left; padding: 15px 20px; background: transparent; border: none; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 12px; color: var(--text-dark); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .p-acc-btn i { color: #06d16f; transition: 0.3s; }
-        .p-acc-content { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; font-size: 11px; line-height: 1.6; color: var(--text-muted); }
-        .p-acc-content.open { padding: 0 20px 20px 20px; max-height: 500px; }
-        .p-acc-content strong { color: var(--text-dark); }
-        
-        [data-theme="dark"] .p-acc-item { background: var(--bg-main); box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light); }
-        [data-theme="dark"] .p-acc-content strong { color: #4facfe; }
+        /* Kustomisasi Tampilan Intro.js Neumorphism */
+        .introjs-tooltip { background: var(--bg-main) !important; color: var(--text-dark) !important; border-radius: 20px !important; box-shadow: 10px 10px 30px rgba(0,0,0,0.3) !important; font-family: 'Poppins', sans-serif !important; border: 1px solid rgba(255,255,255,0.2); }
+        [data-theme="dark"] .introjs-tooltip { background: #2d3748 !important; color: #f0f4f8 !important; border: 1px solid #4a5568;}
+        .introjs-tooltiptitle { font-family: 'Montserrat', sans-serif !important; font-weight: 800 !important; color: #06d16f !important; font-size: 16px !important; margin-bottom: 5px !important;}
+        .introjs-tooltiptext { font-size: 12px !important; line-height: 1.5 !important; font-weight: 500 !important;}
+        .introjs-button { border-radius: 10px !important; background: var(--bg-main) !important; border: none !important; color: var(--text-dark) !important; font-family: 'Poppins', sans-serif !important; font-weight: 700 !important; font-size: 11px !important; box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light) !important; text-shadow: none !important; padding: 8px 12px !important;}
+        .introjs-button:active { box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light) !important; color: #06d16f !important;}
+        .introjs-nextbutton { background: var(--green-grad) !important; color: white !important; box-shadow: 3px 3px 8px rgba(6, 209, 111, 0.4) !important;}
+        .introjs-nextbutton:active { box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2) !important; color: white !important;}
+        .introjs-bullets ul li a { background: #cbd5e1 !important; }
+        .introjs-bullets ul li a.active { background: #06d16f !important; box-shadow: 0 0 5px rgba(6, 209, 111, 0.5) !important;}
+        .introjs-helperLayer { background-color: rgba(255,255,255,0.1); border-radius: 16px; border: 2px solid #06d16f; box-shadow: 0 0 15px rgba(6, 209, 111, 0.5); }
     </style>
 </head>
 <body>
@@ -239,7 +236,7 @@
     <div id="main-content">
         
         <div class="header-top">
-            <div class="greeting">
+            <div class="greeting" id="tour-profil">
                 <img src="Logo-Favicon.png" alt="Logo" class="header-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3353/3353138.png'">
                 <div>
                     <p class="greeting-salam" id="greeting-salam">Assalamu'alaikum,</p>
@@ -247,13 +244,13 @@
                 </div>
             </div>
             
-            <a href="live-chat.html" class="header-chat-btn" title="Pusat Komunikasi">
+            <a href="live-chat.html" class="header-chat-btn" title="Pusat Komunikasi" id="tour-chat">
                 <i class="fa-solid fa-comments"></i>
                 <div class="chat-badge" id="chatBadgeUnread"></div>
             </a>
         </div>
 
-        <div class="islamic-widget-color">
+        <div class="islamic-widget-color" id="tour-astronomi">
             <div class="widget-date-badge">
                 <i class="fa-regular fa-calendar-days"></i> <span id="dynamic-date">...</span> / <span id="hijri-date">...</span>
             </div>
@@ -361,79 +358,99 @@
             <button class="fab-item btn-logout-fab" onclick="logoutFAB()" title="Keluar Sistem">
                 <i class="fa-solid fa-power-off"></i>
             </button>
-            <button class="fab-item" onclick="bukaPanduan()" title="Buku Panduan">
-                <i class="fa-solid fa-book-open" style="color: #4facfe;"></i>
+            <button class="fab-item btn-tour-fab" onclick="mulaiTourInteraktif()" title="Mulai Panduan Tour">
+                <i class="fa-solid fa-map-location-dot"></i>
             </button>
         </div>
-        <button class="fab-main" id="fabMain" onclick="toggleFAB()">
+        <button class="fab-main" id="fabMain" onclick="toggleFAB()" title="Opsi Cepat">
             <i class="fa-solid fa-plus"></i>
         </button>
-    </div>
-
-    <div class="modal-panduan" id="modalPanduan">
-        <div class="panduan-content">
-            <div class="p-header">
-                <h2><i class="fa-solid fa-book-journal-whills"></i> Pusat Panduan</h2>
-                <button class="p-close" onclick="tutupPanduan()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="p-body">
-                
-                <div class="p-acc-item">
-                    <button class="p-acc-btn" onclick="toggleAcc(this)">1. Keamanan & Login <i class="fa-solid fa-chevron-down"></i></button>
-                    <div class="p-acc-content">
-                        <strong>Login Biometrik:</strong> Aktifkan di menu Profil. Anda bisa login menggunakan Sidik Jari atau Sensor Wajah tanpa mengetik sandi.<br><br>
-                        <strong>Sistem Anti-Hacker:</strong> Jika salah sandi 5x, akun akan terkunci merah selama 15 menit otomatis.<br><br>
-                        <strong>Logout Perangkat Lain:</strong> Di menu Profil, Anda bisa mengeluarkan akun Anda dari HP/Laptop lain secara paksa jika lupa logout.
-                    </div>
-                </div>
-
-                <div class="p-acc-item">
-                    <button class="p-acc-btn" onclick="toggleAcc(this)">2. Kasir Pembayaran <i class="fa-solid fa-chevron-down"></i></button>
-                    <div class="p-acc-content">
-                        <strong>Infaq Otomatis:</strong> Jika kasir mengetik nominal bayar "Lebih Besar" dari jumlah tagihan aslinya, sistem akan otomatis mencatat sisa kelebihan uang tersebut ke dalam pos Infaq/Sedekah.<br><br>
-                        <strong>3 Warna Nota:</strong> Kuitansi akan berwarna Oranye (Angsuran), Hijau (Lunas Pas), atau Biru (Lunas + Ada Infaq).<br><br>
-                        <strong>Kirim WA:</strong> Masukkan nomor WA di bawah kuitansi lalu klik kirim untuk meneruskan nota digital ke wali santri.
-                    </div>
-                </div>
-
-                <div class="p-acc-item">
-                    <button class="p-acc-btn" onclick="toggleAcc(this)">3. Buku Kas & Rekap <i class="fa-solid fa-chevron-down"></i></button>
-                    <div class="p-acc-content">
-                        <strong>Anti-Lemot (Infinite Scroll):</strong> Buku Kas memuat data 50 baris pertama. Scroll terus ke bawah layar untuk memuat data-data lama secara otomatis tanpa membuat HP hang.<br><br>
-                        <strong>Filter Tanggal:</strong> Gunakan "Dari Tanggal" dan "Sampai Tanggal" untuk melacak transaksi khusus di rentang waktu tertentu.<br><br>
-                        <strong>Cetak Anti-Virus:</strong> Ekspor ke Excel sudah dilindungi dari script berbahaya (CSV Injection).
-                    </div>
-                </div>
-
-                <div class="p-acc-item">
-                    <button class="p-acc-btn" onclick="toggleAcc(this)">4. Data & Mutasi Santri <i class="fa-solid fa-chevron-down"></i></button>
-                    <div class="p-acc-content">
-                        <strong>Smart Input:</strong> Saat menambah santri, ketik nama dengan huruf kecil semua tidak masalah, sistem akan otomatis mengubah huruf awalnya menjadi Kapital (Ahmad Fauzi).<br><br>
-                        <strong>Format WA:</strong> Ketik awalan 08x atau 8x, sistem akan otomatis menstandarkannya menjadi 628x (Standar Internasional).<br><br>
-                        <strong>Mutasi Massal:</strong> Buka tab Mutasi, pilih filter kelas (Misal: 1 Ibtidaiyah), centang semua anak yang lulus, lalu setel pindah ke kelas (Misal: 2 Ibtidaiyah). Klik proses, ratusan anak pindah kelas dalam 1 detik.
-                    </div>
-                </div>
-
-            </div>
-        </div>
     </div>
 
     <div class="nav-wrapper">
         <div class="bottom-nav" id="bottomNavContainer">
             <div class="nav-indicator" id="navIndicator"></div>
-            <a href="#" class="nav-item" onclick="navSlide(event, this, 'profil.html')">
+            <a href="#" class="nav-item" onclick="navSlide(event, this, 'profil.html')" id="tour-nav-profil">
                 <i class="fa-solid fa-user"></i><span>Profil</span>
             </a>
             <a href="#" class="nav-item active" onclick="navSlide(event, this, 'beranda.html')">
                 <i class="fa-solid fa-house"></i><span>Beranda</span>
             </a>
-            <a href="#" class="nav-item" onclick="navSlide(event, this, 'dashboard.html')">
+            <a href="#" class="nav-item" onclick="navSlide(event, this, 'dashboard.html')" id="tour-nav-dash">
                 <i class="fa-solid fa-chart-pie"></i><span>Dashboard</span>
             </a>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
+
     <script>
+        // --- LOGIKA TOUR INTERAKTIF ---
+        function mulaiTourInteraktif() {
+            vibrateClick();
+            toggleFAB(); // Tutup speed dial jika masih terbuka
+            
+            // Konfigurasi Tour
+            introJs().setOptions({
+                steps: [
+                    {
+                        title: 'Ahlan Wa Sahlan! 👋',
+                        intro: 'Mari ikuti tur singkat untuk mengenal fitur-fitur andalan di Beranda ini. Klik Lanjut untuk memulai.'
+                    },
+                    {
+                        element: document.getElementById('tour-profil'),
+                        title: 'Identitas & Sesi',
+                        intro: 'Ini adalah akun Anda yang sedang aktif. Akses Administrator akan membuka semua menu yang terkunci.',
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.getElementById('tour-chat'),
+                        title: 'Live Chat 💬',
+                        intro: 'Pusat komunikasi antar petugas. Titik merah akan muncul di sini jika ada pesan baru.',
+                        position: 'left'
+                    },
+                    {
+                        element: document.getElementById('tour-astronomi'),
+                        title: 'Waktu Astronomi ⏰',
+                        intro: 'Widget ini menampilkan Kalender Hijriyah dan Jam Istiwa secara real-time berdasarkan lokasi GPS Anda.'
+                    },
+                    {
+                        element: document.getElementById('menuDataSantri'),
+                        title: 'Buku Induk & Mutasi 📖',
+                        intro: 'Kelola data santri, dan gunakan fitur Mutasi Massal di dalamnya untuk menaikkan ratusan santri dalam 1 detik.'
+                    },
+                    {
+                        element: document.getElementById('menuPembayaran'),
+                        title: 'Kasir Pembayaran 💰',
+                        intro: 'Pusat operasional Anda. Dilengkapi sistem Infaq Otomatis, 3 warna Kuitansi, dan bisa dikirim via WA.'
+                    },
+                    {
+                        element: document.getElementById('menuBukuKas'),
+                        title: 'Buku Kas Harian 📘',
+                        intro: 'Lihat seluruh arus masuk/keluar. Dilengkapi fitur Infinite Scroll agar HP Anda tidak lemot saat memuat ribuan data.'
+                    },
+                    {
+                        element: document.getElementById('menuRekapPiutang'),
+                        title: 'Bom Nuklir WA 🚀',
+                        intro: 'Menu Pimpinan untuk menyortir tunggakan ekstrem dan mengirim ratusan pesan tagihan ke WA wali santri sekaligus.'
+                    },
+                    {
+                        element: document.getElementById('fabMain'),
+                        title: 'Akses Cepat ⚡',
+                        intro: 'Gunakan tombol ini kapan saja untuk mengulang tur ini atau mengeluarkan akun (Logout).'
+                    }
+                ],
+                nextLabel: 'Lanjut',
+                prevLabel: 'Kembali',
+                doneLabel: 'Selesai',
+                skipLabel: 'Lewati',
+                showStepNumbers: false,
+                showBullets: true,
+                overlayOpacity: 0.75,
+                exitOnOverlayClick: false
+            }).start();
+        }
+
         // --- PENGAMANAN UI ---
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.onkeydown = function(e) {
@@ -445,8 +462,7 @@
 
         function showToast(msg) {
             let toast = document.getElementById("toast"); 
-            // Aman XSS dari helper global (jika sdh ada di firebase-config)
-            document.getElementById("toastMsg").innerText = msg; 
+            document.getElementById("toastMsg").innerText = msg; // Aman XSS
             toast.className = "show"; 
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }
@@ -496,14 +512,10 @@
                 tutupPopupBismillah();
                 window.history.pushState(null, "", window.location.href);
             }
-            if (document.getElementById('modalPanduan').style.display === 'flex') {
-                tutupPanduan();
-                window.history.pushState(null, "", window.location.href);
-            }
         };
 
         // =========================================================================
-        // PERBAIKAN CELAH #2: OTORISASI SERVER-SIDE (Menggantikan LocalStorage)
+        // PERBAIKAN CELAH #2: OTORISASI SERVER-SIDE
         // =========================================================================
         function verifikasiOtorisasiServer() {
             if (!navigator.onLine) {
@@ -578,7 +590,7 @@
         }
 
         // =========================================================================
-        // LOGIKA SPEED DIAL (PANDUAN & LOGOUT)
+        // LOGIKA SPEED DIAL (TOUR & LOGOUT)
         // =========================================================================
         function toggleFAB() {
             vibrateClick();
@@ -593,36 +605,6 @@
                 localStorage.removeItem('hakAkses'); 
                 localStorage.removeItem('usernameAsli'); 
                 window.location.href = 'index.html#logout'; 
-            }
-        }
-
-        function bukaPanduan() {
-            vibrateClick();
-            toggleFAB(); // Tutup speed dial
-            document.getElementById('modalPanduan').style.display = 'flex';
-            window.history.pushState({ modalOpen: true }, "", window.location.href);
-        }
-
-        function tutupPanduan() {
-            vibrateClick();
-            document.getElementById('modalPanduan').style.display = 'none';
-        }
-
-        function toggleAcc(btn) {
-            vibrateClick();
-            let content = btn.nextElementSibling;
-            let icon = btn.querySelector('i');
-            
-            document.querySelectorAll('.p-acc-content').forEach(el => {
-                if(el !== content) { el.classList.remove('open'); el.previousElementSibling.querySelector('i').style.transform = 'rotate(0deg)'; }
-            });
-
-            if (content.classList.contains('open')) {
-                content.classList.remove('open');
-                icon.style.transform = 'rotate(0deg)';
-            } else {
-                content.classList.add('open');
-                icon.style.transform = 'rotate(180deg)';
             }
         }
         // =========================================================================
