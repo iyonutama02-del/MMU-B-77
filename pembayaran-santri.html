@@ -169,7 +169,9 @@
                 <input type="text" class="input-edit" id="cariSantri" placeholder="Ketik nama untuk mencari cepat..." onkeyup="cariData()" autocomplete="off">
                 <div class="sug-box" id="sugBox"></div>
             </div>
-            <div style="text-align:center; font-size:10px; color:var(--c-green); font-weight:700; margin-top:15px;" id="statusSync"><i class="fa-solid fa-link"></i> Sinkronisasi Mutlak Database Aktif.</div>
+            <div style="text-align:center; font-size:10px; color:var(--c-green); font-weight:700; margin-top:15px;" id="statusSync">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Mengecek Sinkronisasi Waktu Global...
+            </div>
         </div>
 
         <div id="areaDaftarSantri">
@@ -241,6 +243,10 @@
         let idSantriAktif = null;
         let roleAktif = ''; 
         
+        // ✨ VARIABEL WAKTU GLOBAL (Real-time dari Server)
+        let globalTA = "Belum Disetel";
+        let globalBulan = "Belum Disetel";
+        
         const formatRp = (n) => 'Rp ' + parseInt(n || 0).toLocaleString('id-ID');
         
         function showToast(msg) {
@@ -289,7 +295,7 @@
         }
 
         // =========================================================================
-        // PERBAIKAN CELAH #2: OTORISASI SERVER-SIDE EKSKLUSIF KASIR TRANSAKSI
+        // OTORISASI SERVER-SIDE EKSKLUSIF KASIR TRANSAKSI
         // =========================================================================
         async function verifikasiOtorisasiServer() {
             if (!navigator.onLine) {
@@ -316,7 +322,6 @@
 
                 const validRole = dataAkun.Role || 'Operator';
                 
-                // Akun Demo diblokir dari area transaksi
                 if(validRole === 'Demo') {
                     alert("🔒 AKSES DIBATASI: Akun Demo tidak bisa mengakses Kasir Transaksi.");
                     window.location.replace('beranda.html');
@@ -343,11 +348,31 @@
             let user = localStorage.getItem('namaPengguna');
             if(!user) window.location.href = 'index.html';
 
-            let ta = localStorage.getItem('globalTahunAjaran');
-            let bln = localStorage.getItem('globalBulanAktif');
-            if(!ta || !bln || ta === "Belum Disetel" || bln === "Belum Disetel") {
-                showToast("⚠️ Peringatan: Waktu Global belum disetel Pimpinan!"); vibrateHeavy();
-            }
+            // ✨ RADAR WAKTU GLOBAL DARI SERVER
+            database.ref('pengaturan_global').on('value', snap => {
+                if(snap.exists()) {
+                    let config = snap.val();
+                    globalTA = config.Tahun_Ajaran || "Belum Disetel";
+                    globalBulan = config.Bulan_Aktif || "Belum Disetel";
+                    
+                    // Backup ke LocalStorage
+                    localStorage.setItem('globalTahunAjaran', globalTA);
+                    localStorage.setItem('globalBulanAktif', globalBulan);
+                    
+                    let statusEl = document.getElementById('statusSync');
+                    if (globalTA === "Belum Disetel" || globalBulan === "Belum Disetel") {
+                        statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--c-red);"></i> Peringatan: Waktu Global Belum Disetel Pimpinan!`;
+                        showToast("⚠️ Peringatan: Waktu Global belum disetel Pimpinan!");
+                        vibrateHeavy();
+                    } else {
+                        statusEl.innerHTML = `<i class="fa-solid fa-link"></i> Periode Aktif: ${escapeHTML(globalBulan)} - ${escapeHTML(globalTA)}`;
+                        statusEl.style.color = "var(--c-green)";
+                    }
+                    
+                    // Jika layar tagihan sedang terbuka, render ulang untuk mengaktifkan/mematikan tombol Proses
+                    if(idSantriAktif) renderTagihan(idSantriAktif);
+                }
+            });
 
             database.ref('santri').on('value', snap => {
                 dbSantriUtama = []; 
@@ -504,9 +529,9 @@
 
             tagihanSiswa.forEach(t => {
                 let sisa = t.Status === 'Cicilan' ? (t.Nominal - (t.Terbayar || 0)) : t.Nominal;
-                let ta_global = localStorage.getItem('globalTahunAjaran') || "Belum Disetel";
-                let bln_global = localStorage.getItem('globalBulanAktif') || "Belum Disetel";
-                let disableBtn = (ta_global === "Belum Disetel" || bln_global === "Belum Disetel") ? 'disabled' : '';
+                
+                // Gunakan Variable Server-Side Realtime
+                let disableBtn = (globalTA === "Belum Disetel" || globalBulan === "Belum Disetel") ? 'disabled' : '';
                 
                 // XSS Sanitizer pada render HTML Detail Tagihan
                 let safeID = escapeHTML(t.ID_Tagihan);
@@ -549,10 +574,8 @@
         async function eksekusiBayar(idTagihan, tagihanHarusDibayar, tglBuat) {
             vibrateClick();
             
-            let ta_global = localStorage.getItem('globalTahunAjaran') || "Belum Disetel";
-            let bln_global = localStorage.getItem('globalBulanAktif') || "Belum Disetel";
-
-            if (ta_global === "Belum Disetel" || bln_global === "Belum Disetel") {
+            // Gunakan Variable Server-Side Realtime
+            if (globalTA === "Belum Disetel" || globalBulan === "Belum Disetel") {
                 showToast("Akses Ditangguhkan: Pimpinan belum menyetel Waktu Global!"); vibrateHeavy(); return;
             }
 
@@ -601,7 +624,7 @@
                 let waktu = new Date().toLocaleString('id-ID');
                 let kasir = localStorage.getItem('namaPengguna') || 'Kasir';
 
-                let ta_angka = ta_global.replace(/\D/g, '').slice(-4);
+                let ta_angka = globalTA.replace(/\D/g, '').slice(-4);
                 let smartID = `PAY-${ta_angka}-${ts}`;
 
                 // --- PENENTUAN 3 TEMA KUITANSI ---
@@ -642,7 +665,7 @@
                     ID_Transaksi: smartID, Waktu: waktu, Kategori_Nama: tgh.Nama_Pos,
                     Nominal: inputBayar, Sumber: namaAsli, Keterangan: ketKas,
                     Admin_Penerima: kasir, Jenis: 'MASUK',
-                    Tahun_Ajaran: ta_global, Bulan_Hijriyah: bln_global
+                    Tahun_Ajaran: globalTA, Bulan_Hijriyah: globalBulan
                 };
 
                 updates[`buku_kas/${smartID}`] = dataMasuk;
@@ -658,7 +681,7 @@
                     updates[`tagihan/${idTagihan}/Tgl_Lunas`] = waktu;
                     updates[`tagihan/${idTagihan}/Kasir`] = kasir;
                     updates[`tagihan/${idTagihan}/Terbayar`] = sdhBayar;
-                    updates[`tagihan/${idTagihan}/Tahun_Ajaran_Lunas`] = ta_global; 
+                    updates[`tagihan/${idTagihan}/Tahun_Ajaran_Lunas`] = globalTA; 
                     updates[`tagihan/${idTagihan}/Histori_Cicilan`] = historiBaru;
                 } else {
                     updates[`tagihan/${idTagihan}/Status`] = 'Cicilan';
