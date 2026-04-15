@@ -385,72 +385,71 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
 
     <script>
-        // --- LOGIKA TOUR INTERAKTIF ---
+// --- LOGIKA TOUR INTERAKTIF (PANDUAN DETAIL) ---
         function mulaiTourInteraktif() {
             vibrateClick();
             toggleFAB(); // Tutup speed dial jika masih terbuka
             
-            // Konfigurasi Tour
+            // Konfigurasi Tour dengan Teks Detail & Mudah Dipahami
             introJs().setOptions({
                 steps: [
                     {
                         title: 'Ahlan Wa Sahlan! 👋',
-                        intro: 'Mari ikuti tur singkat untuk mengenal fitur-fitur andalan di Beranda ini. Klik Lanjut untuk memulai.'
+                        intro: 'Selamat datang di Sistem Keuangan MMU B-77!<br><br>Mari ikuti tur singkat ini untuk mengenal fitur-fitur canggih yang akan mempermudah tugas Anda sehari-hari. Klik tombol <b>Lanjut</b> untuk mulai menjelajah.'
                     },
                     {
                         element: document.getElementById('tour-profil'),
-                        title: 'Identitas & Sesi',
-                        intro: 'Ini adalah akun Anda yang sedang aktif. Akses Administrator akan membuka semua menu yang terkunci.',
+                        title: 'Identitas & Hak Akses 👤',
+                        intro: 'Di sini terlihat siapa yang sedang aktif.<br><br><b>Cara Kerjanya:</b> Sistem ini pintar! Menu yang bisa dibuka akan menyesuaikan dengan jabatan Anda. Jika ada menu ber-gembok merah, berarti itu menu rahasia khusus untuk Pimpinan/Admin.',
                         position: 'bottom'
                     },
                     {
                         element: document.getElementById('tour-chat'),
-                        title: 'Live Chat 💬',
-                        intro: 'Pusat komunikasi antar petugas. Titik merah akan muncul di sini jika ada pesan baru.',
+                        title: 'Pusat Komunikasi (Live Chat) 💬',
+                        intro: 'Butuh kordinasi cepat dengan kasir lain atau pimpinan? Klik ikon ini!<br><br><b>Fungsinya:</b> Mirip seperti grup WhatsApp. Kalau ada pesan masuk yang belum Anda baca, akan muncul titik merah kecil agar Anda tidak ketinggalan informasi penting.',
                         position: 'left'
                     },
                     {
                         element: document.getElementById('tour-astronomi'),
-                        title: 'Waktu Astronomi ⏰',
-                        intro: 'Widget ini menampilkan Kalender Hijriyah dan Jam Istiwa secara real-time berdasarkan lokasi GPS Anda.'
+                        title: 'Jam & Kalender Akurat ⏰',
+                        intro: 'Bukan sekadar jam biasa!<br><br><b>Keunggulannya:</b> Widget ini otomatis menyinkronkan Kalender Hijriyah dan Jam Istiwa (Waktu Matahari) berdasarkan pelacak lokasi GPS madrasah kita. Waktu transaksi akan selalu dicatat dengan presisi tinggi.'
                     },
                     {
                         element: document.getElementById('menuDataSantri'),
-                        title: 'Buku Induk & Mutasi 📖',
-                        intro: 'Kelola data santri, dan gunakan fitur Mutasi Massal di dalamnya untuk menaikkan ratusan santri dalam 1 detik.'
+                        title: 'Kelola Data & Mutasi Massal 📖',
+                        intro: 'Ini adalah buku induk digital kita.<br><br><b>Fitur Ajaib:</b> Saat menambah santri, ketik nama pakai huruf kecil semua tidak masalah, sistem otomatis merapikannya. Dan di akhir tahun ajaran, Anda bisa memakai fitur <b>Mutasi Massal</b> untuk menaikkan ratusan anak ke kelas baru hanya dalam 1 detik!'
                     },
                     {
                         element: document.getElementById('menuPembayaran'),
-                        title: 'Kasir Pembayaran 💰',
-                        intro: 'Pusat operasional Anda. Dilengkapi sistem Infaq Otomatis, 3 warna Kuitansi, dan bisa dikirim via WA.'
+                        title: 'Kasir Cerdas & Infaq Otomatis 💰',
+                        intro: 'Pusat penerimaan uang! Cara pakainya mudah: cari nama santri, lalu masukkan nominal bayar.<br><br><b>Fitur Keren:</b> Jika wali santri membayar <i>lebih</i> dari tagihannya, sistem akan otomatis menawari sisa uangnya untuk dimasukkan ke pos Infaq/Sedekah. Kuitansinya juga bisa dikirim langsung ke WA wali santri!'
                     },
                     {
                         element: document.getElementById('menuBukuKas'),
-                        title: 'Buku Kas Harian 📘',
-                        intro: 'Lihat seluruh arus masuk/keluar. Dilengkapi fitur Infinite Scroll agar HP Anda tidak lemot saat memuat ribuan data.'
+                        title: 'Buku Kas (Anti-Lemot) 📘',
+                        intro: 'Semua uang masuk & keluar tercatat rapi di sini.<br><br><b>Cara Pakainya:</b> Scroll (geser) layar terus ke bawah untuk melihat data lama. Sistem ini <i>Anti-Lemot</i> karena memuat data sedikit demi sedikit walau jumlahnya puluhan ribu. Laporan juga bisa diunduh ke PDF & Excel yang sudah kebal virus!'
                     },
                     {
                         element: document.getElementById('menuRekapPiutang'),
-                        title: 'Bom Nuklir WA 🚀',
-                        intro: 'Menu Pimpinan untuk menyortir tunggakan ekstrem dan mengirim ratusan pesan tagihan ke WA wali santri sekaligus.'
+                        title: 'Broadcast Tagihan WA 🚀',
+                        intro: 'Menu andalan Pimpinan!<br><br><b>Cara Pakainya:</b> Buka menu ini, filter santri yang nunggak lebih dari 3 bulan (Ekstrem). Centang nama-nama mereka, lalu klik "Kirim Broadcast". Sistem akan otomatis mengetikkan rincian utang dan mengirimkannya ke WA wali santri masing-masing secara beruntun.'
                     },
                     {
                         element: document.getElementById('fabMain'),
-                        title: 'Akses Cepat ⚡',
-                        intro: 'Gunakan tombol ini kapan saja untuk mengulang tur ini atau mengeluarkan akun (Logout).'
+                        title: 'Tombol Akses Cepat ⚡',
+                        intro: 'Tombol melayang ini akan selalu setia menemani Anda.<br><br>Klik tanda plus (+) ini kapan saja jika Anda ingin memutar ulang panduan ini, atau jika Anda ingin Keluar (Logout) dari aplikasi dengan aman.<br><br><b>Selamat bertugas!</b>'
                     }
                 ],
                 nextLabel: 'Lanjut',
                 prevLabel: 'Kembali',
-                doneLabel: 'Selesai',
+                doneLabel: 'Mulai Bekerja',
                 skipLabel: 'Lewati',
                 showStepNumbers: false,
                 showBullets: true,
-                overlayOpacity: 0.75,
-                exitOnOverlayClick: false
+                overlayOpacity: 0.8, // Sedikit lebih gelap agar fokus
+                exitOnOverlayClick: false // Mencegah tertutup jika tidak sengaja klik luar
             }).start();
         }
-
         // --- PENGAMANAN UI ---
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.onkeydown = function(e) {
