@@ -212,20 +212,6 @@
         </div>
 
         <div class="menu-section">
-            <div class="section-title" style="color: #ef4444;"><i class="fa-solid fa-shield-halved"></i> Kontrol Sesi Keamanan</div>
-            <div class="menu-item" onclick="logoutPerangkatLain()">
-                <div class="menu-info">
-                    <div class="menu-icon" style="color: #ef4444;"><i class="fa-solid fa-mobile-screen"></i></div>
-                    <div class="menu-text">
-                        <h4>Logout Paksa Perangkat Lain</h4>
-                        <p>Keluarkan akun ini dari HP/Laptop lain</p>
-                    </div>
-                </div>
-                <div class="menu-action"><i class="fa-solid fa-angle-right"></i></div>
-            </div>
-        </div>
-
-        <div class="menu-section">
             <div class="section-title">Pengaturan Tampilan</div>
             <div class="menu-item" style="cursor: default;">
                 <div class="menu-info">
@@ -598,9 +584,9 @@
 
                 let data = snapshot.val();
                 
-                // MULTI-DEVICE LOGOUT CHECK
+                // MULTI-DEVICE LOGOUT (Passive Check via Firebase if triggered from somewhere else)
                 if(data.forceLogout && data.forceLogout > (Date.now() - 60000)) {
-                    keluarSistemPaksa("Sesi Anda telah diakhiri dari perangkat lain."); return;
+                    keluarSistemPaksa("Sesi Anda telah diakhiri."); return;
                 }
                 
                 if(String(data.Status || data.status).toLowerCase() === 'nonaktif') {
@@ -625,7 +611,7 @@
                 document.getElementById('jabatanTampil').innerText = jabatan;
 
                 // LOGIKA AVATAR DINAMIS
-                let cloudFoto = data.FotoProfil; // Base64 aman
+                let cloudFoto = data.FotoProfil; 
                 let imgEl = document.getElementById('imgProfil');
                 let initialEl = document.getElementById('initialAvatar');
                 let ikonEl = document.getElementById('ikonDefault');
@@ -657,22 +643,6 @@
             vibrateHeavy(); alert(pesan);
             localStorage.removeItem('namaPengguna'); localStorage.removeItem('hakAkses'); localStorage.removeItem('usernameAsli'); 
             window.location.href = 'index.html'; 
-        }
-
-        // --- ✨ FITUR BARU: MULTI-DEVICE LOGOUT ---
-        async function logoutPerangkatLain() {
-            vibrateHeavy();
-            if(!navigator.onLine) { showToast("Anda harus terhubung ke internet."); return; }
-            if(!confirm("Yakin ingin mengeluarkan akun Anda dari semua HP dan Komputer lain? (Anda harus login ulang di perangkat ini juga)")) return;
-            
-            try {
-                // Menambahkan flag forceLogout dengan timestamp saat ini
-                await database.ref('users/' + userAsliFirebase).update({
-                    forceLogout: firebase.database.ServerValue.TIMESTAMP
-                });
-                showToast("Berhasil! Semua perangkat lain akan segera keluar otomatis.");
-                setTimeout(() => { keluarSistemManual(); }, 2000);
-            } catch(e) { showToast("Gagal mengirim perintah ke server."); }
         }
 
         // --- MINI DASHBOARD LOGIC (STATISTIK KASIR) ---
