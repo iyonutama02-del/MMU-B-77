@@ -1,4 +1,7 @@
-const CACHE_NAME = 'keuangan-mmu-b77-v2'; // Temuan #10: Versi di-bump ke v2
+// sw.js
+// KONFIGURASI SERVICE WORKER - PWA ENTERPRISE B-77
+
+const CACHE_NAME = 'keuangan-mmu-b77-v3-Enterprise'; // BUMP VERSI KE V3 (Memaksa HP Kasir Update Total)
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -7,50 +10,73 @@ const ASSETS_TO_CACHE = [
   '/profil.html',
   '/data-santri.html',
   '/pos-keuangan.html',
-  '/manajemen-tagihan.html',
-  '/pembayaran-santri.html',
   '/transaksi-kas.html',
   '/buku-kas.html',
   '/rekap-piutang.html',
-  '/tutup-buku.html',
-  '/pengaturan.html',
+  '/live-chat.html', // Tambahan file yang sudah kita operasi
   '/firebase-config.js',
   '/manifest.json',
   '/Logo-Favicon.png',
-  '/Icon-Aplikasi.png',
   '/Lambang-Keuangan.png'
-  // Temuan #7: Seluruh halaman aplikasi sekarang masuk ke dalam Cache (Offline Mode)
 ];
 
-// Install Service Worker & Simpan Cache
+// 1. Install Service Worker & Simpan Cache Inti
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
+      console.log('[ServiceWorker] Mengunduh aset versi terbaru...');
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
+  // Memaksa SW baru segera terinstal tanpa menunggu tab ditutup
   self.skipWaiting();
 });
 
-// Hapus Cache Lama jika ada versi baru
+// 2. Hapus Cache Lama (Pembersihan Sisa-sisa File Usang)
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
         keys.map(key => {
-          if (key !== CACHE_NAME) return caches.delete(key);
+          if (key !== CACHE_NAME) {
+            console.log('[ServiceWorker] Menghapus cache usang:', key);
+            return caches.delete(key);
+          }
         })
       );
     })
   );
+  // Memaksa kontrol langsung ke halaman yang sedang terbuka
   self.clients.claim();
 });
 
-// Strategi: Tarik dari Internet dulu, kalau putus baru ambil dari Memori HP (Offline Mode)
+// 3. Strategi: Network First dengan Dynamic Caching (Anti-Lemot & Anti-Kudet)
 self.addEventListener('fetch', event => {
+  // Abaikan request dari ekstensi chrome atau API eksternal yang tidak perlu dicache
+  if (!event.request.url.startsWith(self.location.origin)) return;
+
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
-    })
+    fetch(event.request)
+      .then(response => {
+        // Jika berhasil ambil dari server, simpan/update ke Cache (Dynamic Caching)
+        if (event.request.method === 'GET' && response.status === 200) {
+          let responseClone = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return response;
+      })
+      .catch(() => {
+        // Jika sedang OFFLINE, ambil dari Cache memori HP
+        return caches.match(event.request);
+      })
   );
+});
+
+// 4. Listener untuk Force Update dari Client (HTML)
+self.addEventListener('message', event => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
