@@ -160,7 +160,7 @@
         /* --- VISUAL LOCK (SATPAM SERVER) --- */
         .locked-menu { opacity: 0.45; filter: grayscale(80%); cursor: not-allowed !important; }
         .lock-badge { position: absolute; top: -6px; right: -6px; background: var(--bg-main); color: #ff4757; border-radius: 50%; padding: 5px; font-size: 10px; box-shadow: 2px 2px 5px var(--shadow-dark), -2px -2px 5px var(--shadow-light); display: none;}
-        .locked-menu .lock-badge { display: block; } /* Ditampilkan hanya jika ada class locked-menu */
+        .locked-menu .lock-badge { display: block; }
 
         .footer-text { text-align: center; margin: 30px 0 20px; font-size: 10px; color: var(--text-muted); font-weight: 500; padding: 0 20px; line-height: 1.5; }
 
@@ -185,6 +185,41 @@
         .bismillah-arab { font-family: 'Amiri', serif; font-size: 30px; white-space: nowrap; color: #06d16f; margin: 15px 0 30px; line-height: 1.5; text-shadow: 2px 2px 4px var(--shadow-dark); }
         .btn-tutup-popup { background: var(--bg-main); border: none; padding: 14px 0; width: 100%; border-radius: 15px; font-family: 'Poppins'; font-weight: 700; color: var(--text-dark); box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); cursor: pointer; transition: 0.2s; font-size: 13px; }
         .btn-tutup-popup:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); color: #06d16f; }
+
+        /* ======================================================= */
+        /* ✨ FITUR BARU: SPEED DIAL (PANDUAN & LOGOUT) ✨ */
+        /* ======================================================= */
+        .fab-container { position: fixed; bottom: 100px; right: 20px; z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .fab-menu { display: flex; flex-direction: column; gap: 15px; opacity: 0; pointer-events: none; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+        .fab-menu.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        
+        .fab-item { width: 45px; height: 45px; border-radius: 50%; background: var(--bg-main); border: none; font-size: 16px; box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light); cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; }
+        .fab-item:active { box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); }
+        .fab-item.btn-logout-fab { color: #ef4444; }
+        
+        .fab-main { width: 55px; height: 55px; border-radius: 50%; background: var(--green-grad); border: none; color: white; font-size: 20px; box-shadow: 0 8px 15px rgba(6, 209, 111, 0.4); cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; }
+        .fab-main:active { transform: scale(0.9); }
+        .fab-main i { transition: 0.3s; }
+        .fab-main.active i { transform: rotate(135deg); }
+
+        /* Modal Panduan */
+        .modal-panduan { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px); }
+        .panduan-content { background: var(--bg-main); width: 100%; max-width: 500px; max-height: 85vh; border-radius: 25px; box-shadow: 10px 10px 30px rgba(0,0,0,0.3); overflow: hidden; display: flex; flex-direction: column; animation: slideUp 0.4s ease-out; }
+        .p-header { padding: 20px 25px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; display: flex; justify-content: space-between; align-items: center; }
+        .p-header h2 { margin: 0; font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 10px;}
+        .p-close { background: rgba(255,255,255,0.2); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 14px; transition: 0.2s;}
+        .p-close:active { transform: scale(0.8); }
+        
+        .p-body { padding: 20px; overflow-y: auto; color: var(--text-dark); }
+        .p-acc-item { margin-bottom: 15px; border-radius: 15px; background: var(--bg-main); box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light); overflow: hidden; }
+        .p-acc-btn { width: 100%; text-align: left; padding: 15px 20px; background: transparent; border: none; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 12px; color: var(--text-dark); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .p-acc-btn i { color: #06d16f; transition: 0.3s; }
+        .p-acc-content { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; font-size: 11px; line-height: 1.6; color: var(--text-muted); }
+        .p-acc-content.open { padding: 0 20px 20px 20px; max-height: 500px; }
+        .p-acc-content strong { color: var(--text-dark); }
+        
+        [data-theme="dark"] .p-acc-item { background: var(--bg-main); box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light); }
+        [data-theme="dark"] .p-acc-content strong { color: #4facfe; }
     </style>
 </head>
 <body>
@@ -321,6 +356,68 @@
 
     </div> 
 
+    <div class="fab-container">
+        <div class="fab-menu" id="fabMenu">
+            <button class="fab-item btn-logout-fab" onclick="logoutFAB()" title="Keluar Sistem">
+                <i class="fa-solid fa-power-off"></i>
+            </button>
+            <button class="fab-item" onclick="bukaPanduan()" title="Buku Panduan">
+                <i class="fa-solid fa-book-open" style="color: #4facfe;"></i>
+            </button>
+        </div>
+        <button class="fab-main" id="fabMain" onclick="toggleFAB()">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+    </div>
+
+    <div class="modal-panduan" id="modalPanduan">
+        <div class="panduan-content">
+            <div class="p-header">
+                <h2><i class="fa-solid fa-book-journal-whills"></i> Pusat Panduan</h2>
+                <button class="p-close" onclick="tutupPanduan()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-body">
+                
+                <div class="p-acc-item">
+                    <button class="p-acc-btn" onclick="toggleAcc(this)">1. Keamanan & Login <i class="fa-solid fa-chevron-down"></i></button>
+                    <div class="p-acc-content">
+                        <strong>Login Biometrik:</strong> Aktifkan di menu Profil. Anda bisa login menggunakan Sidik Jari atau Sensor Wajah tanpa mengetik sandi.<br><br>
+                        <strong>Sistem Anti-Hacker:</strong> Jika salah sandi 5x, akun akan terkunci merah selama 15 menit otomatis.<br><br>
+                        <strong>Logout Perangkat Lain:</strong> Di menu Profil, Anda bisa mengeluarkan akun Anda dari HP/Laptop lain secara paksa jika lupa logout.
+                    </div>
+                </div>
+
+                <div class="p-acc-item">
+                    <button class="p-acc-btn" onclick="toggleAcc(this)">2. Kasir Pembayaran <i class="fa-solid fa-chevron-down"></i></button>
+                    <div class="p-acc-content">
+                        <strong>Infaq Otomatis:</strong> Jika kasir mengetik nominal bayar "Lebih Besar" dari jumlah tagihan aslinya, sistem akan otomatis mencatat sisa kelebihan uang tersebut ke dalam pos Infaq/Sedekah.<br><br>
+                        <strong>3 Warna Nota:</strong> Kuitansi akan berwarna Oranye (Angsuran), Hijau (Lunas Pas), atau Biru (Lunas + Ada Infaq).<br><br>
+                        <strong>Kirim WA:</strong> Masukkan nomor WA di bawah kuitansi lalu klik kirim untuk meneruskan nota digital ke wali santri.
+                    </div>
+                </div>
+
+                <div class="p-acc-item">
+                    <button class="p-acc-btn" onclick="toggleAcc(this)">3. Buku Kas & Rekap <i class="fa-solid fa-chevron-down"></i></button>
+                    <div class="p-acc-content">
+                        <strong>Anti-Lemot (Infinite Scroll):</strong> Buku Kas memuat data 50 baris pertama. Scroll terus ke bawah layar untuk memuat data-data lama secara otomatis tanpa membuat HP hang.<br><br>
+                        <strong>Filter Tanggal:</strong> Gunakan "Dari Tanggal" dan "Sampai Tanggal" untuk melacak transaksi khusus di rentang waktu tertentu.<br><br>
+                        <strong>Cetak Anti-Virus:</strong> Ekspor ke Excel sudah dilindungi dari script berbahaya (CSV Injection).
+                    </div>
+                </div>
+
+                <div class="p-acc-item">
+                    <button class="p-acc-btn" onclick="toggleAcc(this)">4. Data & Mutasi Santri <i class="fa-solid fa-chevron-down"></i></button>
+                    <div class="p-acc-content">
+                        <strong>Smart Input:</strong> Saat menambah santri, ketik nama dengan huruf kecil semua tidak masalah, sistem akan otomatis mengubah huruf awalnya menjadi Kapital (Ahmad Fauzi).<br><br>
+                        <strong>Format WA:</strong> Ketik awalan 08x atau 8x, sistem akan otomatis menstandarkannya menjadi 628x (Standar Internasional).<br><br>
+                        <strong>Mutasi Massal:</strong> Buka tab Mutasi, pilih filter kelas (Misal: 1 Ibtidaiyah), centang semua anak yang lulus, lalu setel pindah ke kelas (Misal: 2 Ibtidaiyah). Klik proses, ratusan anak pindah kelas dalam 1 detik.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <div class="nav-wrapper">
         <div class="bottom-nav" id="bottomNavContainer">
             <div class="nav-indicator" id="navIndicator"></div>
@@ -348,7 +445,8 @@
 
         function showToast(msg) {
             let toast = document.getElementById("toast"); 
-            document.getElementById("toastMsg").innerText = msg; // Aman XSS
+            // Aman XSS dari helper global (jika sdh ada di firebase-config)
+            document.getElementById("toastMsg").innerText = msg; 
             toast.className = "show"; 
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }
@@ -398,6 +496,10 @@
                 tutupPopupBismillah();
                 window.history.pushState(null, "", window.location.href);
             }
+            if (document.getElementById('modalPanduan').style.display === 'flex') {
+                tutupPanduan();
+                window.history.pushState(null, "", window.location.href);
+            }
         };
 
         // =========================================================================
@@ -406,7 +508,6 @@
         function verifikasiOtorisasiServer() {
             if (!navigator.onLine) {
                 showToast("Sinyal Offline. Memverifikasi dari data lokal.");
-                // Jika offline, fallback ke localStorage sementara, tapi menu tetap terkunci jika bukan admin
                 let localRole = localStorage.getItem('hakAkses') || 'Operator';
                 if (localRole === 'Administrator' || localRole === 'Developer') {
                     bukaGembokEksekutif();
@@ -417,7 +518,6 @@
             const uid = localStorage.getItem('usernameAsli');
             if(!uid) return window.location.replace('index.html');
 
-            // Tanya ke Database, bukan ke LocalStorage
             database.ref('users/' + uid).once('value').then(snapshot => {
                 if (!snapshot.exists()) {
                     showToast("Akun tidak ditemukan di Server!");
@@ -427,7 +527,6 @@
 
                 let dataAkun = snapshot.val();
 
-                // Cek Status Blokir Paksa
                 if (String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif') {
                     showToast("Akses Ditolak: Akun Anda telah diblokir Admin.");
                     localStorage.clear();
@@ -435,7 +534,6 @@
                     return;
                 }
 
-                // Cek Force Logout Sinyal dari Pengaturan
                 if (dataAkun.forceLogout && dataAkun.forceLogout > (Date.now() - 30000)) {
                     showToast("Sesi diputus paksa oleh Server.");
                     localStorage.clear();
@@ -443,13 +541,11 @@
                     return;
                 }
 
-                // XSS Prevention: Isi nama menggunakan innerText
+                // XSS Prevention via innerText
                 document.getElementById('user-name').innerText = dataAkun.NamaLengkap || 'Pengguna';
                 
-                // Perbarui LocalStorage Cache
                 localStorage.setItem('hakAkses', dataAkun.Role);
                 
-                // Eksekusi Buka Gembok jika Pimpinan
                 const validRole = dataAkun.Role || 'Operator';
                 if (validRole === 'Administrator' || validRole === 'Developer') {
                     bukaGembokEksekutif();
@@ -460,7 +556,6 @@
             });
         }
 
-        // Fungsi mencopot gembok UI setelah dikonfirmasi Firebase
         function bukaGembokEksekutif() {
             const lockedIds = ['menuPosKeuangan', 'menuManTagihan', 'menuTutupBuku', 'menuPengaturan'];
             lockedIds.forEach(id => {
@@ -471,20 +566,64 @@
             });
         }
 
-        // Fungsi Satpam Penjaga Klik Menu
         function cekAksesDanPindah(url, menuId) {
             vibrateClick();
-            
             let el = document.getElementById(menuId);
-            
-            // Cek visual DOM: Jika tombol masih punya class 'locked-menu', tolak!
             if(el && el.classList.contains('locked-menu')) {
                 showToast("AKSES DITOLAK SERVER: Area ini khusus untuk Administrator."); 
                 vibrateHeavy();
                 return;
             }
-            
             pindahHalaman(url);
+        }
+
+        // =========================================================================
+        // LOGIKA SPEED DIAL (PANDUAN & LOGOUT)
+        // =========================================================================
+        function toggleFAB() {
+            vibrateClick();
+            document.getElementById('fabMenu').classList.toggle('active');
+            document.getElementById('fabMain').classList.toggle('active');
+        }
+
+        function logoutFAB() {
+            vibrateClick();
+            if(confirm("Yakin ingin Keluar Sistem?")) {
+                localStorage.removeItem('namaPengguna'); 
+                localStorage.removeItem('hakAkses'); 
+                localStorage.removeItem('usernameAsli'); 
+                window.location.href = 'index.html#logout'; 
+            }
+        }
+
+        function bukaPanduan() {
+            vibrateClick();
+            toggleFAB(); // Tutup speed dial
+            document.getElementById('modalPanduan').style.display = 'flex';
+            window.history.pushState({ modalOpen: true }, "", window.location.href);
+        }
+
+        function tutupPanduan() {
+            vibrateClick();
+            document.getElementById('modalPanduan').style.display = 'none';
+        }
+
+        function toggleAcc(btn) {
+            vibrateClick();
+            let content = btn.nextElementSibling;
+            let icon = btn.querySelector('i');
+            
+            document.querySelectorAll('.p-acc-content').forEach(el => {
+                if(el !== content) { el.classList.remove('open'); el.previousElementSibling.querySelector('i').style.transform = 'rotate(0deg)'; }
+            });
+
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                content.classList.add('open');
+                icon.style.transform = 'rotate(180deg)';
+            }
         }
         // =========================================================================
 
@@ -496,7 +635,6 @@
             
             setIndicatorPosition(); window.addEventListener('resize', setIndicatorPosition);
 
-            // Tampilkan cache sementara sambil nunggu server
             document.getElementById('user-name').innerText = localStorage.getItem('namaPengguna') || 'Memuat...';
 
             const hour = new Date().getHours(); let ucapan = "Selamat Pagi";
@@ -505,7 +643,6 @@
             else if (hour >= 18 || hour < 4) ucapan = "Selamat Malam";
             document.getElementById('greeting-salam').innerText = `Assalamu'alaikum, ${ucapan}`;
 
-            // PANGGIL SATPAM SERVER
             verifikasiOtorisasiServer();
 
             const now = new Date();
@@ -516,7 +653,6 @@
             initAstronomiClock();
         });
 
-        // --- INDIKATOR NOTIFIKASI LIVE CHAT OTOMATIS ---
         const myUidForChat = localStorage.getItem('usernameAsli');
         if (myUidForChat) {
             database.ref('chat_messages').limitToLast(3).on('value', snap => {
@@ -541,7 +677,6 @@
             } catch(e) { document.getElementById('hijri-date').innerText = `Kalender Offline`; }
         }
 
-        // --- RUMUS ASTRONOMI JAM ISTIWA' DAN PELACAK ALAMAT GPS ---
         let lonUser = 113.21; 
         
         function hitungEquationOfTime(now) {
