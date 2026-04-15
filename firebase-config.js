@@ -1,7 +1,7 @@
 // firebase-config.js
-// KONFIGURASI AMAN - Menggunakan Environment Variables
+// KONFIGURASI AMAN & BERSIH - Menggunakan Environment Variables
 
-// Cek apakah menggunakan environment variable atau fallback
+// 1. Cek apakah menggunakan environment variable atau fallback (Hardcoded Aman)
 const firebaseConfig = {
     apiKey: window.ENV?.VITE_FIREBASE_API_KEY || "AIzaSyAFdlgBRw9stQDAguizoFho5vhpdd1TDiw",
     authDomain: window.ENV?.VITE_FIREBASE_AUTH_DOMAIN || "keuangan-mmu-b-77.firebaseapp.com",
@@ -12,96 +12,33 @@ const firebaseConfig = {
     appId: window.ENV?.VITE_FIREBASE_APP_ID || "1:1054561507756:web:e16722c692d3b44ed3c209"
 };
 
-// INISIALISASI FIREBASE
+// 2. INISIALISASI FIREBASE (Hanya dieksekusi 1x untuk mencegah memory leak)
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 
+// 3. EXPORT MODULES (Jembatan Utama Aplikasi)
 const database = firebase.database();
 const auth = firebase.auth();
 
-// Helper function untuk sanitasi input
+// 4. HELPER SANITASI GLOBAL (Pencegah XSS Lintas File)
 window.sanitizeInput = function(input) {
     if (input === null || input === undefined) return '';
     return String(input)
-        .replace(/[&<>]/g, function(m) {
+        .replace(/[&<>'"]/g, function(m) {
             if (m === '&') return '&amp;';
             if (m === '<') return '&lt;';
             if (m === '>') return '&gt;';
+            if (m === "'") return '&#39;';
+            if (m === '"') return '&quot;';
             return m;
-        })
-        .replace(/['"]/g, '');
+        });
 };
 
-// Helper function untuk validasi akses
-window.validateAccess = async function(resourceId, userId, requiredRole) {
-    const userRole = localStorage.getItem('hakAkses');
-    const currentUser = localStorage.getItem('usernameAsli');
-    
-    // Admin selalu punya akses
-    if (userRole === 'Administrator' || userRole === 'Developer') {
-        return true;
-    }
-    
-    // Validasi kepemilikan resource
-    if (resourceId && userId) {
-        const snapshot = await database.ref(`tagihan/${resourceId}`).once('value');
-        const data = snapshot.val();
-        
-        if (data && data.ID_Murid === userId) {
-            return true;
-        }
-    }
-    
-    // Cek role
-    if (requiredRole && userRole !== requiredRole) {
-        return false;
-    }
-    
-    return true;
-};
-
-// Rate limiting untuk login
-window.loginAttempts = 0;
-window.loginLockUntil = null;
-
-window.checkRateLimit = function() {
-    if (window.loginLockUntil && Date.now() < window.loginLockUntil) {
-        const remainingSeconds = Math.ceil((window.loginLockUntil - Date.now()) / 1000);
-        throw new Error(`Terlalu banyak percobaan. Coba lagi ${remainingSeconds} detik.`);
-    }
-    return true;
-};
-
-window.incrementLoginAttempts = function() {
-    window.loginAttempts++;
-    if (window.loginAttempts >= 5) {
-        window.loginLockUntil = Date.now() + 15 * 60 * 1000; // 15 menit
-        setTimeout(() => {
-            window.loginAttempts = 0;
-            window.loginLockUntil = null;
-        }, 15 * 60 * 1000);
-    }
-};
-
-window.resetLoginAttempts = function() {
-    window.loginAttempts = 0;
-    window.loginLockUntil = null;
-};
-
-// CSRF Token Management
-window.csrfToken = null;
-
-window.generateCsrfToken = function() {
-    const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
-    sessionStorage.setItem('csrfToken', token);
-    return token;
-};
-
-window.validateCsrfToken = function(token) {
-    const storedToken = sessionStorage.getItem('csrfToken');
-    return token && storedToken && token === storedToken;
-};
-
-// Generate token saat load
-window.generateCsrfToken();
+/* ==================================================================
+  LOG PEMBERSIHAN KEAMANAN (AUDIT 2026):
+  - Fungsi window.validateAccess() DIHAPUS (Sekarang dipindah ke Server-Side per HTML)
+  - Fungsi window.checkRateLimit() DIHAPUS (Sistem blokir login sekarang dicatat di Firebase Database)
+  - Fungsi window.generateCsrfToken() DIHAPUS (Tidak relevan untuk Firebase Realtime DB, hanya bikin lemot)
+  ==================================================================
+*/
