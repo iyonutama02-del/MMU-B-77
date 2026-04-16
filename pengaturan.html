@@ -24,7 +24,7 @@
     <script src="firebase-config.js"></script>
 
     <script>
-        // --- CELAH #2: PENGAMANAN ANTI-FLICKER & OTORISASI ---
+        // --- PENGAMANAN ANTI-FLICKER & OTORISASI ---
         document.documentElement.style.display = 'none';
 
         if (!localStorage.getItem('usernameAsli')) {
@@ -483,9 +483,6 @@
             document.getElementById('sec-' + id).classList.add('active');
         }
 
-        // --- PENGAMANAN XSS & SERVER-SIDE AUTH ---
-        const escapeHTML = (str) => String(str).replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag));
-
         let usernameAsliLokal = localStorage.getItem('usernameAsli');
         let hakAksesLokal = '';
         let cctvDataRaw = [];
@@ -556,6 +553,7 @@
             cekMaintenanceStatus();
         }
 
+        // ✨ PERBAIKAN: MEMASTIKAN PENYIMPANAN HANYA DI SATU FOLDER "pengaturan_global"
         function muatDataMasterSwitch() {
             database.ref('pengaturan_global').on('value', snapshot => {
                 if(snapshot.exists()) {
@@ -564,6 +562,13 @@
                     let bln = data.Bulan_Hijriyah || "Belum Disetel";
                     document.getElementById('displayTahunAjaran').innerText = ta;
                     document.getElementById('displayBulanHijriyah').innerText = bln;
+                    
+                    // Backup ke local storage untuk akses instan di halaman lain
+                    localStorage.setItem('globalTahunAjaran', ta);
+                    localStorage.setItem('globalBulanAktif', bln);
+                } else {
+                    document.getElementById('displayTahunAjaran').innerText = "Belum Disetel";
+                    document.getElementById('displayBulanHijriyah').innerText = "Belum Disetel";
                 }
             });
         }
@@ -586,9 +591,22 @@
             document.getElementById('loadingLayar').style.display = 'flex';
 
             try {
-                await database.ref('pengaturan_global').update({ Tahun_Ajaran: taBaru, Bulan_Hijriyah: blnBaru });
-                showToast("Waktu Global Diterapkan!"); vibrateSuccess(); tutupModal('modalMasterSwitch');
-            } catch(e) {}
+                // Tembakkan datanya KHUSUS ke "pengaturan_global"
+                await database.ref('pengaturan_global').update({ 
+                    Tahun_Ajaran: taBaru, 
+                    Bulan_Hijriyah: blnBaru 
+                });
+                
+                // Segera update memori browser Pimpinan juga agar tidak error saat pindah ke halaman kasir
+                localStorage.setItem('globalTahunAjaran', taBaru);
+                localStorage.setItem('globalBulanAktif', blnBaru);
+                
+                showToast("Waktu Global Diterapkan ke Seluruh Jaringan!"); 
+                vibrateSuccess(); 
+                tutupModal('modalMasterSwitch');
+            } catch(e) {
+                showToast("Gagal menyimpan ke server Firebase.");
+            }
             document.getElementById('loadingLayar').style.display = 'none';
         });
 
@@ -616,7 +634,6 @@
             btn.innerHTML = txt; btn.disabled = false;
         });
 
-        // --- MANAJEMEN USER (XSS PROTECTED & REBUILT) ---
         function muatDataUsersRealtime() {
             database.ref('users').on('value', snapshot => {
                 let tbody = document.getElementById('tabel-users'); 
@@ -631,14 +648,13 @@
                     let unameRaw = child.key; 
                     let row = child.val();
                     
-                    // ANTI XSS: Bersihkan semua string sebelum masuk ke HTML
-                    let uname = escapeHTML(unameRaw);
-                    let roleStr = escapeHTML(row.Role || 'Operator');
+                    let uname = window.sanitizeInput ? window.sanitizeInput(unameRaw) : unameRaw;
+                    let roleStr = window.sanitizeInput ? window.sanitizeInput(row.Role || 'Operator') : (row.Role || 'Operator');
                     let roleLower = roleStr.toLowerCase();
-                    let nama = escapeHTML(row.NamaLengkap || 'Tanpa Nama');
-                    let lastLogin = escapeHTML(row.LastLogin || 'Belum ada riwayat');
-                    let statusAwal = escapeHTML(row.Status || 'Aktif');
-                    let wa = escapeHTML(row.NomorWA || '-');
+                    let nama = window.sanitizeInput ? window.sanitizeInput(row.NamaLengkap || 'Tanpa Nama') : (row.NamaLengkap || 'Tanpa Nama');
+                    let lastLogin = window.sanitizeInput ? window.sanitizeInput(row.LastLogin || 'Belum ada riwayat') : (row.LastLogin || 'Belum ada riwayat');
+                    let statusAwal = window.sanitizeInput ? window.sanitizeInput(row.Status || 'Aktif') : (row.Status || 'Aktif');
+                    let wa = window.sanitizeInput ? window.sanitizeInput(row.NomorWA || '-') : (row.NomorWA || '-');
 
                     let badgeClass = 'badge-operator';
                     if(roleLower === 'developer') badgeClass = 'badge-dev'; 
@@ -661,7 +677,6 @@
                         `;
                     }
 
-                    // Gunakan DOM Creation agar onclick lebih aman dari string pecah
                     let tr = document.createElement('tr');
                     tr.className = "baris-user";
                     tr.innerHTML = `
@@ -696,8 +711,7 @@
             document.getElementById('pmUsername').innerText = "@" + uname;
             document.getElementById('pmLastLoginTime').innerText = lastlog;
             
-            // Hitung aktivitas bulan ini dari CCTV
-            let count = cctvDataRaw.filter(c => escapeHTML(c.Eksekutor) === nama && escapeHTML(c.Waktu).includes(new Date().getFullYear().toString())).length;
+            let count = cctvDataRaw.filter(c => (window.sanitizeInput ? window.sanitizeInput(c.Eksekutor) : c.Eksekutor) === nama && (window.sanitizeInput ? window.sanitizeInput(c.Waktu) : c.Waktu).includes(new Date().getFullYear().toString())).length;
             document.getElementById('pmInputCount').innerText = count + "+";
             
             document.getElementById('modalProfilMini').style.display = 'flex';
@@ -784,7 +798,7 @@
             } catch (err) {}
         });
 
-        // --- CCTV AUDIT (XSS PROTECTED) ---
+        // --- CCTV AUDIT ---
         function muatCCTVRealtime() {
             database.ref('audit_trail').limitToLast(500).on('value', snap => {
                 cctvDataRaw = [];
@@ -800,13 +814,12 @@
             let count = 0; let html = '';
 
             cctvDataRaw.forEach(d => {
-                // XSS Cleanup
-                let eksekutor = escapeHTML(d.Eksekutor);
-                let role = escapeHTML(d.Role);
-                let waktu = escapeHTML(d.Waktu);
-                let menu = escapeHTML(d.Menu);
-                let aksi = escapeHTML(d.Aksi);
-                let detail = escapeHTML(d.Detail);
+                let eksekutor = window.sanitizeInput ? window.sanitizeInput(d.Eksekutor) : d.Eksekutor;
+                let role = window.sanitizeInput ? window.sanitizeInput(d.Role) : d.Role;
+                let waktu = window.sanitizeInput ? window.sanitizeInput(d.Waktu) : d.Waktu;
+                let menu = window.sanitizeInput ? window.sanitizeInput(d.Menu) : d.Menu;
+                let aksi = window.sanitizeInput ? window.sanitizeInput(d.Aksi) : d.Aksi;
+                let detail = window.sanitizeInput ? window.sanitizeInput(d.Detail) : d.Detail;
 
                 if(filterText === "" || eksekutor.toLowerCase().includes(filterText) || menu.toLowerCase().includes(filterText) || aksi.toLowerCase().includes(filterText)) {
                     count++;
@@ -834,11 +847,18 @@
             let tbody = document.getElementById('pdfBody'); tbody.innerHTML = '';
             
             cctvDataRaw.slice(0, 100).forEach(d => { 
+                let w = window.sanitizeInput ? window.sanitizeInput(d.Waktu) : d.Waktu;
+                let e = window.sanitizeInput ? window.sanitizeInput(d.Eksekutor) : d.Eksekutor;
+                let r = window.sanitizeInput ? window.sanitizeInput(d.Role) : d.Role;
+                let m = window.sanitizeInput ? window.sanitizeInput(d.Menu) : d.Menu;
+                let a = window.sanitizeInput ? window.sanitizeInput(d.Aksi) : d.Aksi;
+                let dt = window.sanitizeInput ? window.sanitizeInput(d.Detail) : d.Detail;
+                
                 tbody.innerHTML += `<tr>
-                    <td style="border:1px solid #000; padding:5px;">${escapeHTML(d.Waktu)}</td>
-                    <td style="border:1px solid #000; padding:5px;"><b>${escapeHTML(d.Eksekutor)}</b> (${escapeHTML(d.Role)})</td>
-                    <td style="border:1px solid #000; padding:5px;">${escapeHTML(d.Menu)}</td>
-                    <td style="border:1px solid #000; padding:5px;"><b>${escapeHTML(d.Aksi)}</b>: ${escapeHTML(d.Detail)}</td>
+                    <td style="border:1px solid #000; padding:5px;">${w}</td>
+                    <td style="border:1px solid #000; padding:5px;"><b>${e}</b> (${r})</td>
+                    <td style="border:1px solid #000; padding:5px;">${m}</td>
+                    <td style="border:1px solid #000; padding:5px;"><b>${a}</b>: ${dt}</td>
                 </tr>`;
             });
 
@@ -871,7 +891,6 @@
             }
         }
 
-        // --- ZONA BAHAYA (MAINTENANCE & BACKUP) ---
         function cekMaintenanceStatus() {
             database.ref('pengaturan_global/maintenance').on('value', snap => {
                 isMaintenanceMode = snap.val() === true;
