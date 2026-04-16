@@ -80,10 +80,9 @@
             padding: 6vh 25px; border-radius: 28px; 
             box-shadow: 8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light);
             text-align: center; z-index: 10; transition: 0.3s;
-            opacity: 0; /* Untuk animasi awal */
+            opacity: 0; 
         }
 
-        /* ✨ ANIMASI BARU: Smooth Slide-Up & Breathing Logo */
         @keyframes slideUpFadeIn {
             0% { opacity: 0; transform: translateY(40px); }
             100% { opacity: 1; transform: translateY(0); }
@@ -115,7 +114,6 @@
         }
         .input-wrapper input:focus { outline: none; box-shadow: inset 3px 3px 6px 0 var(--shadow-dark), inset -3px -3px 6px 0 var(--shadow-light), 0 0 0 2px var(--input-focus); }
         
-        /* ✨ ANIMASI MATA */
         .eye-icon { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 5px; user-select: none; transition: color 0.3s, transform 0.2s; }
         .eye-icon:active { transform: translateY(-50%) scale(0.85); color: #06d16f; }
 
@@ -129,7 +127,6 @@
         .btn-login:active { transform: translateY(3px); box-shadow: inset 3px 3px 8px rgba(0,0,0,0.2); }
         .btn-login:disabled { background: #CBD5E1; box-shadow: none; cursor: not-allowed; transform: none; opacity: 0.7; }
         
-        /* ✨ VISUAL COOLDOWN MERAH (Anti-Hacker) */
         .btn-login.locked {
             background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
             box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3) !important;
@@ -221,7 +218,6 @@
             });
         }
 
-        // --- HAPTIC & UI UTILS ---
         function vibrateLight() { if (navigator.vibrate) navigator.vibrate(10); } 
         function vibrateHeavy() { if (navigator.vibrate) navigator.vibrate(500); } 
         function vibrateSuccess() { if (navigator.vibrate) navigator.vibrate([30, 50, 30]); } 
@@ -230,7 +226,6 @@
         function updateOnlineStatus() {
             const btn = document.getElementById('btnLogin');
             if (navigator.onLine) {
-                // Jangan reset tombol jika sedang terkunci cooldown
                 if(!btn.classList.contains('locked')) {
                     btn.disabled = false;
                     btn.innerHTML = "Masuk";
@@ -245,7 +240,6 @@
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
 
-        // --- ANTI-SNOOPING (Animasi Mata Sandi) ---
         const pwdInput = document.getElementById("password");
         const eyeIcon = document.getElementById("togglePassword");
 
@@ -258,7 +252,6 @@
         eyeIcon.addEventListener("touchstart", (e) => { e.preventDefault(); showSandi(); }, {passive: false});
         eyeIcon.addEventListener("touchend", (e) => { e.preventDefault(); hideSandi(); }, {passive: false});
 
-        // --- SESSION SANITIZATION ---
         function hardSessionCleanse() {
             const themePref = localStorage.getItem('themePref');
             const localDeviceId = localStorage.getItem('localDeviceId');
@@ -276,7 +269,6 @@
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }
 
-        // --- ✨ VISUAL COOLDOWN SYSTEM (ANTI BRUTE-FORCE) ---
         let cooldownInterval;
         function startCooldownTimer(unlockTimestamp) {
             const btn = document.getElementById('btnLogin');
@@ -307,7 +299,6 @@
                 }
             }, 1000);
             
-            // Trigger pertama kali agar tidak menunggu 1 detik
             let nowInit = Date.now();
             let diffInit = Math.ceil((unlockTimestamp - nowInit) / 1000);
             if(diffInit > 0) {
@@ -328,7 +319,7 @@
                     let updates = { failedAttempts: attempts };
                     
                     if(attempts >= 5) {
-                        let lockTime = Date.now() + (15 * 60 * 1000); // Kunci 15 Menit
+                        let lockTime = Date.now() + (15 * 60 * 1000);
                         updates.lockedUntil = lockTime;
                         await userRef.update(updates);
                         startCooldownTimer(lockTime);
@@ -339,7 +330,6 @@
                         showToast(`Kata Sandi salah! Peringatan: Percobaan gagal ${attempts}/5`);
                         vibrateHeavy();
                         
-                        // Kembalikan tombol jika belum terkunci
                         const btn = document.getElementById('btnLogin');
                         btn.innerHTML = "Masuk"; btn.disabled = false;
                     }
@@ -444,7 +434,6 @@
                     if (snapshot.exists()) {
                         let dataAkun = snapshot.val();
                         
-                        // CEK STATUS LOCKOUT DARI SERVER
                         if (dataAkun.lockedUntil && Date.now() < dataAkun.lockedUntil) {
                             let timeLeft = Math.ceil((dataAkun.lockedUntil - Date.now()) / 60000);
                             showToast(`Akses Ditolak: Akun Anda sedang terkunci. Coba lagi dalam ${timeLeft} menit.`);
@@ -456,20 +445,12 @@
                             vibrateHeavy(); return;
                         }
 
-                        // CEK DEVICE BINDING KETAT
-                        let localDeviceId = localStorage.getItem('localDeviceId');
-                        const boundDevice = dataAkun.BoundDevice;
-                        if (boundDevice && boundDevice !== localDeviceId && dataAkun.Role !== 'Developer') {
-                             showToast("Akses Ditolak: Perangkat tidak dikenali. Silakan gunakan HP Kasir resmi.");
-                             vibrateHeavy(); return;
-                        }
+                        // --- DEVICE BINDING DIHAPUS DARI SINI ---
                         
-                        // Lolos Semua, Bersihkan Sesi dan Reset Failed Attempts
                         await database.ref('users/' + storedUid).update({ failedAttempts: 0, lockedUntil: null, LastLogin: new Date().toLocaleString('id-ID') });
                         
                         hardSessionCleanse();
                         
-                        // DAFTARKAN ULANG BIOMETRIK SESSION AGAR BISA DIPAKAI LAGI
                         localStorage.setItem('webAuthnId', storedId);
                         localStorage.setItem('webAuthnUid', storedUid);
 
@@ -491,7 +472,7 @@
                 }
             } catch (e) {
                 console.error("Biometrik gagal:", e);
-                await catatGagalLogin(storedUid); // Biometrik gagal juga masuk hitungan
+                await catatGagalLogin(storedUid); 
                 showToast("Verifikasi sensor wajah/sidik jari gagal atau dibatalkan.");
                 vibrateHeavy();
             }
@@ -517,7 +498,6 @@
                  if(window.location.hash === '#logout') window.history.replaceState(null, null, window.location.pathname);
             }
 
-            // ✨ ANIMASI SPLASH KE LOGIN
             setTimeout(function() {
                 document.getElementById('splash-screen').style.opacity = '0';
                 document.getElementById('splash-screen').style.visibility = 'hidden';
@@ -525,7 +505,6 @@
                 document.getElementById('login-screen').style.opacity = '1';
                 document.getElementById('login-screen').style.visibility = 'visible';
                 
-                // Memicu class animasi melayang (Slide-Up) dan Breathing Logo
                 document.querySelector('.login-container').classList.add('animate-slide-up');
                 document.querySelector('.logo-small').classList.add('animate-breathe');
             }, 2500);
@@ -558,7 +537,6 @@
                 
                 const dataAkun = snapshot.val();
                 
-                // --- VISUAL COOLDOWN RATE LIMITING ---
                 if (dataAkun.lockedUntil && Date.now() < dataAkun.lockedUntil) {
                     startCooldownTimer(dataAkun.lockedUntil);
                     showToast("Akses ditolak. Akun Anda sedang dalam masa penangguhan.");
@@ -566,9 +544,9 @@
                 }
 
                 const dbPassword = String(dataAkun.Password); 
-                if (dbPassword !== hashedPassword && dbPassword !== pwdInput) { // Fallback db lama
+                if (dbPassword !== hashedPassword && dbPassword !== pwdInput) {
                     await catatGagalLogin(usrInput);
-                    return; // Tombol direstore oleh fungsi catatGagalLogin
+                    return; 
                 }
                 
                 if (String(dataAkun.Status || dataAkun.status).toLowerCase() === 'nonaktif') {
@@ -576,22 +554,8 @@
                     vibrateHeavy(); btnLogin.innerHTML = "Masuk"; btnLogin.disabled = false; return;
                 }
 
-                // --- PENGECEKAN DEVICE BINDING KETAT ---
-                let localDeviceId = localStorage.getItem('localDeviceId');
-                if (!localDeviceId) {
-                    localDeviceId = 'DEV-' + new Date().getTime() + Math.floor(Math.random() * 1000);
-                    localStorage.setItem('localDeviceId', localDeviceId);
-                }
+                // --- DEVICE BINDING DIHAPUS DARI SINI ---
 
-                const boundDevice = dataAkun.BoundDevice;
-                if (boundDevice && boundDevice !== localDeviceId && dataAkun.Role !== 'Developer') {
-                     showToast("Akses Ditolak: Perangkat tidak dikenali. Silakan gunakan HP Kasir resmi.");
-                     vibrateHeavy(); btnLogin.innerHTML = "Masuk"; btnLogin.disabled = false; return;
-                } else if (!boundDevice) {
-                     await database.ref('users/' + usrInput).update({ BoundDevice: localDeviceId });
-                }
-
-                // Lolos Semua Syarat, Reset Log Percobaan & Lakukan Eksekusi Login
                 await database.ref('users/' + usrInput).update({
                     failedAttempts: 0, lockedUntil: null,
                     LastLogin: new Date().toLocaleString('id-ID'),
@@ -602,7 +566,6 @@
                 
                 hardSessionCleanse();
                 
-                // Daftarkan ulang biometrik jika sukses login password
                 let storedId = localStorage.getItem('webAuthnId');
                 if(storedId) {
                     localStorage.setItem('webAuthnId', storedId);
