@@ -4,15 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#e0e5ec" id="meta-theme-color">
-    <meta name="mobile-web-app-capable" content="yes">
-    
-    <title>Database Santri - Sistem Keuangan</title>
+    <title>Data Santri - MMU B-77</title>
     
     <link rel="icon" type="image/png" href="Logo-Favicon.png">
     <link rel="apple-touch-icon" href="Logo-Favicon.png">
     <link rel="manifest" href="manifest.json">
     
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -39,7 +37,7 @@
     </script>
 
     <style>
-        /* --- TEMA NEUMORPHISM ASLI (TIDAK DIRUBAH) --- */
+        /* --- TEMA NEUMORPHISM ASLI --- */
         :root {
             --bg-main: #e0e5ec;
             --text-dark: #31344b;
@@ -77,7 +75,7 @@
         /* HEADER NAVIGASI */
         .nav-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; position: relative; }
         .btn-icon { width: 45px; height: 45px; border-radius: 15px; background: var(--bg-main); display: flex; justify-content: center; align-items: center; color: var(--text-dark); text-decoration: none; box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light); transition: 0.3s; cursor: pointer; border: none; font-size: 16px; }
-        .btn-icon:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
+        .btn-icon:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); color: var(--green-text); }
         .header-title { font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 800; margin: 0; position: absolute; left: 50%; transform: translateX(-50%); color: var(--text-dark); }
 
         /* --- TABS NEUMORPHISM --- */
@@ -132,6 +130,7 @@
         .btn-mutasi-action.btn-mutasi-exe { background: var(--orange-grad); color: white; box-shadow: 4px 4px 10px rgba(245, 158, 11, 0.3); }
         .btn-mutasi-action.btn-hapus-mode { background: var(--red-grad) !important; box-shadow: 4px 4px 10px rgba(239, 68, 68, 0.3) !important; }
         .btn-mutasi-action:active { transform: translateY(2px); box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2); }
+        
         .cb-container { display: block; position: relative; cursor: pointer; font-size: 22px; user-select: none; padding-left: 28px; margin-bottom: 0; pointer-events: none; }
         .cb-container input { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
         .checkmark { position: absolute; top: -10px; left: 0; height: 22px; width: 22px; background-color: var(--bg-main); border-radius: 8px; box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); transition: 0.2s; }
@@ -317,7 +316,7 @@
                             <select class="input-edit" id="kelasAsal" style="cursor: pointer;">
                                 <option value="">Memuat daftar kelas...</option>
                             </select>
-                            <i class="fa-solid fa-chevron-down icon-select"></i>
+                            <i class="fa-solid fa-chevron-down icon-select" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--green-text); pointer-events: none;"></i>
                         </div>
                     </div>
                     <button class="btn-mutasi-action btn-cari" onclick="tarikDataBerdasarkanKelas()" id="btnCariTarik">
@@ -336,7 +335,7 @@
                                     <option value="Nonaktif">Berhenti / Nonaktif</option>
                                     <option value="Hapus" style="color: #ef4444; font-weight: 800;">🗑️ Hapus Data (Permanen)</option>
                                 </select>
-                                <i class="fa-solid fa-chevron-down icon-select"></i>
+                                <i class="fa-solid fa-chevron-down icon-select" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--green-text); pointer-events: none;"></i>
                             </div>
                         </div>
                         <div class="input-group" id="grupKelasTujuan">
@@ -345,7 +344,7 @@
                                 <select class="input-edit" id="kelasTujuanDropdown" style="cursor: pointer;" onchange="cekKelasBaru()">
                                     <option value="">-- Pilih Kelas Tujuan --</option>
                                 </select>
-                                <i class="fa-solid fa-chevron-down icon-select"></i>
+                                <i class="fa-solid fa-chevron-down icon-select" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--green-text); pointer-events: none;"></i>
                             </div>
                             <input type="text" class="input-edit" id="kelasTujuanManual" placeholder="Ketik nama kelas baru..." style="display: none; margin-top: 10px;">
                         </div>
@@ -485,9 +484,6 @@
     </div>
 
     <script>
-        // --- 🧹 SARINGAN XSS UTILITY ---
-        const escapeHTML = (str) => String(str).replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag));
-
         // --- PENGAMANAN ANTARMUKA (Anti-Snooping & Haptic) ---
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.onkeydown = function(e) {
@@ -581,7 +577,6 @@
         }
 
         // --- ✨ FITUR BARU: AUTO-FORMAT DATA (SMART INPUT) ---
-        // 1. Auto-Title Case untuk Nama
         document.getElementById('nama').addEventListener('blur', function(e) {
             let val = e.target.value.toLowerCase().split(' ');
             for (let i = 0; i < val.length; i++) {
@@ -590,9 +585,8 @@
             e.target.value = val.join(' ');
         });
 
-        // 2. Auto-Format Nomor WA
         document.getElementById('wa').addEventListener('blur', function(e) {
-            let val = e.target.value.replace(/\D/g, ''); // Hapus semua non-angka
+            let val = e.target.value.replace(/\D/g, ''); 
             if(val.startsWith('08')) {
                 val = '628' + val.substring(2);
             } else if(val.startsWith('8')) {
@@ -615,19 +609,6 @@
             if(strWA.startsWith('62')) return '0' + strWA.substring(2);
             if(strWA.startsWith('8')) return '0' + strWA;
             return strWA;
-        }
-
-        async function catatAuditTrail(aksi, detail) {
-            try {
-                await database.ref('audit_trail').push({
-                    Waktu: new Date().toLocaleString('id-ID'),
-                    Eksekutor: localStorage.getItem('namaPengguna') || 'Unknown',
-                    Role: userRole,
-                    Menu: 'Data Santri',
-                    Aksi: aksi,
-                    Detail: detail
-                });
-            } catch(e) { console.error("Gagal catat audit", e); }
         }
 
         // ==========================================
@@ -667,17 +648,17 @@
                         
                         let linkWA = formatWALink(row.WA_Wali);
                         let tampilWA = formatWADisplay(row.WA_Wali);
-                        let btnWAHTML = linkWA ? `<a href="https://wa.me/${linkWA}" target="_blank" class="btn-wa-link"><i class="fa-brands fa-whatsapp" style="font-size:14px;"></i> ${escapeHTML(tampilWA)}</a>` : `<span style="color:var(--text-muted); font-size:11px;">-</span>`;
+                        let btnWAHTML = linkWA ? `<a href="https://wa.me/${linkWA}" target="_blank" class="btn-wa-link"><i class="fa-brands fa-whatsapp" style="font-size:14px;"></i> ${window.sanitizeInput(tampilWA)}</a>` : `<span style="color:var(--text-muted); font-size:11px;">-</span>`;
 
-                        // --- 🧹 XSS SANITIZER UNTUK RENDER TABEL ---
-                        let escapedNama = escapeHTML(row.Nama_Lengkap || "");
-                        let escapedKet = escapeHTML(row.Keterangan || "");
-                        let escapedKelas = escapeHTML(row.Kelas || "-");
-                        let escapedLP = escapeHTML(row.LP || "-");
+                        // Menggunakan fungsi sanitize global dari firebase-config.js
+                        let escapedNama = window.sanitizeInput(row.Nama_Lengkap || "");
+                        let escapedKet = window.sanitizeInput(row.Keterangan || "");
+                        let escapedKelas = window.sanitizeInput(row.Kelas || "-");
+                        let escapedLP = window.sanitizeInput(row.LP || "-");
                         
                         let idMuridManual = row.ID_Murid !== undefined ? row.ID_Murid : (row.ID_Santri || row.NIS || "-");
                         if (idMuridManual === "") idMuridManual = "-";
-                        let escapedIdMurid = escapeHTML(idMuridManual);
+                        let escapedIdMurid = window.sanitizeInput(idMuridManual);
 
                         let escapedNamaUntukFungsi = escapedNama.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                         let escapedKetUntukFungsi = escapedKet.replace(/'/g, "\\'").replace(/"/g, '&quot;');
@@ -691,7 +672,7 @@
                         tr.className = "baris-data"; tr.setAttribute("data-kelas", row.Kelas || ""); tr.setAttribute("data-status", st);
                         
                         tr.innerHTML = `
-                            <td><strong>${escapeHTML(idSistemNode)}</strong></td>
+                            <td><strong>${window.sanitizeInput(idSistemNode)}</strong></td>
                             <td style="color:var(--text-muted); font-family:monospace; font-size:11px;">${escapedIdMurid}</td>
                             <td style="font-weight:600;">${escapedNama}${statusTag}</td>
                             <td>${escapedLP}</td>
@@ -699,8 +680,8 @@
                             <td>${btnWAHTML}</td>
                             <td>
                                 <div class="action-btns">
-                                    <button class="btn-aksi-tabel btn-edit" title="Edit Profil" onclick="bukaModalFormEdit('${escapeHTML(idSistemNode)}', '${escapedIdMurid}', '${escapedNamaUntukFungsi}', '${escapedLP}', '${escapedKelas}', '${escapeHTML(row.WA_Wali||'-')}', '${escapedKetUntukFungsi}')"><i class="fa-solid fa-pen"></i></button>
-                                    <button class="btn-aksi-tabel btn-rapor" title="Buku Riwayat Administrasi" onclick="bukaRapor('${escapeHTML(idSistemNode)}', '${escapedIdMurid}', '${escapedNamaUntukFungsi}', '${escapedKelas}')"><i class="fa-solid fa-file-invoice"></i></button>
+                                    <button class="btn-aksi-tabel btn-edit" title="Edit Profil" onclick="bukaModalFormEdit('${window.sanitizeInput(idSistemNode)}', '${escapedIdMurid}', '${escapedNamaUntukFungsi}', '${escapedLP}', '${escapedKelas}', '${window.sanitizeInput(row.WA_Wali||'-')}', '${escapedKetUntukFungsi}')"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="btn-aksi-tabel btn-rapor" title="Buku Riwayat Administrasi" onclick="bukaRapor('${window.sanitizeInput(idSistemNode)}', '${escapedIdMurid}', '${escapedNamaUntukFungsi}', '${escapedKelas}')"><i class="fa-solid fa-file-invoice"></i></button>
                                 </div>
                             </td>
                         `;
@@ -718,13 +699,15 @@
             } catch(err) { loadingEl.style.display = 'none'; showToast("Error Eksekusi Firebase."); }
         }
 
+        // --- MENGHILANGKAN CELAH XSS PADA PENCARIAN DOM ---
         function cariTabel() {
             let inputPencarian = document.getElementById("searchInput").value.toLowerCase();
             let filterKls = document.getElementById("filterKelas").value;
             let filterSts = document.getElementById("filterStatus").value; 
             
             document.querySelectorAll("#tab1 .baris-data").forEach(baris => {
-                let teksBaris = baris.cells[0].innerText.toLowerCase() + " " + baris.cells[1].innerText.toLowerCase() + " " + baris.cells[2].innerText.toLowerCase();
+                // Gunakan textContent bukan innerText untuk menghindari interpretasi HTML tag (meskipun sudah disanitize, ini best practice DOM)
+                let teksBaris = baris.cells[0].textContent.toLowerCase() + " " + baris.cells[1].textContent.toLowerCase() + " " + baris.cells[2].textContent.toLowerCase();
                 let kelasSiswa = baris.getAttribute("data-kelas");
                 let statusSiswa = baris.getAttribute("data-status");
                 
@@ -818,11 +801,15 @@
                     }
                     dataSimpan.Status = 'Aktif'; 
                     await database.ref('santri/' + idSistem).set(dataSimpan);
-                    await catatAuditTrail('Create', `Menambah santri baru ID: ${idSistem}, Nama: ${dataSimpan.Nama_Lengkap}`);
+                    
+                    if(window.catatAuditTrail) await window.catatAuditTrail('Tambah Santri', `Membuat data baru ID: ${idSistem} (${dataSimpan.Nama_Lengkap})`);
+                    
                     showToast('Data Santri Baru Diciptakan!'); vibrateSuccess();
                 } else {
                     await database.ref('santri/' + idSistem).update(dataSimpan);
-                    await catatAuditTrail('Update', `Mengubah data santri ID: ${idSistem}, Nama: ${dataSimpan.Nama_Lengkap}`);
+                    
+                    if(window.catatAuditTrail) await window.catatAuditTrail('Edit Santri', `Memperbarui data ID: ${idSistem} (${dataSimpan.Nama_Lengkap})`);
+                    
                     showToast('Data Santri Diperbarui!'); vibrateSuccess();
                 }
                 tutupModalForm();
@@ -841,12 +828,15 @@
             document.querySelectorAll("#tabelSantri tbody tr").forEach(row => {
                 if (row.style.display !== "none" && row.classList.contains("baris-data")) {
                     let cols = row.querySelectorAll("td");
-                    let namaBersih = cols[2].innerText.replace('(NONAKTIF)', '').replace('(LULUS)', '').trim();
-                    bodyData.push([cols[0].innerText, cols[1].innerText, namaBersih, cols[3].innerText, cols[4].innerText, cols[5].innerText]);
+                    let namaBersih = cols[2].textContent.replace('(NONAKTIF)', '').replace('(LULUS)', '').trim();
+                    bodyData.push([cols[0].textContent, cols[1].textContent, namaBersih, cols[3].textContent, cols[4].textContent, cols[5].textContent]);
                 }
             });
             if(bodyData.length === 0) { showToast("Tidak ada data untuk PDF!"); return; }
             doc.autoTable({ head: [['ID Santri', 'ID Murid', 'Nama Lengkap', 'L/P', 'Kelas', 'WA Wali']], body: bodyData, startY: 35, theme: 'grid', headStyles: { fillColor: [6, 209, 111], textColor: 255 }, styles: { fontSize: 8 } });
+            
+            if(window.catatAuditTrail) window.catatAuditTrail('Cetak Dokumen', 'Mengunduh Buku Induk Santri ke PDF');
+            
             doc.save('Database_Santri_B77.pdf'); vibrateSuccess();
         }
 
@@ -884,7 +874,7 @@
                         }
                     });
                     await database.ref().update(updates);
-                    await catatAuditTrail('Import', `Mengimpor ${jumlahValid} data santri dari Excel`);
+                    if(window.catatAuditTrail) await window.catatAuditTrail('Import Excel', `Mengimpor ${jumlahValid} data santri secara massal`);
                     document.getElementById('importLoading').style.display = 'none'; showToast(`Sukses Import ${jumlahValid} Data Kilat!`); vibrateSuccess();
                 } catch(error) { document.getElementById('importLoading').style.display = 'none'; showToast('Kesalahan sistem saat membaca Excel.'); vibrateHeavy(); }
                 document.getElementById('uploadExcel').value = ""; 
@@ -909,11 +899,10 @@
                     listTagihan.forEach(row => {
                         let statusColor = row.Status.toLowerCase() === 'belum lunas' ? 'color:#ef4444; font-weight:bold;' : 'color:#22c55e; font-weight:600;';
                         
-                        // XSS Rapor Tagihan
-                        let safeNamaPos = escapeHTML(row.Nama_Pos);
-                        let ket = row.Keterangan ? ` <br><span style="font-size:9px; color:#64748b;">(${escapeHTML(row.Keterangan)})</span>` : '';
+                        let safeNamaPos = window.sanitizeInput(row.Nama_Pos);
+                        let ket = row.Keterangan ? ` <br><span style="font-size:9px; color:#64748b;">(${window.sanitizeInput(row.Keterangan)})</span>` : '';
                         
-                        tbody.innerHTML += `<tr><td>${escapeHTML(row.Tanggal_Buat.split(' ')[0])}</td><td><strong>${safeNamaPos}</strong>${ket}</td><td>${formatRupiah(row.Nominal)}</td><td style="${statusColor}">${escapeHTML(row.Status)}</td></tr>`;
+                        tbody.innerHTML += `<tr><td>${window.sanitizeInput(row.Tanggal_Buat.split(' ')[0])}</td><td><strong>${safeNamaPos}</strong>${ket}</td><td>${formatRupiah(row.Nominal)}</td><td style="${statusColor}">${window.sanitizeInput(row.Status)}</td></tr>`;
                     });
                 }
                 document.getElementById('importLoading').style.display = 'none'; bukaModalAman('modalRapor');
@@ -921,7 +910,6 @@
         }
         function tutupRapor() { vibrateClick(); document.getElementById('modalRapor').style.display = 'none'; }
         
-        // ====== PERBAIKAN BUG PDF: Tambahan pagebreak agar tabel tidak terpotong ======
         function unduhRaporPDF() {
             vibrateClick(); showToast("Mempersiapkan PDF Transparansi..."); let printArea = document.getElementById('area-cetak-rapor');
             var opt = { 
@@ -932,9 +920,9 @@
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
             };
+            if(window.catatAuditTrail) window.catatAuditTrail('Cetak Dokumen', 'Mengunduh Rapor Finansial untuk Santri: ' + currentRaporNama);
             html2pdf().set(opt).from(printArea).save().then(() => { showToast("File PDF berhasil diunduh!"); vibrateSuccess(); });
         }
-        // ==============================================================================
 
         // ==========================================
         // SCRIPT TAB 2: MUTASI KELAS (ADMIN ONLY)
@@ -976,6 +964,7 @@
             }, error => { document.getElementById('tabel-body-mutasi').innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; font-size: 30px;"></i><p>Akses ditolak.</p></div></td></tr>'; });
         }
 
+        // --- MENGHILANGKAN BUG ARGUMENT MUTASI ---
         function renderTabelMutasi(dataArray) {
             let tabelBody = document.getElementById('tabel-body-mutasi');
             tabelBody.innerHTML = '';
@@ -991,12 +980,12 @@
             dataArray.forEach(row => {
                 let tr = document.createElement('tr');
                 
-                // XSS Sanitizer untuk Mutasi
-                let safeNama = escapeHTML(row.Nama_Lengkap || '');
-                let safeIdMurid = escapeHTML(row.idMuridManual || '-');
-                let safeLP = escapeHTML(row.LP || '-');
-                let safeKelas = escapeHTML(row.Kelas || '-');
-                let safeKet = escapeHTML(row.Keterangan || '-');
+                // Gunakan Sanitize Input
+                let safeNama = window.sanitizeInput(row.Nama_Lengkap || '');
+                let safeIdMurid = window.sanitizeInput(row.idMuridManual || '-');
+                let safeLP = window.sanitizeInput(row.LP || '-');
+                let safeKelas = window.sanitizeInput(row.Kelas || '-');
+                let safeKet = window.sanitizeInput(row.Keterangan || '-');
 
                 tr.className = `baris-data`; tr.id = `row_mutasi_${row.idSistemNode}`;
                 tr.onclick = function() { toggleRowClickMutasi(row.idSistemNode); };
@@ -1008,7 +997,7 @@
                             <span class="checkmark"></span>
                         </label>
                     </td>
-                    <td><strong>${escapeHTML(row.idSistemNode)}</strong></td>
+                    <td><strong>${window.sanitizeInput(row.idSistemNode)}</strong></td>
                     <td style="color:var(--text-muted); font-family:monospace; font-size:11px;">${safeIdMurid}</td>
                     <td style="font-weight: 600;">${safeNama}</td>
                     <td>${safeLP}</td>
@@ -1063,20 +1052,24 @@
             if(select.value === 'BARU') { inputManual.style.display = 'block'; inputManual.focus(); } else { inputManual.style.display = 'none'; }
         }
 
-        // ====== PERBAIKAN BUG UX: Mengembalikan teks tombol yang tidak di-hardcode ======
+        // --- MENGHILANGKAN BUG ARGUMENT ---
         function tarikDataBerdasarkanKelas() {
-            vibrateClick(); let kelasDicari = document.getElementById('kelasAsal').value; let btnCari = document.getElementById('btnCariTarik');
+            vibrateClick(); 
+            let kelasDicari = document.getElementById('kelasAsal').value; 
+            let btnCari = document.getElementById('btnCariTarik');
             let teksAsli = btnCari.innerHTML; 
-            btnCari.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Menyaring...'; btnCari.disabled = true;
+            
+            btnCari.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Menyaring...'; 
+            btnCari.disabled = true;
+            
             setTimeout(() => {
                 let hasilFilter = semuaDataSantriMutasi;
                 if(kelasDicari !== "") hasilFilter = semuaDataSantriMutasi.filter(row => row.Kelas && String(row.Kelas).trim() === kelasDicari);
-                renderTabelMutasi(hasilFilter);
+                renderTabelMutasi(hasilFilter); // PASTIKAN ARGUMENNYA MASUK DI SINI
                 btnCari.innerHTML = teksAsli; 
                 btnCari.disabled = false;
             }, 300); 
         }
-        // ================================================================================
 
         async function prosesMutasi() {
             vibrateClick();
@@ -1106,12 +1099,12 @@
                 let updatesObject = {};
                 idTerpilih.forEach(id => {
                     if (jenisAksi === 'Hapus') updatesObject[`santri/${id}`] = null; 
-                    else if (jenisAksi === 'Nonaktif') { updatesObject[`santri/${id}/Status`] = kelasFinal; updatesObject[`santri/${id}/Kelas`] = kelasFinal; } 
+                    else if (jenisAksi === 'Nonaktif') { updatesObject[`santri/${id}/Status`] = "Nonaktif"; updatesObject[`santri/${id}/Keterangan`] = "Dinonaktifkan via Mutasi"; } 
                     else { updatesObject[`santri/${id}/Kelas`] = kelasFinal; updatesObject[`santri/${id}/Status`] = "Aktif"; }
                 });
 
                 await database.ref().update(updatesObject);
-                await catatAuditTrail('Mutasi Massal', `Aksi: ${jenisAksi}, Target: ${kelasFinal}, Jumlah: ${idTerpilih.length} santri`);
+                if(window.catatAuditTrail) await window.catatAuditTrail('Mutasi Massal', `Aksi: ${jenisAksi}, Target: ${kelasFinal}, Jumlah: ${idTerpilih.length} santri`);
                 
                 showToast(jenisAksi === 'Hapus' ? `Sukses! ${idTerpilih.length} santri dihanguskan.` : `Sukses! ${idTerpilih.length} santri dieksekusi.`);
                 vibrateSuccess();
