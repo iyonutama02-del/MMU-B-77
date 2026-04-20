@@ -24,7 +24,21 @@
     <script src="firebase-config.js"></script>
 
     <script>
-        // --- 🛡️ PENGAMANAN ANTI-FLICKER & AUTH SERVER-SIDE ---
+        // --- 🛡️ FAIL-SAFE CACHE PWA (ANTI-MACET 100/100) ---
+        // Jika browser masih meload config lama, sistem ini akan menyelamatkan rendering tabel!
+        if (typeof window.sanitizeInput !== 'function') {
+            window.sanitizeInput = function(input) {
+                if (input == null) return '';
+                return String(input).replace(/[&<>'"]/g, m => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[m] || m));
+            };
+        }
+        if (typeof window.catatAuditTrail !== 'function') {
+            window.catatAuditTrail = async function(aksi, detail) {
+                console.warn("[FAIL-SAFE] Audit tertahan karena Cache PWA lama.");
+            };
+        }
+
+        // --- PENGAMANAN ANTI-FLICKER & AUTH SERVER-SIDE ---
         document.documentElement.style.display = 'none'; // Tirai gaib
 
         if (!localStorage.getItem('usernameAsli')) {
@@ -650,7 +664,7 @@
                         let tampilWA = formatWADisplay(row.WA_Wali);
                         let btnWAHTML = linkWA ? `<a href="https://wa.me/${linkWA}" target="_blank" class="btn-wa-link"><i class="fa-brands fa-whatsapp" style="font-size:14px;"></i> ${window.sanitizeInput(tampilWA)}</a>` : `<span style="color:var(--text-muted); font-size:11px;">-</span>`;
 
-                        // Menggunakan fungsi sanitize global dari firebase-config.js
+                        // Menggunakan fungsi sanitize global dari firebase-config.js (atau fail-safe)
                         let escapedNama = window.sanitizeInput(row.Nama_Lengkap || "");
                         let escapedKet = window.sanitizeInput(row.Keterangan || "");
                         let escapedKelas = window.sanitizeInput(row.Kelas || "-");
@@ -699,14 +713,12 @@
             } catch(err) { loadingEl.style.display = 'none'; showToast("Error Eksekusi Firebase."); }
         }
 
-        // --- MENGHILANGKAN CELAH XSS PADA PENCARIAN DOM ---
         function cariTabel() {
             let inputPencarian = document.getElementById("searchInput").value.toLowerCase();
             let filterKls = document.getElementById("filterKelas").value;
             let filterSts = document.getElementById("filterStatus").value; 
             
             document.querySelectorAll("#tab1 .baris-data").forEach(baris => {
-                // Gunakan textContent bukan innerText untuk menghindari interpretasi HTML tag (meskipun sudah disanitize, ini best practice DOM)
                 let teksBaris = baris.cells[0].textContent.toLowerCase() + " " + baris.cells[1].textContent.toLowerCase() + " " + baris.cells[2].textContent.toLowerCase();
                 let kelasSiswa = baris.getAttribute("data-kelas");
                 let statusSiswa = baris.getAttribute("data-status");
@@ -784,11 +796,11 @@
 
             let dataSimpan = {
                 ID_Santri: idSistem, ID_Murid: idManual,
-                Nama_Lengkap: document.getElementById('nama').value.trim(),
+                Nama_Lengkap: window.sanitizeInput(document.getElementById('nama').value.trim()),
                 LP: document.getElementById('lp').value,
-                Kelas: document.getElementById('kelas').value.trim(),
-                WA_Wali: document.getElementById('wa').value.trim(),
-                Keterangan: document.getElementById('keterangan').value.trim() || '-'
+                Kelas: window.sanitizeInput(document.getElementById('kelas').value.trim()),
+                WA_Wali: window.sanitizeInput(document.getElementById('wa').value.trim()),
+                Keterangan: window.sanitizeInput(document.getElementById('keterangan').value.trim()) || '-'
             };
 
             try {
@@ -964,7 +976,6 @@
             }, error => { document.getElementById('tabel-body-mutasi').innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; font-size: 30px;"></i><p>Akses ditolak.</p></div></td></tr>'; });
         }
 
-        // --- MENGHILANGKAN BUG ARGUMENT MUTASI ---
         function renderTabelMutasi(dataArray) {
             let tabelBody = document.getElementById('tabel-body-mutasi');
             tabelBody.innerHTML = '';
@@ -980,7 +991,6 @@
             dataArray.forEach(row => {
                 let tr = document.createElement('tr');
                 
-                // Gunakan Sanitize Input
                 let safeNama = window.sanitizeInput(row.Nama_Lengkap || '');
                 let safeIdMurid = window.sanitizeInput(row.idMuridManual || '-');
                 let safeLP = window.sanitizeInput(row.LP || '-');
@@ -1052,7 +1062,6 @@
             if(select.value === 'BARU') { inputManual.style.display = 'block'; inputManual.focus(); } else { inputManual.style.display = 'none'; }
         }
 
-        // --- MENGHILANGKAN BUG ARGUMENT ---
         function tarikDataBerdasarkanKelas() {
             vibrateClick(); 
             let kelasDicari = document.getElementById('kelasAsal').value; 
@@ -1065,7 +1074,7 @@
             setTimeout(() => {
                 let hasilFilter = semuaDataSantriMutasi;
                 if(kelasDicari !== "") hasilFilter = semuaDataSantriMutasi.filter(row => row.Kelas && String(row.Kelas).trim() === kelasDicari);
-                renderTabelMutasi(hasilFilter); // PASTIKAN ARGUMENNYA MASUK DI SINI
+                renderTabelMutasi(hasilFilter);
                 btnCari.innerHTML = teksAsli; 
                 btnCari.disabled = false;
             }, 300); 
@@ -1079,7 +1088,7 @@
             if(jenisAksi === 'Naik Kelas') {
                 let pilihanDropdown = document.getElementById('kelasTujuanDropdown').value;
                 if(!pilihanDropdown) { showToast("Pilih Kelas Tujuan!"); vibrateHeavy(); return; }
-                if(pilihanDropdown === 'BARU') { kelasFinal = document.getElementById('kelasTujuanManual').value.trim(); if(!kelasFinal) { showToast("Ketik nama kelas baru!"); vibrateHeavy(); return; } } 
+                if(pilihanDropdown === 'BARU') { kelasFinal = window.sanitizeInput(document.getElementById('kelasTujuanManual').value.trim()); if(!kelasFinal) { showToast("Ketik nama kelas baru!"); vibrateHeavy(); return; } } 
                 else { kelasFinal = pilihanDropdown; }
             } else if (jenisAksi === 'Hapus') { kelasFinal = 'Dihapus'; } else { kelasFinal = jenisAksi; }
 
